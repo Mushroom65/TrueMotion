@@ -26,7 +26,9 @@ jobs:
       - name: Install SDK packages
         run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0'
       - name: Audit source publication
-        run: python3 tools/source_audit.py
+        run: |
+          python3 tools/source_audit.py
+          python3 tools/verify_native.py
       - name: Test and build compatible app
         run: bash gradlew -PtrueMotionNativePrebuilt=true :app:testCompatDebugUnitTest :app:assembleCompatDebug --no-daemon
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
