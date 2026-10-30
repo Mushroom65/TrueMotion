@@ -32,7 +32,9 @@ data class EffectCatalog(
     }
 
     val categories: List<Pair<String, String>> get() =
-        ((if (definitions.any(::isNew)) listOf("new" to "New") else emptyList()) + EffectCategories).map { (k, v) -> k to (categoryNames[k] ?: v) }
+        ((if (definitions.any(::isNew)) listOf("new" to "New") else emptyList()) + EffectCategories)
+            .filter { (key, _) -> !key.startsWith("amz-") || definitions.any { it.category == key } }
+            .map { (k, v) -> k to (categoryNames[k] ?: v) }
 
     fun drawable(path: String?): Drawable? = path?.let { p ->
         runCatching { open?.invoke(p)?.use { ImageDecoder.decodeDrawable(ImageDecoder.createSource(java.nio.ByteBuffer.wrap(it.readBytes()))) } }.getOrNull()
@@ -45,9 +47,25 @@ data class EffectCatalog(
 
     companion object {
         val Categories = linkedMapOf("color" to "Color", "blur" to "Blur", "distort" to "Distort", "stylize" to "Stylize",
-            "noise" to "Noise", "repeat" to "Repeat", "key" to "Key", "move" to "Move", "3d" to "3D", "text" to "Text", "true" to "True Motion")
+            "noise" to "Noise", "repeat" to "Repeat", "key" to "Key", "move" to "Move", "3d" to "3D", "text" to "Text", "true" to "True Motion",
+            "amz-color" to "AfterMotionZ+ · Color & Light", "amz-blur" to "AfterMotionZ+ · Blur & Glow",
+            "amz-distort" to "AfterMotionZ+ · Distortion", "amz-procedural" to "AfterMotionZ+ · Procedural",
+            "amz-drawing" to "AfterMotionZ+ · Drawing & Edges", "amz-transform" to "AfterMotionZ+ · Transform",
+            "amz-3d" to "AfterMotionZ+ · 3D", "amz-text" to "AfterMotionZ+ · Text",
+            "amz-opacity" to "AfterMotionZ+ · Opacity", "amz-matte" to "AfterMotionZ+ · Matte & Key",
+            "amz-repeat" to "AfterMotionZ+ · Repeat", "amz-other" to "AfterMotionZ+ · Other")
 
-        fun read(context: Context): EffectCatalog = parse(currentLanguage(context).tag) { context.assets.open("effects/$it") }
+        private var cached: Pair<String, EffectCatalog>? = null
+
+        @Synchronized private fun assets(context: Context, language: String): EffectCatalog {
+            cached?.takeIf { it.first == language }?.let { return it.second }
+            val app = context.applicationContext
+            return parse(language) { app.assets.open("effects/$it") }.also {
+                if (it.message == null) cached = language to it
+            }
+        }
+
+        fun read(context: Context): EffectCatalog = assets(context, currentLanguage(context).tag)
             .let { catalog ->
                 val prefs = context.getSharedPreferences("true-plugins", 0)
                 if (catalog.message != null) catalog.copy(message = context.getString(R.string.effects_not_loaded))
@@ -87,6 +105,7 @@ private fun EffectDefinition.translated(json: JSONObject): EffectDefinition {
             val options = t.optJSONArray("options")?.let { a -> List(a.length()) { a.optString(it) } }
             p.copy(
                 label = t.optString("label").ifBlank { p.label },
+                section = t.optString("section").ifBlank { p.section },
                 options = if (options != null && options.size == p.options.size && options.none { it.isBlank() }) options else p.options,
             )
         },

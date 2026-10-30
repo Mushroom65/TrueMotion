@@ -44,7 +44,20 @@ internal fun EffectSettings(state: EditorState, layer: Layer, instance: XmlNode,
             }
         }
     }
+    val collapsed = remember(definition.id) { mutableStateMapOf<String, Boolean>() }
+    var lastSection = ""
     definition.params.forEach { param ->
+        if (param.section.isNotBlank() && param.section != lastSection) {
+            val section = param.section
+            Row(Modifier.fillMaxWidth().height(38.dp).background(Am.Panel).clickable { collapsed[section] = collapsed[section] != true }
+                .padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(section, Modifier.weight(1f), color = Am.Accent, fontSize = 13.sp)
+                androidx.compose.material3.Icon(if (collapsed[section] == true) app.absentmotion.ui.editor.effects.EffectIcons.Expand else app.absentmotion.ui.editor.effects.EffectIcons.Expanded,
+                    null, Modifier.size(16.dp), tint = Am.Accent)
+            }
+        }
+        lastSection = param.section
+        if (collapsed[param.section] == true) return@forEach
         val raw = instance.effectProperty(param.id)?.valueAt(layer.t) ?: param.missingDefault
         fun set(text: String, gesture: Boolean = false) {
             select(param)
@@ -82,7 +95,7 @@ internal fun PropertyLabel(label: String, active: Boolean, enabled: Boolean, mod
 @Composable
 internal fun EffectNumbers(state: EditorState, param: EffectParam, raw: String, enabled: Boolean, active: Boolean,
                           select: () -> Unit, set: (String, Boolean) -> Unit) {
-    val count = if (param.kind == "point") 2 else 1
+    val count = when (param.kind) { "point" -> 2; "vector3" -> 3; else -> 1 }
     val parsed = raw.split(',').map { it.trim().finiteFloat() ?: 0f }
     fun stored(v: List<Float>) = v.joinToString(",")
     val values = List(count) { parsed.getOrElse(it) { 0f } }
@@ -93,14 +106,15 @@ internal fun EffectNumbers(state: EditorState, param: EffectParam, raw: String, 
     val factor = if (percent) 100f else 1f
     fun adjust(value: Float, gesture: Boolean) {
         val rounded = if (param.step > 0) round(value/param.step)*param.step else value
-        val changed = latest.toMutableList().also { it[component] = rounded.coerceIn(param.min, param.max) }
+        val changed = latest.toMutableList().also { it[component] = rounded.coerceIn(param.componentMin.getOrElse(component) { param.min }, param.componentMax.getOrElse(component) { param.max }) }
         set(stored(changed), gesture)
     }
     val decimals = param.step.toBigDecimal().stripTrailingZeros().scale().coerceAtLeast(0).let { if (percent) (it - 2).coerceAtLeast(0) else it }
     val unit = if (percent) "%" else if (param.kind == "angle") "°" else param.unit
     fun keypad(index: Int) {
-        state.keypad = KeypadRequest(values.mapIndexed { i, v -> KeypadField(if (count == 1) param.label else listOf("X", "Y")[i], v * factor, unit, param.min * factor, param.max * factor) }, index) { next ->
-            set(stored(next.map { v -> (v/factor).coerceIn(param.min, param.max) }), false)
+        state.keypad = KeypadRequest(values.mapIndexed { i, v -> KeypadField(if (count == 1) param.label else listOf("X", "Y", "Z")[i], v * factor, unit,
+            param.componentMin.getOrElse(i) { param.min } * factor, param.componentMax.getOrElse(i) { param.max } * factor) }, index) { next ->
+            set(stored(next.mapIndexed { i, v -> (v/factor).coerceIn(param.componentMin.getOrElse(i) { param.min }, param.componentMax.getOrElse(i) { param.max }) }), false)
         }
     }
     fun tap(index: Int) { if (active && component == index) keypad(index) else { component = index; select() } }
@@ -122,13 +136,13 @@ internal fun EffectNumbers(state: EditorState, param: EffectParam, raw: String, 
             return@Row
         }
         key(param.id, component) {
-            EffectRuler(values[component], param.step, param.min, param.max, enabled,
+            EffectRuler(values[component], param.step, param.componentMin.getOrElse(component) { param.min }, param.componentMax.getOrElse(component) { param.max }, enabled,
                 select, { adjust(it, true) }, state::endGesture, Modifier.weight(1f).fillMaxHeight(), defaults.getOrNull(component), state.settings.vibration)
         }
         Column(Modifier.padding(horizontal = 2.dp, vertical = 4.dp).fillMaxHeight(), Arrangement.spacedBy(2.dp)) {
             values.forEachIndexed { i, value ->
                 Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (i == 0) "X:" else "Y:", Modifier.padding(end = 5.dp), color = Am.Caption, fontSize = 10.sp)
+                    Text(listOf("X:", "Y:", "Z:")[i], Modifier.padding(end = 5.dp), color = Am.Caption, fontSize = 10.sp)
                     ValueBox(formatFixed(value * factor, decimals), i == component, active && i == component, Modifier.width(55.dp).fillMaxHeight(), 5.5f, enabled) { tap(i) }
                 }
             }
@@ -145,16 +159,16 @@ internal fun ValueBox(text: String, chosen: Boolean, lit: Boolean, modifier: Mod
 
 @Composable
 private fun EffectChoice(param: EffectParam, raw: String, enabled: Boolean, set: (String) -> Unit) {
-    val chosen = (raw.finiteFloat() ?: 0f).roundToInt().coerceIn(param.options.indices)
+    val chosen = param.optionValues.indexOfFirst { abs(it - (raw.finiteFloat() ?: 0f)) < 1e-5f }
     var open by remember(param.id) { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().height(38.dp).padding(horizontal = 8.dp).alpha(if (enabled) 1f else 0.35f), verticalAlignment = Alignment.CenterVertically) {
         Text(param.label, Modifier.weight(1f), color = Am.OnDark, fontSize = 14.sp)
         Box {
-            Text(param.options[chosen], Modifier.clip(PanelShape).background(Color(0x33000000)).clickable(enabled = enabled) { open = true }
+            Text(param.options.getOrNull(chosen) ?: raw, Modifier.clip(PanelShape).background(Color(0x33000000)).clickable(enabled = enabled) { open = true }
                 .padding(horizontal = 12.dp, vertical = 6.dp), color = Am.OnDark, fontSize = 14.sp, maxLines = 1)
             Presence(open) {
                 MenuPopup(DropOrRise, { open = false }) {
-                    param.options.forEachIndexed { i, option -> MenuRow(option) { set(formatFloats(floatArrayOf(i.toFloat()))); open = false } }
+                    param.options.forEachIndexed { i, option -> MenuRow(option) { set(formatFloats(floatArrayOf(param.optionValues[i]))); open = false } }
                 }
             }
         }

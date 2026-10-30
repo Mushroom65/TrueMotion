@@ -35,7 +35,7 @@
   <string name="true_grade">Open True Color Grade</string>
   <string name="true_plugins_help">Bundled plugins start disabled. Commands are applied as one Undo step. Only supported effects can be added; an invalid command leaves the project unchanged.</string>
   <string name="true_operation_error">Operation failed: %1$s</string>
-  <string name="true_credits">True Motion Next is based on AbsentMotion (Apache 2.0). Our earlier mod was based on Toji Motion / Alight Motion. t.me/TrueMoti0n</string>
+  <string name="true_credits">True Motion Next is based on AbsentMotion (Apache 2.0). Our earlier mod was based on Toji Motion / Alight Motion. The new effect pack is adapted from AfterMotionZ+. t.me/TrueMoti0n</string>
   <string name="true_import_integrity">The True Motion package contains missing, duplicated or corrupted files.</string>
   <string name="true_vector_new">New vector animation</string>
   <string name="true_vector_edit">Edit vector animation</string>

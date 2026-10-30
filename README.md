@@ -6,8 +6,9 @@ An experimental Android motion graphics editor based on [AbsentMotion 4.0.0](htt
 
 [Русская инструкция](README_TRUE_MOTION_RU.md) · [Port status](docs/TRUE_MOTION_MIGRATION_RU.md) · [Telegram](https://t.me/TrueMoti0n)
 
-## Included in 0.10.0
+## Included in 0.11.0
 
+- 575 freshly adapted AfterMotionZ+ effects in 11 separate categories, including Deep Glow AE and Saber AE; 198 existing definitions preserved. [Scope and validation](docs/AFTERZ_EFFECTS_RU.md).
 - Native color grading with wheels, curves and HSL controls.
 - Live audio-driven animation referencing an audio layer, beat markers and Bop.
 - Native particle simulation, lifetime controls and layer textures.
@@ -17,7 +18,7 @@ An experimental Android motion graphics editor based on [AbsentMotion 4.0.0](htt
 - Manual viewport prerender, green timeline cache indicators and a 2 GiB disk cache.
 - Animated GIF import and the supplied True Motion launcher/in-app logo.
 
-The port is **not complete**. The legacy effect library, full 3D/rigging tools, automatic caching of every viewed frame and the new Windows renderer remain incomplete. Consult the [feature status](docs/TRUE_MOTION_MIGRATION.json) before relying on a feature. Unknown legacy effects are preserved on import, but exact rendering compatibility is not guaranteed.
+The port is **not complete**. The remaining donor effects, full 3D/rigging tools, automatic caching of every viewed frame and the new Windows renderer remain incomplete. Consult the [feature status](docs/TRUE_MOTION_MIGRATION.json) before relying on a feature. Unknown legacy effects are preserved on import, but exact rendering compatibility is not guaranteed.
 
 ## Build the compatible Android app
 
@@ -41,6 +42,10 @@ The exact user-provided logo is retained in `branding/true-motion-source.png`. W
 
 The 0.10.0 compatible build passed [GitHub Actions](https://github.com/Mushroom65/TrueMotion/actions/runs/41078996060): 1,252 JVM tests, 0 failures, 8 skips, plus source/native hash checks. The local APK was installed and its branding checked in MuMu. Native instrumentation with export pixel comparisons belongs to the 0.9.0 feature validation. A physical phone was not tested; see [release validation notes](docs/RELEASE_0_10_RU.md).
 
+The 0.11.0 local validation passed 1,257 JVM tests (0 failures, 12 environment skips), compiled and rendered all 575 new effects on Android, and reran the existing native feature checks. Deep Glow PNG/export matched preview; decoded MP4 mean error was 0.9001/255. Donor-wide visual parity and physical-device validation remain unverified.
+
 ## Credits and licences
 
 AbsentMotion authors: source base and renderer, Apache-2.0. Original [LICENSE](LICENSE), [NOTICE](NOTICE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) are retained. Rhino uses MPL-2.0; its notices are in `app/src/main/assets/true-licenses`. Earlier mod credits remain **Toji Motion / Alight Motion**. The archived upstream README is in [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md).
+
+Effect shaders and available thumbnails were adapted from the user-supplied AfterMotionZ+ Clone APK. Donor provenance, author references and unsupported definitions are recorded in [AFTERZ_EFFECT_PORT.json](docs/AFTERZ_EFFECT_PORT.json) and [port notes](docs/AFTERZ_EFFECTS_RU.md). The donor APK, decryptor DEX and decryptor native library are not distributed here.

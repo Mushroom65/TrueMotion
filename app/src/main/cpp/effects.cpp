@@ -9,11 +9,13 @@
 #include "include/core/SkPicture.h"
 #include "include/core/SkPictureRecorder.h"
 #include "include/effects/SkImageFilters.h"
+#include "src/core/SkRuntimeEffectPriv.h"
 
 #include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstring>
+#include <cstdlib>
 #include <optional>
 #include <string_view>
 #include <vector>
@@ -211,11 +213,40 @@ std::string EffectRuntime::load(const std::string& xml) {
     auto root = ParseXml(xml, &error);
     if (!root || root->name != "effect" || !root->attr("id")) return "shader error: bad definition " + error;
     Definition d;
+    d.afterz = root->attr("dialect") && std::string_view(root->attr("dialect")) == "afterz";
+    if (root->attr("iterations")) d.iterations = root->attr("iterations");
     for (const auto& c : root->children) {
-        if (c->name == "param" && c->attr("name")) d.defaults[c->attr("name")] = ParseAnimNode(c.get());
+        if (c->name == "param" && c->attr("name")) {
+            d.defaults[c->attr("name")] = ParseAnimNode(c.get());
+            if (c->attr("uniform")) d.aliases[c->attr("uniform")] = c->attr("name");
+        }
+        if (d.afterz && c->name == "texture" && c->attr("uniform") && c->attr("source") && c->attr("name")) {
+            const std::string source = c->attr("source");
+            d.inputs[c->attr("uniform")] = source == "buffer" ? c->attr("name") : "$" + source;
+            if (source == "comp") d.backdrop = true;
+        }
+        if (d.afterz && c->name == "stage" && c->attr("sksl")) {
+            Stage stage;
+            stage.source = c->attr("sksl");
+            if (c->attr("target")) stage.target = c->attr("target");
+            if (c->attr("downsample")) stage.downsample = std::strtof(c->attr("downsample"), nullptr);
+            if (!(stage.downsample >= 1 && stage.downsample <= 1024)) return "shader error: invalid buffer scale";
+            d.stages.push_back(std::move(stage));
+        }
     }
     const std::string id = root->attr("id");
     const char* sksl = root->attr("sksl");
+    if (d.afterz) {
+        if (d.stages.empty() && sksl && *sksl) d.stages.push_back(Stage{sksl, nullptr, "", 1});
+        if (d.stages.empty() || d.stages.size() > 64 || !d.stages.back().target.empty()) return "shader error: invalid effect graph";
+        d.pending = true;
+        if (root->attr("lazy") && std::string_view(root->attr("lazy")) == "false") {
+            const std::string status = compile(d);
+            if (status != "ok") return status;
+        }
+        fDefinitions[id] = std::move(d);
+        return "ok";
+    }
     if (!sksl || !*sksl) {
         if (!BuiltIn(id) && !MotionEffect(id) && !RepeatEffect(id) && !TextEffect(id) && !DrawingEffect(id)) return "shader error: no shader and no built-in called " + id;
         d.backdrop = id == "absent.glow";
@@ -237,8 +268,24 @@ std::string EffectRuntime::load(const std::string& xml) {
     return "ok";
 }
 
+std::string EffectRuntime::compile(Definition& d) {
+    d.pending = false;
+    for (auto& stage : d.stages) {
+        auto result = SkRuntimeEffect::MakeForShader(SkString(stage.source), SkRuntimeEffectPriv::ES3Options());
+        if (!result.effect || !result.effect->findChild("image")) {
+            d.error = "shader error: " + std::string(result.errorText.c_str());
+            d.shader = nullptr;
+            return d.error;
+        }
+        stage.shader = std::move(result.effect);
+    }
+    d.shader = d.stages.back().shader;
+    return "ok";
+}
+
 const EffectRuntime::Definition* EffectRuntime::find(const std::string& id) const {
     auto d = fDefinitions.find(id);
+    if (d != fDefinitions.end() && d->second.pending) compile(d->second);
     return d == fDefinitions.end() ? nullptr : &d->second;
 }
 
@@ -292,6 +339,59 @@ sk_sp<SkImageFilter> EffectRuntime::chain(const Scene& scene, const Layer& layer
         if (BuiltIn(e.id)) {
             const auto value = [&](const char* name, int i, float fallback) { return Value(e, defaults, name, i, t, fallback); };
             f = e.id == "absent.glow" ? GlowFilter(value, f, withBackdrop) : BuiltInFilter(e.id, value, f);
+        } else if (d && d->shader && d->afterz) {
+            const int iterations = d->iterations.empty() ? 1 : std::clamp((int)std::lround(Value(e, defaults, d->iterations.c_str(), 0, t, 1)), 1, 128);
+            for (int iteration = 0; iteration < iterations; ++iteration) {
+                const auto source = f;
+                std::map<std::string, sk_sp<SkImageFilter>> buffers;
+                for (const auto& stage : d->stages) {
+                    SkRuntimeShaderBuilder b(stage.shader);
+                    for (const auto& u : stage.shader->uniforms()) {
+                        const std::string name(u.name);
+                        const int n = (int)(u.sizeInBytes() / 4);
+                        std::vector<float> v(n);
+                        auto alias = d->aliases.find(name);
+                        if (alias != d->aliases.end()) {
+                            const char* property = alias->second.c_str();
+                            if (u.isColor() && n == 4) v = {Value(e, defaults, property, 1, t, 0), Value(e, defaults, property, 2, t, 0),
+                                Value(e, defaults, property, 3, t, 0), Value(e, defaults, property, 0, t, 1)};
+                            else for (int i = 0; i < n; ++i) v[i] = Value(e, defaults, property, i, t, 0);
+                        } else if (name == "size") v = {area.width(), area.height()};
+                        else if (name == "time") v = {seconds};
+                        else if (name == "amzIteration") v = {(float)iteration};
+                        else if (name == "layer") v = {std::max(own().width(), 1.0f), std::max(own().height(), 1.0f)};
+                        else if (name == "fromLayer") v = columns(fromLayer());
+                        else if (name == "toLayer") {
+                            SkMatrix inverse;
+                            v = columns(fromLayer().invert(&inverse) ? inverse : SkMatrix::I());
+                        } else if (name == "screen") v = {-area.left(), -area.top(), (float)scene.width, (float)scene.height};
+                        v.resize(n);
+                        if (u.type >= SkRuntimeEffect::Uniform::Type::kInt) {
+                            std::vector<int> ints(v.begin(), v.end());
+                            b.uniform(u.name).set(ints.data(), n);
+                        } else b.uniform(u.name).set(v.data(), n);
+                    }
+                    std::vector<std::string_view> names;
+                    std::vector<sk_sp<SkImageFilter>> inputs;
+                    for (const auto& child : stage.shader->children()) {
+                        names.push_back(child.name);
+                        const auto found = d->inputs.find(std::string(child.name));
+                        const std::string binding = found == d->inputs.end() ? "$content" : found->second;
+                        if (binding == "$content") inputs.push_back(source);
+                        else if (binding == "$comp") inputs.push_back(nullptr);
+                        else {
+                            auto buffer = buffers.find(binding);
+                            inputs.push_back(buffer == buffers.end() ? SkImageFilters::Empty() : buffer->second);
+                        }
+                    }
+                    auto rendered = SkImageFilters::RuntimeShader(b, reach, names.data(), inputs.data(), (int)names.size());
+                    const float ds = stage.downsample;
+                    const SkRect target = SkRect::MakeLTRB(bounds.left()/ds, bounds.top()/ds, bounds.right()/ds, bounds.bottom()/ds);
+                    rendered = SkImageFilters::Crop(target, rendered);
+                    if (stage.target.empty()) f = std::move(rendered);
+                    else buffers[stage.target] = std::move(rendered);
+                }
+            }
         } else if (d && d->shader) {
             SkRuntimeShaderBuilder b(d->shader);
             for (const SkRuntimeEffect::Uniform& u : d->shader->uniforms()) {

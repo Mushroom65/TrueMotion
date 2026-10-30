@@ -35,7 +35,7 @@
   <string name="true_grade">打开 True Color Grade</string>
   <string name="true_plugins_help">内置插件默认关闭。命令可通过一次撤销还原。只能添加已支持的效果，命令出错不会改变项目。</string>
   <string name="true_operation_error">操作失败：%1$s</string>
-  <string name="true_credits">True Motion Next 基于 AbsentMotion（Apache 2.0）。之前的模组基于 Toji Motion / Alight Motion。t.me/TrueMoti0n</string>
+  <string name="true_credits">True Motion Next 基于 AbsentMotion（Apache 2.0）。之前的模组基于 Toji Motion / Alight Motion。新效果包改编自 AfterMotionZ+。t.me/TrueMoti0n</string>
   <string name="true_import_integrity">True Motion 项目包包含缺失、重复或损坏的文件。</string>
   <string name="true_vector_new">新建矢量动画</string>
   <string name="true_vector_edit">编辑矢量动画</string>

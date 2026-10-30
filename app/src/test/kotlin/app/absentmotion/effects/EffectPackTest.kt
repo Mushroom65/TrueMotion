@@ -20,12 +20,12 @@ class EffectPackTest {
         assertEquals("index.json and the effect files", files.sorted(), index.sorted())
         assertEquals("ids are unique", index.size, index.toSet().size)
         assertEquals("every listed effect parses", index, catalog.definitions.map { it.key })
-        assertTrue(catalog.definitions.all { (it.id == "absent.${it.key}" || it.id in setOf("lab.true.grade", "lab.true.audioMotion", "lab.true.particles") || it.pluginId != null && it.id.startsWith("plugin.${it.pluginId}.")) && it.category in EffectCatalog.Categories })
+        assertTrue(catalog.definitions.all { (it.id == "absent.${it.key}" || it.dialect == "afterz" && it.id.startsWith("amz.") || it.id in setOf("lab.true.grade", "lab.true.audioMotion", "lab.true.particles") || it.pluginId != null && it.id.startsWith("plugin.${it.pluginId}.")) && it.category in EffectCatalog.Categories })
     }
 
     @Test fun shadersDeclareTheContractAndOneUniformPerParam() {
         val declared = Regex("""(layout\s*\(\s*color\s*\)\s*)?uniform\s+(\w+)\s+(\w+)\s*;""")
-        for (effect in catalog.definitions) {
+        for (effect in catalog.definitions.filter { it.dialect != "afterz" }) {
             if (effect.native) {
                 assertTrue("${effect.key} is not a built-in", effect.category in setOf("move", "repeat", "text") || effect.id in setOf("absent.blur", "absent.glow", "absent.motionblur", "absent.smear", "absent.backdrop", "absent.drawingprogress", "absent.stroketaper", "lab.true.audioMotion", "lab.true.particles"))
                 assertNull(effect.sksl)
@@ -83,7 +83,8 @@ class EffectPackTest {
         val choices = catalog.definitions.flatMap { e -> e.params.filter { it.kind == "choice" }.map { e.key to it } }
         assertTrue(choices.isNotEmpty())
         for ((key, p) in choices) {
-            assertTrue("$key.${p.id}", p.options.size >= 2 && p.min == 0f && p.max == p.options.size - 1f && p.type == "float")
+            assertTrue("$key.${p.id}", p.options.isNotEmpty() && p.optionValues.size == p.options.size && p.type == "float")
+            if (!key.startsWith("afterz-")) assertTrue("$key.${p.id}", p.options.size >= 2 && p.min == 0f && p.max == p.options.size - 1f)
             assertEquals("$key.${p.id}", p.default.toFloat(), p.default.toFloat().toInt().toFloat())
         }
     }
@@ -114,10 +115,11 @@ class EffectPackTest {
         val fresh = catalog.listed("new").map { it.key }.toSet()
         assertTrue(fresh.containsAll(listOf("vhs", "oscillate", "timequant", "unsharpmask", "flicker")))
         assertTrue("blur" !in fresh && "glow" !in fresh)
-        assertEquals(listOf("new") + EffectCatalog.Categories.keys + "ai", catalog.categories.map { it.first })
+        val categories = EffectCatalog.Categories.keys.filter { !it.startsWith("amz-") || catalog.listed(it).isNotEmpty() }
+        assertEquals(listOf("new") + categories + "ai", catalog.categories.map { it.first })
         val old = EffectCatalog(catalog.definitions.map { it.copy(since = null) }, newest = catalog.newest)
         assertTrue(old.listed("new").isEmpty())
-        assertEquals(EffectCatalog.Categories.keys.toList() + "ai", old.categories.map { it.first })
+        assertEquals(categories + "ai", old.categories.map { it.first })
     }
 
     @Test fun thumbnailsStaySmallAndMovingEffectsAnimate() {

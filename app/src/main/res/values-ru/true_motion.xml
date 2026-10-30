@@ -35,7 +35,7 @@
   <string name="true_grade">Открыть True Color Grade</string>
   <string name="true_plugins_help">Встроенные плагины изначально выключены. Команда отменяется одним шагом. Добавляются поддерживаемые эффекты; ошибка команды не меняет проект.</string>
   <string name="true_operation_error">Не удалось выполнить: %1$s</string>
-  <string name="true_credits">True Motion Next основан на AbsentMotion (Apache 2.0). Наш предыдущий мод основан на Toji Motion / Alight Motion. t.me/TrueMoti0n</string>
+  <string name="true_credits">True Motion Next основан на AbsentMotion (Apache 2.0). Наш предыдущий мод основан на Toji Motion / Alight Motion. Новый набор эффектов адаптирован из AfterMotionZ+. t.me/TrueMoti0n</string>
   <string name="true_import_integrity">Архив True Motion содержит отсутствующие, повторяющиеся или повреждённые файлы.</string>
   <string name="true_vector_new">Новая векторная анимация</string>
   <string name="true_vector_edit">Изменить векторную анимацию</string>
