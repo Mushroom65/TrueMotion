@@ -17,6 +17,7 @@ foreign=json.loads((pack/'foreign.json').read_text(encoding='utf-8'))
 existing_foreign={k:v for k,v in foreign.items() if not str(v.get('to','')).startswith('afterz-')}
 foreign=dict(existing_foreign)
 baseline={k:hashlib.sha256((pack/(k+'.json')).read_bytes()).hexdigest() for k in original}
+normalized_baseline={k:hashlib.sha256((pack/(k+'.json')).read_bytes().replace(b'\r\n',b'\n')).hexdigest() for k in original}
 locales={p.stem:(p,json.loads(p.read_text(encoding='utf-8'))) for p in (pack/'i18n').glob('*.json')}
 ui_text=json.loads((Path(__file__).parent/'ui_text.json').read_text(encoding='utf-8'))
 common={lang:{} for lang in ('ru','zh-CN')}
@@ -85,6 +86,8 @@ for lang,(path,local) in locales.items():
 assert all(hashlib.sha256((pack/(k+'.json')).read_bytes()).hexdigest()==v for k,v in baseline.items())
 manifest={'sourceApk':'AfterMotionZ+ Clone.apk','sourceApkSha256':converter.DONOR_SHA,'sourceDefinitions':834,
     'converted':len(compiled),'pending':len(report['effects'])-len(compiled),'originalDefinitionsUnchanged':baseline,
+    'originalDefinitionsNormalizedSHA256':normalized_baseline,
+    'originalHashNote':'Raw hashes record the original Windows reference bytes; normalized hashes verify unchanged content after CRLF-to-LF checkout conversion.',
     'oldTrueMotionCatalogUsedAsSource':False,'thumbnailSources':preview_sources,
     'originalImportRulesSha256':hashlib.sha256(json.dumps(existing_foreign,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
     'newImportRules':len(foreign)-len(existing_foreign),

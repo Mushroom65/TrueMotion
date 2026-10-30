@@ -21,9 +21,9 @@ class AfterZPortTest {
         assertEquals(donor.size, donor.map { it.id }.toSet().size)
         assertTrue(donor.all { it.id.startsWith("amz.") && it.key.startsWith("afterz-") && it.category.startsWith("amz-") })
         assertTrue(catalog.definitions.filter { it.dialect != "afterz" }.none { it.category.startsWith("amz-") || it.id.startsWith("amz.") })
-        val originals = manifest.getJSONObject("originalDefinitionsUnchanged")
+        val originals = manifest.getJSONObject("originalDefinitionsNormalizedSHA256")
         for (key in originals.keys()) {
-            val bytes = File(assets, "$key.json").readBytes()
+            val bytes = File(assets, "$key.json").readText().replace("\r\n", "\n").toByteArray(Charsets.UTF_8)
             val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
             assertEquals("Original effect $key changed", originals.getString(key), hash)
         }
