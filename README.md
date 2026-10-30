@@ -39,7 +39,7 @@ GitHub Actions builds the compatible debug APK and runs JVM tests. It does not p
 
 The exact user-provided logo is retained in `branding/true-motion-source.png`. With Pillow installed, run `python tools/icon/package_true_motion.py` to reproduce the app and adaptive/themed launcher assets.
 
-The 0.10.0 branding update is checked separately from the 0.9.0 feature validation. The previous feature pass ran 1,252 JVM tests (0 failures, 12 assumptions/skips) and native instrumentation in MuMu, including export pixel comparisons. A physical phone was not tested by the build author; release validation notes describe each build's scope.
+The 0.10.0 compatible build passed [GitHub Actions](https://github.com/Mushroom65/TrueMotion/actions/runs/41078996060): 1,252 JVM tests, 0 failures, 8 skips, plus source/native hash checks. The local APK was installed and its branding checked in MuMu. Native instrumentation with export pixel comparisons belongs to the 0.9.0 feature validation. A physical phone was not tested; see [release validation notes](docs/RELEASE_0_10_RU.md).
 
 ## Credits and licences
 
