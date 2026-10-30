@@ -24,7 +24,9 @@ jobs:
           distribution: temurin
           java-version: '21'
       - name: Install SDK packages
-        run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0'
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.0 build-tools;37.0.0'
       - name: Audit source publication
         run: |
           python3 tools/source_audit.py
