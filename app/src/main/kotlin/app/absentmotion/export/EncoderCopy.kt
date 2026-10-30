@@ -5,10 +5,11 @@ import android.view.Surface
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-internal class EncoderCopy(surface: Surface, turn: Boolean) : AutoCloseable {
-    private var handle = nativeOpen(surface, turn).also { check(it != 0L) { "encoder copy set-up failed" } }
+internal class EncoderCopy(surface: Surface, turn: Boolean = false, pixels: Boolean = false) : AutoCloseable {
+    private var handle = nativeOpen(surface, turn, pixels).also { check(it != 0L) { "encoder copy set-up failed" } }
 
     fun copy(buffer: HardwareBuffer, presentNs: Long): Boolean = nativeCopy(handle, buffer, presentNs)
+    fun pixels(bytes: ByteArray, width: Int, height: Int, presentNs: Long): Boolean = nativePixels(handle, bytes, width, height, presentNs)
 
     override fun close() {
         if (handle != 0L) nativeClose(handle)
@@ -16,7 +17,8 @@ internal class EncoderCopy(surface: Surface, turn: Boolean) : AutoCloseable {
     }
 
     private companion object {
-        @JvmStatic external fun nativeOpen(surface: Surface, turn: Boolean): Long
+        @JvmStatic external fun nativeOpen(surface: Surface, turn: Boolean, pixels: Boolean): Long
+        @JvmStatic external fun nativePixels(handle: Long, pixels: ByteArray, width: Int, height: Int, presentNs: Long): Boolean
         @JvmStatic external fun nativeCopy(handle: Long, buffer: HardwareBuffer, presentNs: Long): Boolean
         @JvmStatic external fun nativeClose(handle: Long)
     }

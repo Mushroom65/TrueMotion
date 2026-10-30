@@ -1,0 +1,29 @@
+{
+ "id": "true-plugin-builtin-distort-diffuse",
+ "runtimeId": "plugin.builtin.distort.diffuse",
+ "plugin": "builtin.distort",
+ "name": "True Diffuse",
+ "category": "true",
+ "description": "Independent True Motion implementation; not an AE binary port.",
+ "params": [
+  {
+   "id": "amount",
+   "label": "Diffusion radius",
+   "type": "float",
+   "default": 0.015,
+   "min": 0.0,
+   "max": 0.15,
+   "step": 0.01
+  },
+  {
+   "id": "seed",
+   "label": "Seed",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.0,
+   "max": 10000.0,
+   "step": 0.01
+  }
+ ],
+ "sksl": "uniform shader image;\nuniform float2 size;\nuniform float2 layer;\nuniform float3x3 toLayer;\nuniform float3x3 fromLayer;\nuniform float time;\nuniform float amount;\nuniform float seed;\nfloat4 readInput(float2 uv){if(uv.x<0.0||uv.y<0.0||uv.x>1.0||uv.y>1.0)return float4(0.0);return float4(image.eval(uv * size));}\nfloat hash(float2 p){return fract(sin(dot(p,float2(127.1,311.7))+seed)*43758.5453);}half4 main(float2 coord){float2 uv=(coord / size);float a=hash(floor(uv*800.0))*6.2831853;float2 d=float2(cos(a),sin(a))*amount;return (readInput(uv+d)+readInput(uv-d)+readInput(uv)) / 3.0;}"
+}

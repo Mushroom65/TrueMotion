@@ -1,0 +1,7 @@
+{
+  "source": "True Motion work/modassets/true_grade.xml",
+  "sha256": "b0dcafe94f7b916fb2fc3dbb185de57b1f3a0925bcb99c79b4b7f7b544519388",
+  "output": "effects/true-grade.json",
+  "adapter": "tools/port_true_grade.py",
+  "params": 53
+}

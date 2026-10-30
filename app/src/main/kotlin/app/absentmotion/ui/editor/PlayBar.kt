@@ -40,6 +40,7 @@ fun PlayBar(state: EditorState, modifier: Modifier = Modifier) {
         ) { state.playing = !state.playing }
         BarButton(ChromeIcons.SkipForward, stringResource(R.string.play_skip_forward), cell) { state.skipForward() }
         BarButton(ChromeIcons.CopyPaste, stringResource(R.string.play_copy_paste), cell) { menuOpen = true }
+        RenderPreviewButton(state, cell)
         Box(cell) {
             BarButton(
                 if (state.previewPanelOpen) ChromeIcons.PreviewModeOpen else ChromeIcons.PreviewMode, stringResource(R.string.play_preview_mode), Modifier.fillMaxSize(),

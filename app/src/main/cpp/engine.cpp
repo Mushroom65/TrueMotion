@@ -115,7 +115,15 @@ public:
     Target* attach(ANativeWindow* window, bool forEncoder) override;
     void detach(Target* target) override;
     std::string timing(Target* target) override;
-    bool setScene(const std::string& xml, std::string* error) override { return ParseScene(xml, &fScene, error); }
+    bool setScene(const std::string& xml, std::string* error) override {
+        if (!ParseScene(xml, &fScene, error)) return false;
+        bindAudioSignals(fScene.layers);
+        return true;
+    }
+    void setAudioSignals(const std::map<std::string, std::shared_ptr<const AudioSignal>>& signals) override {
+        fAudioSignals = signals;
+        bindAudioSignals(fScene.layers);
+    }
     std::string loadEffect(const std::string& xml) override { return fEffects.load(xml); }
     int maxPictureSize() const override { return fGraphite ? fGraphite->maxTextureSize() : fGanesh->maxTextureSize(); }
     bool setPicture(const std::string& uri, int64_t layerId, AHardwareBuffer* buffer,
@@ -137,6 +145,8 @@ public:
     bool layerQuad(int64_t layerId, double timeMs, float xy[8]) override;
     bool layerMatrix(int64_t layerId, double timeMs, float m[18]) override;
     bool layerBounds(int64_t layerId, double timeMs, float ltrb[4]) override;
+    bool localBounds(int64_t layerId, double timeMs, float ltrb[4]) override;
+    bool reanchor(int64_t layerId, double timeMs, float x, float y, float location[3]) override;
     int64_t hitTest(float x, float y, double timeMs) override;
     bool still(double timeMs, int width, int height, std::vector<uint8_t>* rgba) override;
     bool shapeIcon(const std::string& xml, int size, uint32_t color, std::vector<uint8_t>* rgba) override;
@@ -227,6 +237,16 @@ private:
 
     std::vector<std::unique_ptr<Target>> fTargets;
     Scene fScene;
+    std::map<std::string, std::shared_ptr<const AudioSignal>> fAudioSignals;
+    void bindAudioSignals(std::vector<Layer>& layers) {
+        for (Layer& layer : layers) {
+            for (LayerEffect& effect : layer.effects) {
+                auto found = fAudioSignals.find(effect.audioSignalKey);
+                effect.audioSignal = found != fAudioSignals.end() ? found->second : nullptr;
+            }
+            bindAudioSignals(layer.children);
+        }
+    }
     std::map<std::pair<std::string, int64_t>, sk_sp<SkImage>> fPictures;
     std::map<std::pair<std::string, int64_t>, sk_sp<SkImage>> fMasks;
     struct VideoFrames {
@@ -1146,6 +1166,58 @@ bool EngineImpl::layerBounds(int64_t layerId, double timeMs, float ltrb[4]) {
     ltrb[0] = bounds.left(); ltrb[1] = bounds.top();
     ltrb[2] = bounds.right(); ltrb[3] = bounds.bottom();
     return !bounds.isEmpty();
+}
+
+bool EngineImpl::localBounds(int64_t layerId, double timeMs, float bounds[4]) {
+    const Layer* layer = fScene.layer(layerId);
+    if (!layer) return false;
+    const SkRect rect = SelectionBounds(*layer, timeMs, SkMatrix::I());
+    bounds[0] = rect.left(); bounds[1] = rect.top(); bounds[2] = rect.right(); bounds[3] = rect.bottom();
+    return !rect.isEmpty();
+}
+
+bool EngineImpl::reanchor(int64_t layerId, double timeMs, float x, float y, float location[3]) {
+    if (!std::isfinite(x) || !std::isfinite(y)) return false;
+    const Layer* original = fScene.layer(layerId);
+    if (!original) return false;
+    auto siblings = fScene.layers;
+    auto found = std::find_if(siblings.begin(), siblings.end(), [&](const Layer& l) { return l.id == layerId; });
+    Layer& layer = *found;
+    const float t = layer.localTime(timeMs);
+    const float raw[3] = {layer.location.get(0, t, 0), layer.location.get(1, t, 0), layer.location.get(2, t, 0)};
+    auto origin = [&]() {
+        const Placement p = EffectivePlacement(siblings, layer, timeMs);
+        SkMatrix local = SkMatrix::I();
+        local.preSkew(tanf(layer.skew.get(0, t, 0)), tanf(layer.skew.get(1, t, 0)));
+        local.preScale(p.scale.fX, p.scale.fY).preTranslate(-p.pivot.fX, -p.pivot.fY);
+        const SkPoint xy = local.mapPoint({0, 0});
+        const SkV4 turned = SkM44::Rotate({0, 0, 1}, p.rotation * 3.14159265f / 180) * p.tilt * SkV4{xy.fX, xy.fY, 0, 0};
+        return SkV4{p.location.fX + turned.x, p.location.fY + turned.y, p.z + turned.z, 1};
+    };
+    const SkV4 before = origin();
+    layer.pivot = Anim{{x, y}};
+    const SkV4 base = origin();
+    const SkV4 difference{before.x - base.x, before.y - base.y, before.z - base.z, 0};
+    if (std::abs(difference.x) + std::abs(difference.y) + std::abs(difference.z) < 1e-5f) {
+        std::copy(raw, raw + 3, location); return true;
+    }
+    SkV4 columns[3];
+    for (int axis = 0; axis < 3; axis++) {
+        layer.location = Anim{{raw[0], raw[1], raw[2]}};
+        layer.location.value[axis] += 1;
+        const SkV4 shifted = origin();
+        columns[axis] = {shifted.x - base.x, shifted.y - base.y, shifted.z - base.z, 0};
+    }
+    SkM44 jacobian(columns[0].x, columns[1].x, columns[2].x, 0,
+                   columns[0].y, columns[1].y, columns[2].y, 0,
+                   columns[0].z, columns[1].z, columns[2].z, 0, 0, 0, 0, 1), inverse;
+    if (!jacobian.invert(&inverse)) return false;
+    const SkV4 delta = inverse * difference;
+    location[0] = raw[0] + delta.x; location[1] = raw[1] + delta.y; location[2] = raw[2] + delta.z;
+    if (!std::isfinite(location[0]) || !std::isfinite(location[1]) || !std::isfinite(location[2])) return false;
+    layer.location = Anim{{location[0], location[1], location[2]}};
+    const SkV4 after = origin();
+    return std::abs(after.x - before.x) + std::abs(after.y - before.y) + std::abs(after.z - before.z) < .05f;
 }
 
 int64_t EngineImpl::hitTest(float x, float y, double timeMs) {

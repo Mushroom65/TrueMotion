@@ -146,7 +146,7 @@ class MainActivity : ComponentActivity() {
         templates = TemplateStore(this)
         recovery = Recovery(File(filesDir, "recovery"))
         CrashLogs.install(this)
-        RecoveryHandler.install(recovery) { editor?.let { it.projectId to it.scene.toXml() } }
+        RecoveryHandler.install(recovery) { editor?.let { it.projectId to it.document.toXml() } }
         val reopen = savedInstanceState?.getString(OPEN_PROJECT)
         lifecycleScope.launch {
             val (offer, crash) = withContext(DiskThread.dispatcher) { runCatching { recovery.pending(store) }.getOrNull() to runCatching { CrashLogs.collect(applicationContext) }.getOrNull() }
@@ -154,6 +154,7 @@ class MainActivity : ComponentActivity() {
             recovered = offer
             if (reopen != null && offer?.id != reopen && editor == null && !opening) openJob = lifecycleScope.launch {
                 val state = openNow(reopen) ?: return@launch
+                state.restoreGroupPath(savedInstanceState.getLongArray(OPEN_GROUPS)?.toList().orEmpty())
                 state.frame = savedInstanceState.getInt(OPEN_FRAME).coerceIn(0, state.scene.lastFrame)
                 if (savedInstanceState.containsKey(OPEN_LAYER)) state.selectedId = savedInstanceState.getLong(OPEN_LAYER)
                 if (state.selected == null) state.selectedId = null
@@ -172,7 +173,7 @@ class MainActivity : ComponentActivity() {
             runCatching { app.absentmotion.library.sweepStaleTemps(filesDir, cacheDir) }
         }
         val openElement: (String) -> Unit = { id ->
-            editor?.let { it.playing = false; it.endGesture(); it.saver.snapshot(it.scene.toXml()) }
+            editor?.let { it.playing = false; it.endGesture(); it.saver.snapshot(it.document.toXml()) }
             MultiSelect.clear()
             open(id)
         }
@@ -271,7 +272,7 @@ class MainActivity : ComponentActivity() {
                     dismissButton = { TextButton({ saveFailed = false; closeAnyway = true; closeEditor() }) { Text(stringResource(R.string.home_save_failed_leave), color = Am.Accent) } },
                     containerColor = Am.Field, textContentColor = Am.OnDark,
                 )
-                if (open?.historyOpen == true) VersionHistory(store, open.projectId, open.scene.title, engine, onRestore = { restoreVersion(open.projectId, it) }) { open.historyOpen = false }
+                if (open?.historyOpen == true) VersionHistory(store, open.projectId, open.document.title, engine, onRestore = { restoreVersion(open.projectId, it) }) { open.historyOpen = false }
                 historyFor?.let { (id, title, damaged) ->
                     VersionHistory(store, id, title, engine, onRestore = { restoreVersion(id, it) }, onDelete = if (damaged) { { deleteDamaged(id) } } else null) { historyFor = null }
                 }
@@ -555,7 +556,7 @@ class MainActivity : ComponentActivity() {
         closing.playing = false
         app.absentmotion.editor.PreviewCache.clear()
         closing.endGesture()
-        val scene = closing.scene
+        val scene = closing.document
         lifecycleScope.launch {
             withContext(Dispatchers.IO) { runCatching { closing.saver.flush().get() } }
             if (closing.saver.failing && !closeAnyway) {
@@ -567,7 +568,7 @@ class MainActivity : ComponentActivity() {
             closing.saver.snapshot(scene.toXml())
             engine.audio?.release()
             try {
-                saveThumbnail(scene, closing.timeMs, closing.projectId)
+                saveThumbnail(scene, if (closing.editingGroup) 0 else closing.timeMs, closing.projectId)
             } finally {
                 MultiSelect.clear()
                 editor = null
@@ -603,6 +604,7 @@ class MainActivity : ComponentActivity() {
         editor?.let { state ->
             outState.putString(OPEN_PROJECT, state.projectId)
             outState.putInt(OPEN_FRAME, state.frame)
+            outState.putLongArray(OPEN_GROUPS, state.groupPath.toLongArray())
             state.selectedId?.let { outState.putLong(OPEN_LAYER, it) }
         }
     }
@@ -643,6 +645,7 @@ class MainActivity : ComponentActivity() {
     private companion object {
         const val OPEN_PROJECT = "openProject"
         const val OPEN_FRAME = "openFrame"
+        const val OPEN_GROUPS = "openGroups"
         const val OPEN_LAYER = "openLayer"
         const val UI_FONT_LIMIT = 2f
         const val EDITOR_FONT_LIMIT = 1.3f

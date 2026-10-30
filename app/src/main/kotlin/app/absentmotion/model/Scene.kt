@@ -156,7 +156,7 @@ value class Scene(val node: XmlNode) {
     companion object {
         val LAYER_TAGS = setOf("shape", "text", "drawing", "embedScene", "camera", "audio", "nullobj", "model")
 
-        fun parse(xml: String) = Scene(XmlNode.parse(xml))
+        fun parse(xml: String) = Scene(XmlNode.parse(xml)).withLegacyMotionPaths()
 
         fun create(title: String, width: Int, height: Int, fps: Int, bgColor: Int) = Scene(
             XmlNode(

@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf8'?>
+<resources>
+  <string name="true_studio">True Motion 工作室</string>
+  <string name="true_close">关闭</string>
+  <string name="true_animation">动画</string>
+  <string name="true_layers">图层</string>
+  <string name="true_color">颜色</string>
+  <string name="true_plugins">插件</string>
+  <string name="true_select_layer">请在时间轴中选择图层</string>
+  <string name="true_position">位置</string>
+  <string name="true_scale">缩放</string>
+  <string name="true_rotation">旋转</string>
+  <string name="true_opacity">不透明度</string>
+  <string name="true_expression">表达式</string>
+  <string name="true_expression_help">支持 time、value、wiggle、loopIn、loopOut、sin、cos 和向量。结果烘焙为可编辑关键帧，使用我们的受限表达式语言。</string>
+  <string name="true_bake_expression">将表达式烘焙为关键帧</string>
+  <string name="true_expressions">表达式</string>
+  <string name="true_reverse_keys">反转关键帧动画</string>
+  <string name="true_copy_transform">复制变换动画</string>
+  <string name="true_paste_transform">粘贴动画并适配图层时长</string>
+  <string name="true_paste_relative">相对当前位置粘贴动画</string>
+  <string name="true_bop">根据时间轴标记生成弹动</string>
+  <string name="true_bop_help">请先检测音频节拍或手动添加标记。Bop 生成 20% 缩放脉冲，并在 180 毫秒内衰减。</string>
+  <string name="true_grid">网格</string>
+  <string name="true_ring">环形</string>
+  <string name="true_count">包含原图层的总数量</string>
+  <string name="true_radius">半径（像素）</string>
+  <string name="true_columns">列数</string>
+  <string name="true_spacing_x">X 间距（像素）</string>
+  <string name="true_spacing_y">Y 间距（像素）</string>
+  <string name="true_stagger">时间偏移或间隔（帧）</string>
+  <string name="true_create_array">创建可编辑副本</string>
+  <string name="true_sequence">顺序排列选中图层</string>
+  <string name="true_grade_help">53 个可动画参数：曝光、对比度、饱和度、色温、Lift/Gamma/Gain、RGB 曲线、自然饱和度、阴影、高光以及六组 HSL 范围。仅需一次着色器渲染。</string>
+  <string name="true_grade">打开 True Color Grade</string>
+  <string name="true_plugins_help">内置插件默认关闭。命令可通过一次撤销还原。只能添加已支持的效果，命令出错不会改变项目。</string>
+  <string name="true_operation_error">操作失败：%1$s</string>
+  <string name="true_credits">True Motion Next 基于 AbsentMotion（Apache 2.0）。之前的模组基于 Toji Motion / Alight Motion。t.me/TrueMoti0n</string>
+  <string name="true_import_integrity">True Motion 项目包包含缺失、重复或损坏的文件。</string>
+  <string name="true_vector_new">新建矢量动画</string>
+  <string name="true_vector_edit">编辑矢量动画</string>
+</resources>

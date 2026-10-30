@@ -31,7 +31,8 @@ enum class AppLanguage(val tag: String, val nativeName: String) {
     Persian("fa", "فارسی"),
     Turkish("tr", "Türkçe"),
     Russian("ru", "Русский"),
-    Bengali("bn", "বাংলা");
+    Bengali("bn", "বাংলা"),
+    Chinese("zh-CN", "简体中文");
 
     val language: String get() = tag.substringBefore('-')
 

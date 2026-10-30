@@ -1,0 +1,589 @@
+{
+  "id": "true-particles",
+  "runtimeId": "lab.true.particles",
+  "name": "Particles",
+  "category": "true",
+  "native": true,
+  "description": "Native deterministic particle physics. Four emitters, lifetime controls, XYZ forces, drag, turbulence, attraction and a layer texture. Opens a dedicated panel.",
+  "params": [
+    {
+      "id": "amount",
+      "label": "Particle count",
+      "type": "float",
+      "default": 128,
+      "min": 1.0,
+      "max": 4096,
+      "step": 1.0
+    },
+    {
+      "id": "life",
+      "label": "Lifetime (s)",
+      "type": "float",
+      "default": 3.0,
+      "min": 0.05,
+      "max": 60,
+      "step": 0.1
+    },
+    {
+      "id": "lifeRandom",
+      "label": "Lifetime randomness",
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 0.9,
+      "step": 0.01
+    },
+    {
+      "id": "timeScale",
+      "label": "Time speed",
+      "type": "float",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "timeOffset",
+      "label": "Time offset (s)",
+      "type": "float",
+      "default": 1,
+      "min": -30.0,
+      "max": 300.0,
+      "step": 0.01
+    },
+    {
+      "id": "seed",
+      "label": "Seed",
+      "type": "text",
+      "default": "1"
+    },
+    {
+      "id": "emitter",
+      "label": "Emitter shape",
+      "type": "choice",
+      "default": 3,
+      "options": [
+        "Point",
+        "Sphere",
+        "Box",
+        "Circle"
+      ]
+    },
+    {
+      "id": "originX",
+      "label": "Position X",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "originY",
+      "label": "Position Y",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "originZ",
+      "label": "Position Z",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "spawnX",
+      "label": "Spawn radius X",
+      "type": "float",
+      "default": 0.6,
+      "min": 0.0,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "spawnY",
+      "label": "Spawn radius Y",
+      "type": "float",
+      "default": 0.15,
+      "min": 0.0,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "spawnZ",
+      "label": "Spawn radius Z",
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "velocityX",
+      "label": "Velocity X",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "velocityY",
+      "label": "Velocity Y",
+      "type": "float",
+      "default": -0.35,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "velocityZ",
+      "label": "Velocity Z",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "spread",
+      "label": "Velocity spread",
+      "type": "float",
+      "default": 0.5,
+      "min": 0.0,
+      "max": 5.0,
+      "step": 0.01
+    },
+    {
+      "id": "directionSpread",
+      "label": "Direction cone (°)",
+      "type": "float",
+      "default": 180.0,
+      "min": 0.0,
+      "max": 180.0,
+      "step": 1.0
+    },
+    {
+      "id": "velocityRandom",
+      "label": "Velocity randomness",
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.01
+    },
+    {
+      "id": "speedStart",
+      "label": "Speed at birth ×",
+      "type": "float",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "speedEnd",
+      "label": "Speed at death ×",
+      "type": "float",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "gravityX",
+      "label": "Gravity X",
+      "type": "float",
+      "default": 0.0,
+      "min": -5.0,
+      "max": 5.0,
+      "step": 0.01
+    },
+    {
+      "id": "gravity",
+      "label": "Gravity Y",
+      "type": "float",
+      "default": 0.18,
+      "min": -5.0,
+      "max": 5.0,
+      "step": 0.01
+    },
+    {
+      "id": "gravityZ",
+      "label": "Gravity Z",
+      "type": "float",
+      "default": 0.0,
+      "min": -5.0,
+      "max": 5.0,
+      "step": 0.01
+    },
+    {
+      "id": "windX",
+      "label": "Wind acceleration X",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "windY",
+      "label": "Wind acceleration Y",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "windZ",
+      "label": "Wind acceleration Z",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "forceRandom",
+      "label": "Force randomness",
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.01
+    },
+    {
+      "id": "drag",
+      "label": "Drag",
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "turbulence",
+      "label": "Turbulence",
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 5.0,
+      "step": 0.01
+    },
+    {
+      "id": "noiseFrequency",
+      "label": "Noise frequency",
+      "type": "float",
+      "default": 1.0,
+      "min": 0.01,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "attractorX",
+      "label": "Attractor position X",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "attractorY",
+      "label": "Attractor position Y",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "attractorZ",
+      "label": "Attractor position Z",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "attractStrength",
+      "label": "Attract (+) / repel (−)",
+      "type": "float",
+      "default": 0.0,
+      "min": -10.0,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "attractRadius",
+      "label": "Attractor soft radius",
+      "type": "float",
+      "default": 0.25,
+      "min": 0.05,
+      "max": 5.0,
+      "step": 0.01
+    },
+    {
+      "id": "radius",
+      "label": "Particle radius",
+      "type": "float",
+      "default": 0.055,
+      "min": 0.002,
+      "max": 1.0,
+      "step": 0.001
+    },
+    {
+      "id": "sizeStart",
+      "label": "Size at birth ×",
+      "type": "float",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "sizeEnd",
+      "label": "Size at death ×",
+      "type": "float",
+      "default": 0,
+      "min": 0.0,
+      "max": 10.0,
+      "step": 0.01
+    },
+    {
+      "id": "lifeCurve",
+      "label": "Lifetime curve",
+      "type": "float",
+      "default": 1.0,
+      "min": 0.1,
+      "max": 5.0,
+      "step": 0.01
+    },
+    {
+      "id": "variation",
+      "label": "Size randomness",
+      "type": "float",
+      "default": 0.35,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.01
+    },
+    {
+      "id": "tint",
+      "label": "Tint",
+      "type": "color",
+      "default": "#ffffb85c"
+    },
+    {
+      "id": "colorStart",
+      "label": "Color at birth ×",
+      "type": "color",
+      "default": "#ffffffff"
+    },
+    {
+      "id": "colorEnd",
+      "label": "Color at death ×",
+      "type": "color",
+      "default": "#ffffffff"
+    },
+    {
+      "id": "colorRandom",
+      "label": "Color randomness",
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.01
+    },
+    {
+      "id": "opacityStart",
+      "label": "Opacity at birth",
+      "type": "float",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.01
+    },
+    {
+      "id": "opacityEnd",
+      "label": "Opacity at death",
+      "type": "float",
+      "default": 0,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.01
+    },
+    {
+      "id": "opacityRandom",
+      "label": "Opacity randomness",
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.01
+    },
+    {
+      "id": "softFade",
+      "label": "Fade in / out",
+      "type": "switch",
+      "default": true
+    },
+    {
+      "id": "rotation",
+      "label": "Rotation (°)",
+      "type": "float",
+      "default": 0.0,
+      "min": -3600.0,
+      "max": 3600.0,
+      "step": 1.0
+    },
+    {
+      "id": "rotationRandom",
+      "label": "Rotation randomness ±",
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 180.0,
+      "step": 1.0
+    },
+    {
+      "id": "rotationSpeed",
+      "label": "Rotation speed (°/s)",
+      "type": "float",
+      "default": 0.0,
+      "min": -3600.0,
+      "max": 3600.0,
+      "step": 1.0
+    },
+    {
+      "id": "spinRandom",
+      "label": "Spin randomness",
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.01
+    },
+    {
+      "id": "alignVelocity",
+      "label": "Align to velocity",
+      "type": "switch",
+      "default": false
+    },
+    {
+      "id": "useTexture",
+      "label": "Use texture",
+      "type": "switch",
+      "default": false
+    },
+    {
+      "id": "additive",
+      "label": "Additive blending",
+      "type": "switch",
+      "default": true
+    },
+    {
+      "id": "cameraX",
+      "label": "Emitter camera position X",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "cameraY",
+      "label": "Emitter camera position Y",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "cameraZ",
+      "label": "Emitter camera position Z",
+      "type": "float",
+      "default": -3.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "camRotationX",
+      "label": "Emitter camera rotation X",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "camRotationY",
+      "label": "Emitter camera rotation Y",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "camRotationZ",
+      "label": "Emitter camera rotation Z",
+      "type": "float",
+      "default": 0.0,
+      "min": -10000,
+      "max": 10000,
+      "step": 0.01
+    },
+    {
+      "id": "fov",
+      "label": "Field of view (°)",
+      "type": "float",
+      "default": 50.0,
+      "min": 10.0,
+      "max": 140.0,
+      "step": 1.0
+    },
+    {
+      "id": "worldScale",
+      "label": "World unit (px)",
+      "type": "float",
+      "default": 300,
+      "min": 1,
+      "max": 100000,
+      "step": 1
+    },
+    {
+      "id": "spriteAspect",
+      "label": "Texture aspect X/Y",
+      "type": "float",
+      "default": 1,
+      "min": 0.01,
+      "max": 100,
+      "step": 0.01
+    },
+    {
+      "id": "textureResolution",
+      "label": "Texture detail (px)",
+      "type": "float",
+      "default": 512,
+      "min": 64,
+      "max": 1024,
+      "step": 1
+    },
+    {
+      "id": "sourceLayer",
+      "label": "Texture source layer",
+      "type": "text",
+      "default": "0"
+    }
+  ]
+}

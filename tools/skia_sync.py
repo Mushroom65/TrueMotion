@@ -6,7 +6,7 @@ import sys
 skia = os.path.abspath(sys.argv[1])
 skip = {'angle2', 'dawn', 'swiftshader', 'emsdk', 'd3d12allocator', 'vello', 'perfetto', 'partition_alloc',
         'libjxl', 'highway', 'libavif', 'libgav1', 'imgui', 'unicodetools', 'icu4x', 'oboe', 'vulkan-deps',
-        'vulkan-tools', 'jinja2', 'markupsafe', 'egl-registry', 'opengl-registry', 'abseil-cpp'}
+        'vulkan-tools', 'jinja2', 'markupsafe', 'egl-registry', 'opengl-registry', 'abseil-cpp', 'webgpu-headers'}
 scope = {}
 with open(os.path.join(skia, "DEPS")) as f:
     exec('def Var(x): return vars[x]\n' + f.read(), scope)

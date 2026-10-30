@@ -164,6 +164,6 @@ class PreviewCacheTest {
         val mib = 1L shl 20
         assertEquals(0L, diskBudget(512 * mib))
         assertEquals(256 * mib, diskBudget(2048 * mib))
-        assertEquals(1024 * mib, diskBudget(100_000 * mib))
+        assertEquals(2048 * mib, diskBudget(100_000 * mib))
     }
 }

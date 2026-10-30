@@ -78,6 +78,7 @@ data class EffectDefinition(
     val status: String = "ok",
     val since: String? = null,
     val presets: List<EffectPreset> = emptyList(),
+    val pluginId: String? = null,
 ) {
     val available: Boolean get() = status == "ok"
     val thumbnail: String get() = "thumb/$key.webp"
@@ -128,9 +129,10 @@ data class EffectDefinition(
             val parsed = List(params.length()) { EffectParam.parse(params.getJSONObject(it)) }
             parsed.forEachIndexed { i, p -> require(p.after == null || parsed.take(i).any { it.id == p.after }) { "$key.${p.id}: after ${p.after} is not an earlier parameter" } }
             val presets = json.optJSONArray("presets") ?: JSONArray()
-            return EffectDefinition("absent.$key", key, json.optString("name", key), category, json.optString("description"),
+            return EffectDefinition(json.optString("runtimeId", "absent.$key"), key, json.optString("name", key), category, json.optString("description"),
                 parsed, if (native) null else sksl, native, since = json.optString("since").takeIf { it.isNotBlank() },
-                presets = List(presets.length()) { preset(key, parsed, presets.getJSONObject(it)) })
+                presets = List(presets.length()) { preset(key, parsed, presets.getJSONObject(it)) },
+                pluginId = json.optString("plugin").takeIf { it.isNotBlank() })
         }
 
         private fun preset(key: String, params: List<EffectParam>, json: JSONObject): EffectPreset {

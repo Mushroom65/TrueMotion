@@ -6,6 +6,7 @@ plugins {
 }
 
 val appVersion = Properties().apply { rootProject.file("version.properties").inputStream().use { load(it) } }
+val nativePrebuilt = providers.gradleProperty("trueMotionNativePrebuilt").orNull == "true"
 
 android {
     namespace = "app.absentmotion"
@@ -13,9 +14,10 @@ android {
     ndkVersion = "30.0.16248370"
 
     defaultConfig {
-        applicationId = "app.absentmotion"
+        applicationId = "app.truemotion"
         minSdk = 33
         targetSdk = 37
+        testInstrumentationRunner = "app.truemotion.port.PortInstrumentation"
         versionCode = appVersion.getProperty("versionCode").toInt()
         versionName = appVersion.getProperty("versionName")
         ndk { abiFilters += "arm64-v8a" }
@@ -25,7 +27,7 @@ android {
         }
     }
 
-    externalNativeBuild {
+    if (!nativePrebuilt) externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
             version = "3.31.6"
@@ -71,6 +73,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    packaging { jniLibs { useLegacyPackaging = true } }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -89,6 +93,7 @@ android {
     }
 
     sourceSets {
+        if (nativePrebuilt) named("main") { jniLibs.srcDir("native-prebuilt") }
         named("compat") {
             kotlin.directories += "src/foss/kotlin"
             assets.directories += "src/foss/assets"
@@ -102,6 +107,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 }
 
 dependencies {
+    implementation(files("libs/rhino.jar"))
     implementation(platform("androidx.compose:compose-bom:2026.09.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")

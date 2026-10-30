@@ -63,6 +63,18 @@ internal fun EffectsPanel(state: EditorState, modifier: Modifier) {
     val shownFor = remember { longArrayOf(layer.id) }
     LaunchedEffect(layer.id) { if (shownFor[0] != layer.id) { shownFor[0] = layer.id; state.effectIndex = -1 } }
     LaunchedEffect(instance == null) { if (instance == null && index >= 0) state.effectIndex = -1 }
+    if (instance?.get("id") == app.absentmotion.truemotion.ColorGrade.ID && definition?.available == true) {
+        ColorGradePanel(state, index, definition, modifier)
+        return
+    }
+    if (instance?.get("id") == app.absentmotion.truemotion.AudioReactive.ID && definition?.available == true) {
+        androidx.compose.runtime.key(index) { AudioMotionPanel(state, modifier) }
+        return
+    }
+    if (instance?.let(app.absentmotion.truemotion.Particles::isEffect) == true && definition?.available == true) {
+        androidx.compose.runtime.key(index) { ParticlePanel(state, index, definition, modifier) }
+        return
+    }
     var active by remember(layer.id, index, definition?.id) { mutableStateOf(definition?.params?.firstOrNull { it.kind != "color" && it.kind != "switch" && it.kind != "choice" && it.kind != "text" }) }
     var menu by remember { mutableStateOf(false) }
     var choosing by remember { mutableStateOf(false) }

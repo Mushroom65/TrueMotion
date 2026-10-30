@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="true_audio_effect_mode">Live effect (no keyframes)</string>
+  <string name="true_audio_effect_loading">Preparing audio dependency…</string>
+  <string name="true_audio_effect_applied">Live effect added. Original keyframes are unchanged.</string>
+  <string name="true_audio_effect_help">The selected audio layer drives this effect at render time. Audio edits are reanalysed automatically; preview and export use the same signal. Turn this option off to create editable keys instead.</string>
+  <string name="true_audio_effect_enabled">Effect enabled</string>
+  <string name="true_audio_effect_remove">Remove audio effect</string>
+  <string name="true_audio_buffer_limit">Audio analysis is too large. Shorten the source or reduce the number of different audio responses.</string>
+  <string name="true_pivot_title">Anchor point</string>
+  <string name="true_pivot_drag">Drag to move the anchor point</string>
+  <string name="true_pivot_keep">Keep object in place</string>
+  <string name="true_pivot_cannot_keep">This transform cannot preserve the object position. Turn off “Keep object in place” to edit the anchor directly.</string>
+  <string name="true_pivot_center">Center anchor</string>
+  <string name="true_pivot_reset">Reset anchor</string>
+</resources>

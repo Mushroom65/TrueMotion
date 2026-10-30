@@ -50,6 +50,7 @@ import app.absentmotion.editor.pasteEffectsOnChosen
 import app.absentmotion.editor.MultiSelect
 import app.absentmotion.editor.StylePart
 import app.absentmotion.editor.addCamera
+import app.absentmotion.editor.addParticles
 import app.absentmotion.editor.addEmptyGroup
 import app.absentmotion.editor.addModel
 import app.absentmotion.editor.addNull
@@ -140,6 +141,7 @@ private fun ObjectTiles(state: EditorState, reading: Boolean, pick: () -> Unit, 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ObjectTile(stringResource(R.string.structure_import_svg), ChromeIcons.ImportSvg, Modifier.size(70.dp, 80.dp), onClick = importSvg)
             ObjectTile(stringResource(R.string.structure_3d_model), ChromeIcons.Model3d, Modifier.size(70.dp, 80.dp), enabled = !reading, onClick = importModel)
+            ObjectTile(stringResource(R.string.true_particles_title), PanelIcons.Particles, Modifier.size(70.dp, 80.dp)) { state.addParticles() }
         }
     }
 }
@@ -281,6 +283,7 @@ internal fun MultiTopBar(state: EditorState, modifier: Modifier) {
             val text = pluralStringResource(R.plurals.structure_layers_selected, ids.size, ids.size.toString())
             Text(text, Modifier.weight(1f), color = tint, maxLines = 1, autoSize = TextAutoSize.StepBased(10.sp, 14.sp))
             val cell = Modifier.width(40.dp).fillMaxHeight()
+            SelectionButton(ChromeIcons.Studio, stringResource(R.string.true_studio), cell, tint) { state.trueStudioOpen = true }
             SelectionButton(SelectionIcons.Group, stringResource(R.string.structure_group), cell, tint, ids.isNotEmpty()) { state.groupLayers(ids) }
             SelectionButton(SelectionIcons.Mask, stringResource(R.string.structure_group_mask), cell, tint, ids.size > 1) { state.groupLayers(ids, "mask") }
             SelectionButton(SelectionIcons.Exclude, stringResource(R.string.structure_group_exclude), cell, tint, ids.size > 1) { state.groupLayers(ids, "exclude") }

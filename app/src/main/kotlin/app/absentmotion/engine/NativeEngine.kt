@@ -22,6 +22,22 @@ class NativeEngine(backend: Backend) : AutoCloseable {
 
     fun setScene(xml: String) {
         nativeSetScene(handle, xml.toByteArray())?.let { throw IllegalArgumentException(it) }
+        sceneSetCount++
+    }
+    internal var sceneSetCount = 0L
+        private set
+    internal var audioUploadCount = 0L
+        private set
+
+    private var audioSignalKeys = emptyList<String>()
+    internal fun setAudioSignals(signals: List<app.absentmotion.truemotion.AudioReactive.Signal>) {
+        val keys = signals.map { it.key }
+        if (keys == audioSignalKeys) return
+        nativeSetAudioSignals(handle, keys.toTypedArray(), signals.map { it.response.startMs.toDouble() }.toDoubleArray(),
+            signals.map { it.response.stepMs }.toDoubleArray(), signals.map { it.response.levels }.toTypedArray(),
+            signals.map { it.response.silence }.toFloatArray(), signals.map { it.response.releaseMs }.toFloatArray())
+        audioSignalKeys = keys
+        audioUploadCount++
     }
 
     fun loadEffect(xml: String): String = nativeLoadEffect(handle, xml.toByteArray())
@@ -75,6 +91,8 @@ class NativeEngine(backend: Backend) : AutoCloseable {
     fun layerMatrix(layerId: Long, timeMs: Double): FloatArray? = nativeLayerMatrix(handle, layerId, timeMs)
 
     fun layerBounds(layerId: Long, timeMs: Double): FloatArray? = nativeLayerBounds(handle, layerId, timeMs)
+    internal fun localBounds(layerId: Long, timeMs: Double): FloatArray? = nativeLocalBounds(handle, layerId, timeMs)
+    internal fun reanchor(layerId: Long, timeMs: Double, x: Float, y: Float): FloatArray? = nativeReanchor(handle, layerId, timeMs, x, y)
 
     fun layerOutline(layerId: Long, timeMs: Double): String? = nativeLayerOutline(handle, layerId, timeMs)
 
@@ -111,6 +129,8 @@ class NativeEngine(backend: Backend) : AutoCloseable {
         @JvmStatic private external fun nativeDetach(engine: Long, target: Long)
         @JvmStatic private external fun nativeTiming(engine: Long, target: Long): String
         @JvmStatic private external fun nativeSetScene(engine: Long, xml: ByteArray): String?
+        @JvmStatic private external fun nativeSetAudioSignals(engine: Long, keys: Array<String>, starts: DoubleArray, steps: DoubleArray,
+            levels: Array<FloatArray>, silences: FloatArray, releases: FloatArray)
         @JvmStatic private external fun nativeLoadEffect(engine: Long, xml: ByteArray): String
         @JvmStatic private external fun nativeMaxPictureSize(engine: Long): Int
         @JvmStatic private external fun nativeSetPicture(engine: Long, uri: ByteArray, layerId: Long,
@@ -136,6 +156,8 @@ class NativeEngine(backend: Backend) : AutoCloseable {
         @JvmStatic private external fun nativeEase(easing: String, us: FloatArray): FloatArray
         @JvmStatic private external fun nativeFastCaptionCpu(): Boolean
         @JvmStatic private external fun nativeLayerBounds(engine: Long, layerId: Long, timeMs: Double): FloatArray?
+        @JvmStatic private external fun nativeLocalBounds(engine: Long, layerId: Long, timeMs: Double): FloatArray?
+        @JvmStatic private external fun nativeReanchor(engine: Long, layerId: Long, timeMs: Double, x: Float, y: Float): FloatArray?
         @JvmStatic private external fun nativeLayerQuad(engine: Long, layerId: Long, timeMs: Double): FloatArray?
         @JvmStatic private external fun nativeLayerMatrix(engine: Long, layerId: Long, timeMs: Double): FloatArray?
         @JvmStatic private external fun nativeLayerOutline(engine: Long, layerId: Long, timeMs: Double): String?

@@ -8,6 +8,7 @@
 #include "include/core/SkPathUtils.h"
 #include "include/core/SkRRect.h"
 #include "scene.h"
+#include "particles.h"
 #include "drawing.h"
 
 namespace am {
@@ -196,6 +197,7 @@ SkPath Arrow(SkPoint start, SkPoint end, float half, float headHalf, float headL
 }
 
 SkPath ShapePath(const Layer& layer, float t) {
+    if (HasParticles(layer)) return SkPath::Rect(ParticleBounds(layer, layer.startTime + (double)t * (layer.endTime - layer.startTime)));
     if (layer.text) return TextPath(layer, t);
     if (layer.kind == "embedScene") return SkPath::Rect(SkRect::MakeXYWH(-layer.innerWidth / 2.0f, -layer.innerHeight / 2.0f, (float)layer.innerWidth, (float)layer.innerHeight));
     if (layer.kind == "drawing") return DrawingBounds(layer);

@@ -1,0 +1,8 @@
+package app.truemotion.vector;
+import java.util.*;import java.io.*;import java.util.zip.*;import android.util.Base64;
+final class VectorMediaPortable {
+ static VectorDocument decode(String marker)throws Exception{GZIPInputStream in=new GZIPInputStream(new ByteArrayInputStream(Base64.decode(marker.substring(VectorAnimation.PREFIX.length()),Base64.DEFAULT)));ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] b=new byte[16384];int n;while((n=in.read(b))!=-1){WorkBudget.memory((out.size()+(long)n)*6);out.write(b,0,n);}in.close();return VectorDocument.read(out.toString("UTF-8"));}
+ static void collect(String marker,Set<String> uris){try{VectorDocument d=decode(marker);for(VectorDocument.Shape s:all(d))if(s.isMedia())uris.add(s.mediaUri);}catch(Exception e){throw new IllegalArgumentException("Cannot package vector media",e);}}
+ static String replace(String marker,String old,String value){try{VectorDocument d=decode(marker);boolean changed=false;for(VectorDocument.Shape s:all(d))if(s.mediaUri.equals(old)){s.mediaUri=value;changed=true;}return changed?VectorAnimation.marker(d):marker;}catch(Exception e){throw new IllegalArgumentException("Cannot remap vector media",e);}}
+ static List<VectorDocument.Shape> all(VectorDocument d){ArrayList<VectorDocument.Shape> out=new ArrayList<VectorDocument.Shape>();ArrayList<VectorDocument> docs=new ArrayList<VectorDocument>();docs.add(d);for(VectorSymbol symbol:d.symbols.values())docs.add(symbol.document);for(VectorDocument doc:docs)for(VectorDocument.Track t:doc.tracks)for(VectorDocument.Cel c:t.keys.values())out.addAll(c.shapes);return out;}
+}

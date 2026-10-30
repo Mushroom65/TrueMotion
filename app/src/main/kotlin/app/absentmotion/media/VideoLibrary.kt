@@ -97,7 +97,16 @@ class VideoLibrary(context: Context, private val engine: EngineThread) {
 
     @Volatile private var shown: Pair<Request, List<VideoSample>>? = null
 
-    private fun visible(request: Request) = shown?.takeIf { it.first === request }?.second ?: request.scene.videoSamples(request.timeMs, request.playing, request.warm).also { shown = request to it }
+    @Volatile private var dependencyScene: Pair<Any, Scene>? = null
+    private fun visible(request: Request): List<VideoSample> {
+        shown?.takeIf { it.first === request }?.let { return it.second }
+        // Decoder sessions can check different preview requests concurrently.
+        // Publish the input and its derived scene together, and use a local snapshot.
+        val cached = dependencyScene
+        val document = if (cached?.first === request.scene.node) cached.second
+            else app.absentmotion.truemotion.Particles.mediaScene(request.scene).also { dependencyScene = request.scene.node to it }
+        return document.videoSamplesDirect(request.timeMs, request.playing, request.warm).also { shown = request to it }
+    }
 
     private suspend fun reconcile(request: Request) {
         val wanted = visible(request).associateBy { it.layer.id }
@@ -442,6 +451,10 @@ internal data class VideoSample(val track: LayerTrack, val timeMs: Double) {
 private const val WARM_MS = 1000
 
 internal fun Scene.videoSamples(timeMs: Int, playing: Boolean, warm: Boolean): List<VideoSample> {
+    return app.absentmotion.truemotion.Particles.mediaScene(this).videoSamplesDirect(timeMs, playing, warm)
+}
+
+private fun Scene.videoSamplesDirect(timeMs: Int, playing: Boolean, warm: Boolean): List<VideoSample> {
     val tracks = layerTracks().filter { track -> track.layer.mediaFill?.let { it.video && !isMissing(it.uri) } == true }
     fun at(ms: Int, among: List<LayerTrack>) = among.mapNotNull { track -> track.timeAt(ms.toDouble(), true)?.let { VideoSample(track, it.ms) } }
     val now = at(timeMs, tracks)

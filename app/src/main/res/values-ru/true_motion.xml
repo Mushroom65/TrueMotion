@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf8'?>
+<resources>
+  <string name="true_studio">Студия True Motion</string>
+  <string name="true_close">Закрыть</string>
+  <string name="true_animation">Анимация</string>
+  <string name="true_layers">Слои</string>
+  <string name="true_color">Цвет</string>
+  <string name="true_plugins">Плагины</string>
+  <string name="true_select_layer">Выберите слой на таймлайне</string>
+  <string name="true_position">Позиция</string>
+  <string name="true_scale">Масштаб</string>
+  <string name="true_rotation">Поворот</string>
+  <string name="true_opacity">Непрозрачность</string>
+  <string name="true_expression">Выражение</string>
+  <string name="true_expression_help">time, value, wiggle, loopIn, loopOut, sin, cos, векторы. Результат — редактируемые ключи. Используется наш ограниченный язык выражений.</string>
+  <string name="true_bake_expression">Запечь выражение в ключи</string>
+  <string name="true_expressions">Выражения</string>
+  <string name="true_reverse_keys">Реверс ключевой анимации</string>
+  <string name="true_copy_transform">Копировать анимацию трансформации</string>
+  <string name="true_paste_transform">Вставить анимацию по длительности слоя</string>
+  <string name="true_paste_relative">Вставить анимацию относительно позиции</string>
+  <string name="true_bop">Bop по меткам таймлайна</string>
+  <string name="true_bop_help">Сначала обнаружьте биты на аудиослое или добавьте метки вручную. Bop создаёт импульс масштаба на 20 процентов со спадом 180 мс.</string>
+  <string name="true_grid">Сетка</string>
+  <string name="true_ring">Кольцо</string>
+  <string name="true_count">Всего копий вместе с исходным</string>
+  <string name="true_radius">Радиус, px</string>
+  <string name="true_columns">Столбцы</string>
+  <string name="true_spacing_x">Шаг X, px</string>
+  <string name="true_spacing_y">Шаг Y, px</string>
+  <string name="true_stagger">Сдвиг или интервал, кадры</string>
+  <string name="true_create_array">Создать редактируемые копии</string>
+  <string name="true_sequence">Расположить выбранные слои последовательно</string>
+  <string name="true_grade_help">53 анимируемых параметра: экспозиция, контраст, насыщенность, температура, Lift/Gamma/Gain, RGB-кривые, сочность, тени, света и шесть диапазонов HSL. Один проход шейдера.</string>
+  <string name="true_grade">Открыть True Color Grade</string>
+  <string name="true_plugins_help">Встроенные плагины изначально выключены. Команда отменяется одним шагом. Добавляются поддерживаемые эффекты; ошибка команды не меняет проект.</string>
+  <string name="true_operation_error">Не удалось выполнить: %1$s</string>
+  <string name="true_credits">True Motion Next основан на AbsentMotion (Apache 2.0). Наш предыдущий мод основан на Toji Motion / Alight Motion. t.me/TrueMoti0n</string>
+  <string name="true_import_integrity">Архив True Motion содержит отсутствующие, повторяющиеся или повреждённые файлы.</string>
+  <string name="true_vector_new">Новая векторная анимация</string>
+  <string name="true_vector_edit">Изменить векторную анимацию</string>
+</resources>

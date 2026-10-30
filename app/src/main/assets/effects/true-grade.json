@@ -1,0 +1,487 @@
+{
+ "id": "true-grade",
+ "runtimeId": "lab.true.grade",
+ "name": "True Color Grade",
+ "category": "true",
+ "description": "True Motion color grading: primary controls, Lift/Gamma/Gain, RGB curves and six HSL bands. One texture pass; animated parameters are supported.",
+ "params": [
+  {
+   "id": "exposure",
+   "label": "Exposure",
+   "type": "float",
+   "default": 0.0,
+   "min": -4.0,
+   "max": 4.0,
+   "step": 0.01
+  },
+  {
+   "id": "contrast",
+   "label": "Contrast",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.25,
+   "max": 2.5,
+   "step": 0.01
+  },
+  {
+   "id": "saturation",
+   "label": "Saturation",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.0,
+   "max": 2.0,
+   "step": 0.01
+  },
+  {
+   "id": "temperature",
+   "label": "Temperature",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "tint",
+   "label": "Tint",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "lift",
+   "label": "Lift brightness",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "liftR",
+   "label": "Lift R",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "liftG",
+   "label": "Lift G",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "liftB",
+   "label": "Lift B",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "gamma",
+   "label": "Gamma brightness",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "gammaR",
+   "label": "Gamma R",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "gammaG",
+   "label": "Gamma G",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "gammaB",
+   "label": "Gamma B",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "gain",
+   "label": "Gain brightness",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "gainR",
+   "label": "Gain R",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "gainG",
+   "label": "Gain G",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "gainB",
+   "label": "Gain B",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveY1",
+   "label": "Curve Y 1",
+   "type": "float",
+   "default": 0.25,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveY2",
+   "label": "Curve Y 2",
+   "type": "float",
+   "default": 0.5,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveY3",
+   "label": "Curve Y 3",
+   "type": "float",
+   "default": 0.75,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveR1",
+   "label": "Curve R 1",
+   "type": "float",
+   "default": 0.25,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveR2",
+   "label": "Curve R 2",
+   "type": "float",
+   "default": 0.5,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveR3",
+   "label": "Curve R 3",
+   "type": "float",
+   "default": 0.75,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveG1",
+   "label": "Curve G 1",
+   "type": "float",
+   "default": 0.25,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveG2",
+   "label": "Curve G 2",
+   "type": "float",
+   "default": 0.5,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveG3",
+   "label": "Curve G 3",
+   "type": "float",
+   "default": 0.75,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveB1",
+   "label": "Curve B 1",
+   "type": "float",
+   "default": 0.25,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveB2",
+   "label": "Curve B 2",
+   "type": "float",
+   "default": 0.5,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "curveB3",
+   "label": "Curve B 3",
+   "type": "float",
+   "default": 0.75,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "vibrance",
+   "label": "Vibrance",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "shadows",
+   "label": "Shadows",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "highlights",
+   "label": "Highlights",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "blackPoint",
+   "label": "Black point",
+   "type": "float",
+   "default": 0.0,
+   "min": -0.25,
+   "max": 0.25,
+   "step": 0.01
+  },
+  {
+   "id": "whitePoint",
+   "label": "White point",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.5,
+   "max": 1.5,
+   "step": 0.01
+  },
+  {
+   "id": "gradeMix",
+   "label": "Grade strength",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslRedH",
+   "label": "Range hue",
+   "type": "float",
+   "default": 0.0,
+   "min": -60.0,
+   "max": 60.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslRedS",
+   "label": "Range saturation",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslRedL",
+   "label": "Range lightness",
+   "type": "float",
+   "default": 0.0,
+   "min": -0.5,
+   "max": 0.5,
+   "step": 0.01
+  },
+  {
+   "id": "hslYellowH",
+   "label": "Range hue",
+   "type": "float",
+   "default": 0.0,
+   "min": -60.0,
+   "max": 60.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslYellowS",
+   "label": "Range saturation",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslYellowL",
+   "label": "Range lightness",
+   "type": "float",
+   "default": 0.0,
+   "min": -0.5,
+   "max": 0.5,
+   "step": 0.01
+  },
+  {
+   "id": "hslGreenH",
+   "label": "Range hue",
+   "type": "float",
+   "default": 0.0,
+   "min": -60.0,
+   "max": 60.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslGreenS",
+   "label": "Range saturation",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslGreenL",
+   "label": "Range lightness",
+   "type": "float",
+   "default": 0.0,
+   "min": -0.5,
+   "max": 0.5,
+   "step": 0.01
+  },
+  {
+   "id": "hslCyanH",
+   "label": "Range hue",
+   "type": "float",
+   "default": 0.0,
+   "min": -60.0,
+   "max": 60.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslCyanS",
+   "label": "Range saturation",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslCyanL",
+   "label": "Range lightness",
+   "type": "float",
+   "default": 0.0,
+   "min": -0.5,
+   "max": 0.5,
+   "step": 0.01
+  },
+  {
+   "id": "hslBlueH",
+   "label": "Range hue",
+   "type": "float",
+   "default": 0.0,
+   "min": -60.0,
+   "max": 60.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslBlueS",
+   "label": "Range saturation",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslBlueL",
+   "label": "Range lightness",
+   "type": "float",
+   "default": 0.0,
+   "min": -0.5,
+   "max": 0.5,
+   "step": 0.01
+  },
+  {
+   "id": "hslMagentaH",
+   "label": "Range hue",
+   "type": "float",
+   "default": 0.0,
+   "min": -60.0,
+   "max": 60.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslMagentaS",
+   "label": "Range saturation",
+   "type": "float",
+   "default": 0.0,
+   "min": -1.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "hslMagentaL",
+   "label": "Range lightness",
+   "type": "float",
+   "default": 0.0,
+   "min": -0.5,
+   "max": 0.5,
+   "step": 0.01
+  }
+ ],
+ "sksl": "uniform shader image;\nuniform float2 size;\nuniform float time;\nuniform float exposure;\nuniform float contrast;\nuniform float saturation;\nuniform float temperature;\nuniform float tint;\nuniform float lift;\nuniform float liftR;\nuniform float liftG;\nuniform float liftB;\nuniform float gamma;\nuniform float gammaR;\nuniform float gammaG;\nuniform float gammaB;\nuniform float gain;\nuniform float gainR;\nuniform float gainG;\nuniform float gainB;\nuniform float curveY1;\nuniform float curveY2;\nuniform float curveY3;\nuniform float curveR1;\nuniform float curveR2;\nuniform float curveR3;\nuniform float curveG1;\nuniform float curveG2;\nuniform float curveG3;\nuniform float curveB1;\nuniform float curveB2;\nuniform float curveB3;\nuniform float vibrance;\nuniform float shadows;\nuniform float highlights;\nuniform float blackPoint;\nuniform float whitePoint;\nuniform float gradeMix;\nuniform float hslRedH;\nuniform float hslRedS;\nuniform float hslRedL;\nuniform float hslYellowH;\nuniform float hslYellowS;\nuniform float hslYellowL;\nuniform float hslGreenH;\nuniform float hslGreenS;\nuniform float hslGreenL;\nuniform float hslCyanH;\nuniform float hslCyanS;\nuniform float hslCyanL;\nuniform float hslBlueH;\nuniform float hslBlueS;\nuniform float hslBlueL;\nuniform float hslMagentaH;\nuniform float hslMagentaS;\nuniform float hslMagentaL;\n\nfloat cv(float x,float a,float b,float c){\n x=clamp(x,0.0,1.0)*4.0;\n if(x<1.0)return mix(0.0,a,x);\n if(x<2.0)return mix(a,b,x-1.0);\n if(x<3.0)return mix(b,c,x-2.0);\n return mix(c,1.0,x-3.0);\n}\n\n// studioGrade98: all new controls share the existing single texture pass.\nfloat3 rgbHsl98(float3 c){\n float high=max(c.r,max(c.g,c.b)),low=min(c.r,min(c.g,c.b)),d=high-low;\n float l=(high+low)*0.5,h=0.0,s=0.0;\n if(d>0.00001){s=d/max(0.00001,1.0-abs(2.0*l-1.0));\n  if(high==c.r)h=mod((c.g-c.b)/d,6.0);else if(high==c.g)h=(c.b-c.r)/d+2.0;else h=(c.r-c.g)/d+4.0;\n  h=fract(h/6.0+1.0);\n }\n return float3(h,s,l);\n}\nfloat3 hslRgb98(float3 hsl){\n float3 hue=clamp(abs(mod(hsl.x*6.0+float3(0.0,4.0,2.0),6.0)-3.0)-1.0,0.0,1.0);\n return hsl.z+(hue-0.5)*(1.0-abs(2.0*hsl.z-1.0))*hsl.y;\n}\nfloat hueBand98(float hue,float center){float d=abs(hue-center);d=min(d,1.0-d);return 1.0-smoothstep(0.0,1.0/6.0,d);}\n\nhalf4 main(float2 coord){\n float4 src=float4(image.eval(coord));\n float3 rgb=src.a>0.00001?src.rgb/src.a:float3(0.0);\n rgb*=exp2(exposure);\n rgb*=exp2(float3(temperature*0.35-tint*0.12,tint*0.24,-temperature*0.35-tint*0.12));\n float3 lo=float3(lift*0.25)+float3(liftR,liftG,liftB)*0.25;\n float3 ga=exp2(float3(gamma)+float3(gammaR,gammaG,gammaB));\n float3 hi=exp2(float3(gain)+float3(gainR,gainG,gainB));\n rgb=max(float3(0.0),rgb+(float3(1.0)-rgb)*lo);\n rgb=pow(rgb,float3(1.0)/ga)*hi;\n rgb=(rgb-float3(0.5))*contrast+float3(0.5);\n float lum=dot(rgb,float3(0.2126,0.7152,0.0722));\n rgb=mix(float3(lum),rgb,saturation);\n rgb=float3(cv(rgb.r,curveY1,curveY2,curveY3),cv(rgb.g,curveY1,curveY2,curveY3),cv(rgb.b,curveY1,curveY2,curveY3));\n rgb=float3(cv(rgb.r,curveR1,curveR2,curveR3),cv(rgb.g,curveG1,curveG2,curveG3),cv(rgb.b,curveB1,curveB2,curveB3));\n\n if(abs(shadows)+abs(highlights)+abs(blackPoint)+abs(whitePoint-1.0)>0.000001){\n  float toneLum=clamp(dot(rgb,float3(0.2126,0.7152,0.0722)),0.0,1.0);\n  float shadowMask=1.0-smoothstep(0.12,0.62,toneLum),highlightMask=smoothstep(0.38,0.9,toneLum);\n  rgb*=exp2((shadows*shadowMask+highlights*highlightMask)*1.5);\n  rgb=(rgb-float3(blackPoint))/max(0.01,whitePoint-blackPoint);\n }\n if(abs(hslRedH) + abs(hslRedS) + abs(hslRedL) + abs(hslYellowH) + abs(hslYellowS) + abs(hslYellowL) + abs(hslGreenH) + abs(hslGreenS) + abs(hslGreenL) + abs(hslCyanH) + abs(hslCyanS) + abs(hslCyanL) + abs(hslBlueH) + abs(hslBlueS) + abs(hslBlueL) + abs(hslMagentaH) + abs(hslMagentaS) + abs(hslMagentaL)>0.000001){\n  float3 hsl=rgbHsl98(clamp(rgb,0.0,1.0)),delta=float3(0.0);\n  float chroma=smoothstep(0.01,0.08,hsl.y);\n  delta+=hueBand98(hsl.x,0.0/6.0)*float3(hslRedH,hslRedS,hslRedL);\n  delta+=hueBand98(hsl.x,1.0/6.0)*float3(hslYellowH,hslYellowS,hslYellowL);\n  delta+=hueBand98(hsl.x,2.0/6.0)*float3(hslGreenH,hslGreenS,hslGreenL);\n  delta+=hueBand98(hsl.x,3.0/6.0)*float3(hslCyanH,hslCyanS,hslCyanL);\n  delta+=hueBand98(hsl.x,4.0/6.0)*float3(hslBlueH,hslBlueS,hslBlueL);\n  delta+=hueBand98(hsl.x,5.0/6.0)*float3(hslMagentaH,hslMagentaS,hslMagentaL);\n  hsl.x=fract(hsl.x+delta.x*chroma/360.0+1.0);\n  hsl.y=clamp(hsl.y*(1.0+delta.y*chroma),0.0,1.0);\n  hsl.z=clamp(hsl.z+delta.z*chroma,0.0,1.0);\n  rgb=hslRgb98(hsl);\n }\n if(abs(vibrance)>0.000001){\n  float high=max(rgb.r,max(rgb.g,rgb.b)),low=min(rgb.r,min(rgb.g,rgb.b));\n  float sat=high>0.00001?(high-low)/high:0.0;\n  float factor=1.0+vibrance*(vibrance>0.0?1.0-sat:1.0);\n  float y=dot(rgb,float3(0.2126,0.7152,0.0722));rgb=mix(float3(y),rgb,factor);\n }\n return float4(mix(src.rgb,clamp(rgb,0.0,1.0)*src.a,gradeMix),src.a);\n\n}\n"
+}

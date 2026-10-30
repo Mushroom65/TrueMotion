@@ -30,6 +30,12 @@ const char* kFragment =
     "varying vec2 uv;\n"
     "void main() { gl_FragColor = vec4(texture2D(frame, uv).rgb, 1.0); }\n";
 
+const char* kPixelsFragment =
+    "precision mediump float;\n"
+    "uniform sampler2D frame;\n"
+    "varying vec2 uv;\n"
+    "void main() { gl_FragColor = vec4(texture2D(frame, uv).rgb, 1.0); }\n";
+
 struct Copier {
     EGLDisplay display = EGL_NO_DISPLAY;
     EGLContext context = EGL_NO_CONTEXT;
@@ -39,6 +45,8 @@ struct Copier {
     GLuint texture = 0;
     int width = 0;
     int height = 0;
+    bool pixels = false;
+    int pixelWidth = 0, pixelHeight = 0;
     bool turn = false;
     PFNEGLGETNATIVECLIENTBUFFERANDROIDPROC clientBuffer = nullptr;
     PFNEGLCREATEIMAGEKHRPROC createImage = nullptr;
@@ -108,7 +116,7 @@ bool setUp(Copier* c) {
     c->destroyImage = (PFNEGLDESTROYIMAGEKHRPROC)eglGetProcAddress("eglDestroyImageKHR");
     c->targetTexture = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
     c->presentationTime = (PFNEGLPRESENTATIONTIMEANDROIDPROC)eglGetProcAddress("eglPresentationTimeANDROID");
-    if (!c->clientBuffer || !c->createImage || !c->destroyImage || !c->targetTexture || !c->presentationTime) return false;
+    if (!c->presentationTime || (!c->pixels && (!c->clientBuffer || !c->createImage || !c->destroyImage || !c->targetTexture))) return false;
     const EGLint configAttributes[] = {EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_BLUE_SIZE, 8, EGL_ALPHA_SIZE, 8,
                                        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
                                        EGL_RECORDABLE_ANDROID, EGL_TRUE, EGL_NONE};
@@ -123,7 +131,7 @@ bool setUp(Copier* c) {
     c->width = ANativeWindow_getWidth(c->window);
     c->height = ANativeWindow_getHeight(c->window);
     GLuint vertex = compile(GL_VERTEX_SHADER, kVertex);
-    GLuint fragment = compile(GL_FRAGMENT_SHADER, kFragment);
+    GLuint fragment = compile(GL_FRAGMENT_SHADER, c->pixels ? kPixelsFragment : kFragment);
     if (!vertex || !fragment) return false;
     c->program = glCreateProgram();
     glAttachShader(c->program, vertex);
@@ -136,11 +144,12 @@ bool setUp(Copier* c) {
     glGetProgramiv(c->program, GL_LINK_STATUS, &linked);
     if (!linked) return false;
     glGenTextures(1, &c->texture);
-    glBindTexture(GL_TEXTURE_EXTERNAL_OES, c->texture);
-    glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    const GLenum target=c->pixels?GL_TEXTURE_2D:GL_TEXTURE_EXTERNAL_OES;
+    glBindTexture(target, c->texture);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     c->release();
     return true;
 }
@@ -172,12 +181,34 @@ bool copy(Copier* c, AHardwareBuffer* buffer, int64_t presentNs) {
     return ok;
 }
 
+bool copyPixels(Copier* c,const void* pixels,int width,int height,int64_t presentNs) {
+    if (!c || !c->pixels || !pixels || width<=0 || height<=0 || !c->current()) return false;
+    static const GLfloat quad[]={-1,-1,1,-1,-1,1,1,1};
+    glViewport(0,0,c->width,c->height);
+    glUseProgram(c->program); glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D,c->texture);
+    glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+    if(c->pixelWidth!=width || c->pixelHeight!=height) {
+        glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,width,height,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+        c->pixelWidth=width; c->pixelHeight=height;
+    } else glTexSubImage2D(GL_TEXTURE_2D,0,0,0,width,height,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+    glUniform1i(glGetUniformLocation(c->program,"frame"),0);
+    glUniform1f(glGetUniformLocation(c->program,"turn"),c->turn?1.0f:0.0f);
+    glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,0,quad); glEnableVertexAttribArray(0);
+    glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+    const bool drawn=glGetError()==GL_NO_ERROR;
+    c->presentationTime(c->display,c->surface,presentNs);
+    const bool swapped=eglSwapBuffers(c->display,c->surface)==EGL_TRUE;
+    glFinish(); c->release();
+    return drawn&&swapped;
+}
+
 }
 
 extern "C" {
 
-JNIEXPORT jlong JNICALL Java_app_absentmotion_export_EncoderCopy_nativeOpen(JNIEnv* env, jclass, jobject surface, jboolean turn) {
+JNIEXPORT jlong JNICALL Java_app_absentmotion_export_EncoderCopy_nativeOpen(JNIEnv* env, jclass, jobject surface, jboolean turn, jboolean pixels) {
     auto* c = new Copier();
+    c->pixels = pixels;
     c->turn = turn == JNI_TRUE;
     c->window = ANativeWindow_fromSurface(env, surface);
     if (!c->window || !setUp(c)) {
@@ -190,6 +221,15 @@ JNIEXPORT jlong JNICALL Java_app_absentmotion_export_EncoderCopy_nativeOpen(JNIE
 
 JNIEXPORT jboolean JNICALL Java_app_absentmotion_export_EncoderCopy_nativeCopy(JNIEnv* env, jclass, jlong handle, jobject buffer, jlong presentNs) {
     return copy(reinterpret_cast<Copier*>(handle), AHardwareBuffer_fromHardwareBuffer(env, buffer), presentNs);
+}
+
+JNIEXPORT jboolean JNICALL Java_app_absentmotion_export_EncoderCopy_nativePixels(JNIEnv* env,jclass,jlong handle,jbyteArray pixels,jint width,jint height,jlong presentNs) {
+    if(width<=0 || height<=0 || (int64_t)width*height*4!=env->GetArrayLength(pixels)) return false;
+    jbyte* bytes=env->GetByteArrayElements(pixels,nullptr);
+    if(!bytes) return false;
+    const bool ok=copyPixels(reinterpret_cast<Copier*>(handle),bytes,width,height,presentNs);
+    env->ReleaseByteArrayElements(pixels,bytes,JNI_ABORT);
+    return ok;
 }
 
 JNIEXPORT void JNICALL Java_app_absentmotion_export_EncoderCopy_nativeClose(JNIEnv*, jclass, jlong handle) {

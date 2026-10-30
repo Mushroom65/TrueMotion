@@ -1,0 +1,65 @@
+{
+ "id": "true-plugin-builtin-energy-beam",
+ "runtimeId": "plugin.builtin.energy.beam",
+ "plugin": "builtin.energy",
+ "name": "True Energy Beam",
+ "category": "true",
+ "description": "Independent True Motion implementation; not an AE binary port.",
+ "params": [
+  {
+   "id": "startX",
+   "label": "Start X",
+   "type": "float",
+   "default": 0.2,
+   "min": -1.0,
+   "max": 2.0,
+   "step": 0.01
+  },
+  {
+   "id": "startY",
+   "label": "Start Y",
+   "type": "float",
+   "default": 0.5,
+   "min": -1.0,
+   "max": 2.0,
+   "step": 0.01
+  },
+  {
+   "id": "endX",
+   "label": "End X",
+   "type": "float",
+   "default": 0.8,
+   "min": -1.0,
+   "max": 2.0,
+   "step": 0.01
+  },
+  {
+   "id": "endY",
+   "label": "End Y",
+   "type": "float",
+   "default": 0.5,
+   "min": -1.0,
+   "max": 2.0,
+   "step": 0.01
+  },
+  {
+   "id": "width",
+   "label": "Width",
+   "type": "float",
+   "default": 0.01,
+   "min": 0.001,
+   "max": 0.1,
+   "step": 0.01
+  },
+  {
+   "id": "energy",
+   "label": "Energy",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.0,
+   "max": 4.0,
+   "step": 0.01
+  }
+ ],
+ "sksl": "uniform shader image;\nuniform float2 size;\nuniform float2 layer;\nuniform float3x3 toLayer;\nuniform float3x3 fromLayer;\nuniform float time;\nuniform float startX;\nuniform float startY;\nuniform float endX;\nuniform float endY;\nuniform float width;\nuniform float energy;\nfloat4 readInput(float2 uv){if(uv.x<0.0||uv.y<0.0||uv.x>1.0||uv.y>1.0)return float4(0.0);return float4(image.eval(uv * size));}\nhalf4 main(float2 coord){float2 a=float2(startX,startY),b=float2(endX,endY),p=(coord / size);float2 v=b-a;float h=clamp(dot(p-a,v)/max(dot(v,v),.00001),0.0,1.0);float d=length(p-a-v*h);float core=exp(-d*d/max(width*width,.000001)),halo=exp(-d/max(width*5.0,.0001))*.4;float g=clamp((core+halo)*energy,0.0,1.0);float4 c=readInput(p);float3 glow=mix(float3(.1,.5,1.0),float3(1.0),core)*g;return float4(glow+c.rgb*(1.0-g),g+c.a*(1.0-g));}"
+}

@@ -21,7 +21,12 @@ fun copyLayers(
                 ids[record.partner]?.let { mapped -> result = result.with(slot.attr, record.copy(partner = mapped).toString()) }
             }
         }
-        return result.copy(children = node.children.map(::remap))
+        val children = node.children.map(::remap).map { child ->
+            if (node.name == "effect" && app.absentmotion.truemotion.Particles.isEffect(node) && child.name == "property" && child["name"] == "sourceLayer") {
+                ids[child["value"]?.toLongOrNull()]?.let { child.with("value", "$it") } ?: child
+            } else child
+        }
+        return result.copy(children = children)
     }
     val shift = if (startTime == null || layers.isEmpty()) 0 else startTime - layers.minOf { it.startTime }
     return layers.map { move(Layer(remap(it.node)), it.startTime + shift) }

@@ -19,6 +19,7 @@ data class PropRef(val kind: Kind, val name: String, val effectIndex: Int = -1) 
 
     companion object {
         val Location = PropRef(Kind.Transform, "location")
+        val Pivot = PropRef(Kind.Transform, "pivot")
         val Scale = PropRef(Kind.Transform, "scale")
         val Rotation = PropRef(Kind.Transform, "rotation")
         val Skew = PropRef(Kind.Transform, "skew")
@@ -90,7 +91,8 @@ fun XmlNode.valueAt(t: Float): String? {
     val a = keys[next - 1]
     val b = keys[next]
     val u = (t - a.t) / (b.t - a.t)
-    return blend(a.v, b.v, if (b.e.isNullOrEmpty()) u else NativeEngine.ease(b.e, u))
+    val eased = if (b.e.isNullOrEmpty()) u else NativeEngine.ease(b.e, u)
+    return pathValue(a, b, eased) ?: blend(a.v, b.v, eased)
 }
 
 fun XmlNode.withValueAt(t: Float, value: String, snap: ClosedFloatingPointRange<Float>): XmlNode {

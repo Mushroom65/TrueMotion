@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_group_edit">Редактировать группу</string>
+    <string name="true_group_back">Вернуться в родительскую композицию</string>
+    <string name="true_group_timing">Время группы</string>
+    <string name="true_group_continue">Продолжать</string>
+    <string name="true_group_linked_hint">При изменении создаётся локальная копия элемента. Исходный проект сохраняется.</string>
+    <string name="true_group_timing_hint">При удлинении группа по умолчанию удерживает последний кадр. Время внутренних ключей сохраняется. Можно выбрать повтор или растяжение анимации.</string>
+</resources>

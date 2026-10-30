@@ -15,3 +15,9 @@ NOTICE text to reproduce here.
 Not yet checked: the NOTICE files of the Android build's AndroidX and
 kotlinx.coroutines artifacts and of the Android NDK. Their NOTICE text, if any,
 is not reproduced here.
+
+True Motion Next source port, updated 2026-10-25. Based on AbsentMotion v4.0.0.
+True Motion editor and plugin sources adapted from the user-owned local mod.
+Earlier True Motion credits: Toji Motion / Alight Motion. https://t.me/TrueMoti0n
+Non-engine bootstrap native libraries are unchanged binaries from the matching official AbsentMotion compatible release.
+libamengine.so is rebuilt from the combined project sources. Hashes and build provenance are in docs/TRUE_MOTION_PROVENANCE.json.

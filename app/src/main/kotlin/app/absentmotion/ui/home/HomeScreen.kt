@@ -230,7 +230,7 @@ private fun TopBar(onMenu: () -> Unit, search: String?, templates: Boolean, onSe
         Box(Modifier.align(Alignment.CenterStart).size(50.dp).clickable(onClick = onMenu), contentAlignment = Alignment.Center) {
             Icon(HomeIcons.Menu, stringResource(R.string.settings), Modifier.size(24.dp), tint = Am.Navy)
         }
-        if (search == null) Text("AbsentMotion", Modifier.align(Alignment.Center), color = Am.Navy, fontSize = 22.sp, fontWeight = FontWeight.Medium)
+        if (search == null) TrueBrandTitle(Modifier.align(Alignment.Center))
         else HomeSearchField(search, templates, onSearch, Modifier.align(Alignment.Center).padding(horizontal = 56.dp).fillMaxWidth())
         SearchButton(search, onSearch, Modifier.align(Alignment.CenterEnd))
     }

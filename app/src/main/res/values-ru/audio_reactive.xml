@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="true_audio_effect_mode">Живой эффект (без ключей)</string>
+  <string name="true_audio_effect_loading">Подготовка звуковой зависимости…</string>
+  <string name="true_audio_effect_applied">Живой эффект добавлен. Исходные ключи не изменены.</string>
+  <string name="true_audio_effect_help">Выбранный аудиослой управляет эффектом при рендере. Изменения звука анализируются автоматически; предпросмотр и экспорт используют один сигнал. Отключи этот режим для создания редактируемых ключей.</string>
+  <string name="true_audio_effect_enabled">Эффект включён</string>
+  <string name="true_audio_effect_remove">Удалить реакцию на звук</string>
+  <string name="true_audio_buffer_limit">Анализ звука слишком большой. Сократи источник или уменьши число разных реакций на звук.</string>
+  <string name="true_pivot_title">Якорь</string>
+  <string name="true_pivot_drag">Потяни, чтобы переместить якорь</string>
+  <string name="true_pivot_keep">Сохранять положение объекта</string>
+  <string name="true_pivot_cannot_keep">При этой трансформации сохранить положение не удалось. Отключи сохранение положения для прямого изменения якоря.</string>
+  <string name="true_pivot_center">Якорь в центр</string>
+  <string name="true_pivot_reset">Сбросить якорь</string>
+</resources>

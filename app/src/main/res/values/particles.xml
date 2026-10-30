@@ -1,0 +1,18 @@
+<resources>
+    <string name="true_particles_title">Particles</string>
+    <string name="true_particles_emitter">Emitter</string>
+    <string name="true_particles_motion">Motion</string>
+    <string name="true_particles_forces">Forces</string>
+    <string name="true_particles_look">Appearance</string>
+    <string name="true_particles_camera">Camera</string>
+    <string name="true_particles_source">Texture: %1$s</string>
+    <string name="true_particles_dot">Circle / this layer’s media</string>
+    <string name="true_particles_source_missing">The texture source is missing. Choose another layer.</string>
+    <string name="true_particles_hint">Live native preview. Tap a value twice for numeric entry. The keyframe button animates the selected parameter.</string>
+    <string name="true_particles_camera_hint">This is the emitter’s own camera. The project camera transforms the resulting layer.</string>
+    <string name="true_particles_seed_hint">Seed is a whole number from 0 to 9223372036854775807; it does not create keys.</string>
+    <string name="true_particles_reset">Reset this section</string>
+    <string name="true_particles_enable">Enable particles</string>
+    <string name="true_particles_disable">Disable particles</string>
+    <string name="true_particles_source_hint">Use another layer’s current content, including its effects. Its placement is excluded. Circular dependencies are unavailable.</string>
+</resources>

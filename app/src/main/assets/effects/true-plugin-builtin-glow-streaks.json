@@ -1,0 +1,38 @@
+{
+ "id": "true-plugin-builtin-glow-streaks",
+ "runtimeId": "plugin.builtin.glow.streaks",
+ "plugin": "builtin.glow",
+ "name": "True Streaks",
+ "category": "true",
+ "description": "Independent True Motion implementation; not an AE binary port.",
+ "params": [
+  {
+   "id": "lengthPx",
+   "label": "Length",
+   "type": "float",
+   "default": 0.06,
+   "min": 0.0,
+   "max": 0.25,
+   "step": 0.01
+  },
+  {
+   "id": "angle",
+   "label": "Angle",
+   "type": "float",
+   "default": 0.0,
+   "min": -180.0,
+   "max": 180.0,
+   "step": 0.01
+  },
+  {
+   "id": "intensity",
+   "label": "Intensity",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.0,
+   "max": 4.0,
+   "step": 0.01
+  }
+ ],
+ "sksl": "uniform shader image;\nuniform float2 size;\nuniform float2 layer;\nuniform float3x3 toLayer;\nuniform float3x3 fromLayer;\nuniform float time;\nuniform float lengthPx;\nuniform float angle;\nuniform float intensity;\nfloat4 readInput(float2 uv){if(uv.x<0.0||uv.y<0.0||uv.x>1.0||uv.y>1.0)return float4(0.0);return float4(image.eval(uv * size));}\nhalf4 main(float2 coord){float4 c=readInput((coord / size)),b=float4(0.0);float2 d=float2(cos(angle*.0174532925),sin(angle*.0174532925))*lengthPx;for(int i=-8;i<=8;i++)b+=readInput((coord / size)+d*float(i)/8.0)/17.0;float a=clamp(c.a+b.a*intensity,0.0,1.0);return float4(min(c.rgb+b.rgb*intensity,float3(a)),a);}"
+}

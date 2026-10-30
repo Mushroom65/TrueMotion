@@ -1,0 +1,16 @@
+<resources>
+    <string name="true_path_title">Motion path</string>
+    <string name="true_path_fit">Fit</string>
+    <string name="true_path_need_keys">Add two position keys or create a starting path.</string>
+    <string name="true_path_create">Create path</string>
+    <string name="true_path_smooth">Smooth all</string>
+    <string name="true_path_smooth_key">Smooth key</string>
+    <string name="true_path_corner">Corner</string>
+    <string name="true_path_point">Point</string>
+    <string name="true_path_in">Incoming</string>
+    <string name="true_path_out">Outgoing</string>
+    <string name="true_path_enabled">Curves</string>
+    <string name="true_path_link">Link handles</string>
+    <string name="true_path_orient">Auto orient</string>
+    <string name="true_path_hint">Drag points or handles; use two fingers to pan and zoom. Coordinates are relative to the parent layer. Timing stays on the timeline.</string>
+</resources>

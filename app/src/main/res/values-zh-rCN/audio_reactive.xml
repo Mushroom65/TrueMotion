@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="true_audio_effect_mode">实时效果（无关键帧）</string>
+  <string name="true_audio_effect_loading">正在准备音频依赖…</string>
+  <string name="true_audio_effect_applied">已添加实时效果，原始关键帧保持不变。</string>
+  <string name="true_audio_effect_help">所选音频图层在渲染时驱动效果。音频变化会自动重新分析；预览与导出使用同一信号。关闭此模式可生成可编辑关键帧。</string>
+  <string name="true_audio_effect_enabled">启用效果</string>
+  <string name="true_audio_effect_remove">移除音频效果</string>
+  <string name="true_audio_buffer_limit">音频分析过大。请缩短源素材或减少不同音频响应的数量。</string>
+  <string name="true_pivot_title">锚点</string>
+  <string name="true_pivot_drag">拖动以移动锚点</string>
+  <string name="true_pivot_keep">保持对象位置</string>
+  <string name="true_pivot_cannot_keep">此变换无法保持对象位置。关闭保持位置后可直接编辑锚点。</string>
+  <string name="true_pivot_center">锚点居中</string>
+  <string name="true_pivot_reset">重置锚点</string>
+</resources>

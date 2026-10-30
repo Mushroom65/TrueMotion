@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf8'?>
+<resources>
+  <string name="true_studio">True Motion Studio</string>
+  <string name="true_close">Close</string>
+  <string name="true_animation">Animation</string>
+  <string name="true_layers">Layers</string>
+  <string name="true_color">Color</string>
+  <string name="true_plugins">Plugins</string>
+  <string name="true_select_layer">Select a layer in the timeline</string>
+  <string name="true_position">Position</string>
+  <string name="true_scale">Scale</string>
+  <string name="true_rotation">Rotation</string>
+  <string name="true_opacity">Opacity</string>
+  <string name="true_expression">Expression</string>
+  <string name="true_expression_help">time, value, wiggle, loopIn, loopOut, sin, cos, vectors. Results become editable keyframes. This is our bounded expression language.</string>
+  <string name="true_bake_expression">Bake expression to keys</string>
+  <string name="true_expressions">Expressions</string>
+  <string name="true_reverse_keys">Reverse keyframe animation</string>
+  <string name="true_copy_transform">Copy transform animation</string>
+  <string name="true_paste_transform">Paste animation, fit layer duration</string>
+  <string name="true_paste_relative">Paste animation relative to position</string>
+  <string name="true_bop">Bop from timeline markers</string>
+  <string name="true_bop_help">Detect beats on an audio layer first, or add markers manually. Bop adds a 20 percent scale pulse with a 180 ms decay.</string>
+  <string name="true_grid">Grid</string>
+  <string name="true_ring">Ring</string>
+  <string name="true_count">Total copies including source</string>
+  <string name="true_radius">Radius, px</string>
+  <string name="true_columns">Columns</string>
+  <string name="true_spacing_x">Spacing X, px</string>
+  <string name="true_spacing_y">Spacing Y, px</string>
+  <string name="true_stagger">Time offset or gap, frames</string>
+  <string name="true_create_array">Create editable copies</string>
+  <string name="true_sequence">Sequence selected layers</string>
+  <string name="true_grade_help">53 animated controls: exposure, contrast, saturation, temperature, Lift/Gamma/Gain, RGB curves, vibrance, shadows, highlights and six HSL ranges. All in one shader pass.</string>
+  <string name="true_grade">Open True Color Grade</string>
+  <string name="true_plugins_help">Bundled plugins start disabled. Commands are applied as one Undo step. Only supported effects can be added; an invalid command leaves the project unchanged.</string>
+  <string name="true_operation_error">Operation failed: %1$s</string>
+  <string name="true_credits">True Motion Next is based on AbsentMotion (Apache 2.0). Our earlier mod was based on Toji Motion / Alight Motion. t.me/TrueMoti0n</string>
+  <string name="true_import_integrity">The True Motion package contains missing, duplicated or corrupted files.</string>
+  <string name="true_vector_new">New vector animation</string>
+  <string name="true_vector_edit">Edit vector animation</string>
+</resources>

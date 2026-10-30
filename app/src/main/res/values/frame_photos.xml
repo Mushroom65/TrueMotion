@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_photo_title">Frame to photo layer</string>
+    <string name="true_photo_video_action">Video frame to photo</string>
+    <string name="true_photo_video">Video source</string>
+    <string name="true_photo_composition">Composition</string>
+    <string name="true_photo_source_hint">Capture the source frame with the clip’s trim and speed. Keep the current geometry and transform; effects and sound are omitted.</string>
+    <string name="true_photo_composition_hint">Capture the visible composition with effects and transparency. The photo is stored with this project, without a gallery export.</string>
+    <string name="true_photo_duration_label">Photo duration (seconds)</string>
+    <string name="true_photo_duration">Duration: %1$s s</string>
+    <string name="true_photo_create">Create photo layer</string>
+    <string name="true_photo_working">Capturing frame…</string>
+    <string name="true_photo_choose_video">Select a video layer and place the playhead inside it.</string>
+    <string name="true_photo_cannot_capture">Unable to capture this frame.</string>
+    <string name="true_photo_changed">The project changed during capture. Capture the frame again.</string>
+    <string name="true_photo_source_name">Frame photo</string>
+    <string name="true_photo_composition_name">Composition photo</string>
+    <string name="true_speed_number">Playback speed (0.001–100×)</string>
+</resources>

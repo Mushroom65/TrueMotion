@@ -72,7 +72,20 @@ static void DrawMotionPath(SkCanvas* canvas, const std::vector<Layer>& siblings,
     if (points.empty()) points.push_back(place(timeMs, {layer.location.get(0, t, 0), layer.location.get(1, t, 0)}));
     paint.setStyle(SkPaint::kStroke_Style);
     paint.setStrokeWidth(3 * px);
-    canvas->drawPath(SkPath::Polygon({points.data(), points.size()}, false), paint);
+    if (layer.location.spatial && layer.location.keys.size() >= 2) {
+        std::vector<SkPoint> curve;
+        const int subdivisions = std::max(1, std::min(32, 4096 / (int)layer.location.keys.size()));
+        for (size_t i = 1; i < layer.location.keys.size(); ++i) {
+            const auto& a = layer.location.keys[i-1];
+            const auto& b = layer.location.keys[i];
+            for (int step = 0; step <= subdivisions; ++step) {
+                const float at = a.t + (b.t-a.t) * step / subdivisions;
+                const double ms = layer.startTime + (double)at * (layer.endTime-layer.startTime);
+                curve.push_back(place(ms, {layer.location.get(0,at,0),layer.location.get(1,at,0)}));
+            }
+        }
+        canvas->drawPath(SkPath::Polygon({curve.data(), curve.size()}, false), paint);
+    } else canvas->drawPath(SkPath::Polygon({points.data(), points.size()}, false), paint);
     paint.setStyle(SkPaint::kFill_Style);
     for (int i = 0; i < (int)points.size(); i++) {
         if (i == here) continue;
@@ -254,6 +267,16 @@ void RenderPreview(SkCanvas* canvas, int width, int height, const Scene& scene, 
             SkPoint q[4];
             for (int i = 0; i < 4; i++) q[i] = {xy[2 * i] * scale + dx, xy[2 * i + 1] * scale + dy};
             DrawSelection(canvas, q, handles, px);
+            if (handles == -3) {
+                const float t = selected->localTime(timeMs);
+                const SkPoint local = {selected->pivot.get(0, t, 0), selected->pivot.get(1, t, 0)};
+                const SkPoint anchor = SkMatrix::Translate(dx, dy).preScale(scale, scale).mapPoint(WorldMatrix(scene, *selected, timeMs).mapPoint(local));
+                SkPaint mark; mark.setAntiAlias(true); mark.setStyle(SkPaint::kStroke_Style);
+                mark.setColor(SK_ColorBLACK); mark.setStrokeWidth(5 * px); canvas->drawCircle(anchor, 8 * px, mark);
+                mark.setColor(SkColorSetRGB(0xff, 0x91, 0x68)); mark.setStrokeWidth(2 * px); canvas->drawCircle(anchor, 8 * px, mark);
+                canvas->drawLine(anchor.fX - 14 * px, anchor.fY, anchor.fX + 14 * px, anchor.fY, mark);
+                canvas->drawLine(anchor.fX, anchor.fY - 14 * px, anchor.fX, anchor.fY + 14 * px, mark);
+            }
         }
         DrawSnapGuides(canvas, canvas->getBaseLayerSize(), view.guides, scale, dx, dy, px);
 }

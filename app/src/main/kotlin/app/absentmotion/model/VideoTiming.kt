@@ -175,6 +175,7 @@ fun Layer.trimmedTo(start: Int, end: Int, mediaMs: Int = Int.MAX_VALUE): Layer {
         if (end > endTime && mediaMs != Int.MAX_VALUE && node["loop"] != "true") to =minOf(end, maxOf(endTime, startTime + timing.localMs(mediaMs.toDouble()).roundToInt()))
     }
     var trimmed = withTimes(from, to)
+    if (from != startTime || to != endTime) trimmed = trimmed.copy(node = trimmed.node.with("trueSpeedContentEnd", null))
     if (nested != null && from != startTime) {
         val cut = (nestedCut + from - startTime).coerceAtLeast(0)
         trimmed = trimmed.copy(node = trimmed.node.with("inTime", cut.takeIf { it > 0 }?.toString()))
@@ -189,7 +190,7 @@ fun Layer.trimmedTo(start: Int, end: Int, mediaMs: Int = Int.MAX_VALUE): Layer {
         }
         if (to != endTime && node["loop"] != "true") trimmed = trimmed.copy(node = trimmed.node.with("outTime", "${timing.mediaMs((to - startTime).toDouble()).roundToInt().coerceAtMost(mediaMs)}"))
     }
-    return trimmed
+    return trimmed.withExtendedGroupHold(endTime)
 }
 
 fun Layer.trimHitsSourceLimit(start: Boolean, wanted: Int, mediaMs: Int = Int.MAX_VALUE): Boolean =
@@ -251,11 +252,13 @@ fun Layer.retimedVideo(start: Int, end: Int): Layer {
     return copy(node = n)
 }
 
-fun Layer.withVideoSpeedMap(map: XmlNode): Layer {
+fun Layer.withVideoSpeedMap(map: XmlNode, keepContentEnd: Boolean = false): Layer {
     val old = VideoTiming(this)
     var changed = copy(node = node.withChild("speedMap", map).with("speed", null))
     val timing = VideoTiming(changed)
-    val duration = timing.localMs(old.mediaMs((endTime - startTime).toDouble())).coerceIn(1.0, (Int.MAX_VALUE.toLong() - startTime).toDouble()).roundToInt()
+    val contentEnd = minOf(old.mediaMs((endTime - startTime).toDouble()), node["trueSpeedContentEnd"]?.finiteDouble() ?: Double.POSITIVE_INFINITY)
+    val duration = timing.localMs(contentEnd).coerceIn(1.0, (Int.MAX_VALUE.toLong() - startTime).toDouble()).roundToInt()
+    if (keepContentEnd || node["trueSpeedContentEnd"] != null) changed = changed.copy(node = changed.node.with("trueSpeedContentEnd", contentEnd.toString()))
     fun adjust(n: XmlNode): XmlNode {
         if (n.name == "speedMap" || n.name == "scene") return n
         if (n.name == "kf") {

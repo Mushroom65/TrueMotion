@@ -21,11 +21,16 @@ import app.absentmotion.model.KeyScope
 import app.absentmotion.model.Layer
 import app.absentmotion.model.PropRef
 import app.absentmotion.model.Scene
+import app.absentmotion.model.groupScene
+import app.absentmotion.model.validGroupPath
+import app.absentmotion.model.withGroupScene
+import app.absentmotion.model.withGroupHolds
+import app.absentmotion.model.nestedTime
 
 enum class EditorPanel(@StringRes val title: Int) {
     Tools(0), Speed(R.string.edit_panel_time_remapping), MoveTransform(R.string.edit_panel_transform), ColorFill(R.string.edit_panel_fill_color),
     EditShape(R.string.edit_panel_shape_options), EditText(R.string.edit_panel_edit_text),
-    BorderShadow(R.string.edit_panel_frame_shadow), Blending(R.string.edit_panel_opacity_blend), Effects(R.string.edit_panel_effects), Camera(R.string.edit_panel_camera_options), Model(R.string.edit_panel_model_options),
+    BorderShadow(R.string.edit_panel_frame_shadow), Blending(R.string.edit_panel_opacity_blend), Effects(R.string.edit_panel_effects), Camera(R.string.edit_panel_camera_options), Model(R.string.edit_panel_model_options), AudioMotion(R.string.true_audio_title),
 }
 
 data class KeyTarget(val ref: PropRef, val default: String, val type: String = "float")
@@ -69,14 +74,84 @@ class EditorState(
     val settings: AppSettings,
     val saver: ProjectSaver,
 ) {
-    var scene by mutableStateOf(initial.withMattesFollowing())
+    var document by mutableStateOf(initial.withGroupHolds().withMattesFollowing())
         private set
+    var groupPath by mutableStateOf(emptyList<Long>())
+        private set
+    var scene by mutableStateOf(document)
+        private set
+
+    val editingGroup: Boolean get() = groupPath.isNotEmpty()
+    val sceneTitle: String get() = groupPath.lastOrNull()?.let { document.groupScene(groupPath.dropLast(1))?.layer(it)?.label } ?: scene.title
+    val sceneTrail: String get() = buildList {
+        add(document.title)
+        for (i in groupPath.indices) document.groupScene(groupPath.take(i))?.layer(groupPath[i])?.label?.let(::add)
+    }.joinToString(" / ")
+    private data class GroupView(val frame: Int, val zoom: Float, val pan: Offset, val timelineZoom: Float, val camera: Boolean)
+    private val groupViews = mutableListOf<GroupView>()
+
+    fun enterGroup(id: Long? = selectedId): Boolean {
+        if (groupPath.size >= 32) return false
+        val groupId = id ?: return false
+        val layer = scene.layer(groupId) ?: return false
+        val inner = layer.nested ?: return false
+        val at = layer.nestedTime(timeMs.toDouble(), scene.fps).ms.toInt().coerceAtLeast(0)
+        visualPreview.clear()
+        endGesture()
+        playing = false
+        framePhotoOpen = false
+        groupViews += GroupView(frame, canvasZoom, canvasPan, timelineZoom, cameraMode)
+        clearSelection()
+        cameraMode = false
+        groupPath = groupPath + groupId
+        scene = document.groupScene(groupPath)!!
+        frame = inner.frameAt(at).coerceIn(0, maxOf(scene.lastFrame, 0))
+        canvasZoom = 1f
+        canvasPan = Offset.Zero
+        timelineZoom = 100f
+        engine.setScene(scene)
+        return true
+    }
+
+    fun leaveGroup(): Boolean {
+        val id = groupPath.lastOrNull() ?: return false
+        visualPreview.clear()
+        endGesture()
+        playing = false
+        framePhotoOpen = false
+        clearSelection()
+        cameraMode = false
+        groupPath = groupPath.dropLast(1)
+        scene = document.groupScene(groupPath)!!
+        val view = groupViews.removeLastOrNull()
+        frame = (view?.frame ?: 0).coerceIn(0, maxOf(scene.lastFrame, 0))
+        canvasZoom = view?.zoom ?: 1f
+        canvasPan = view?.pan ?: Offset.Zero
+        timelineZoom = view?.timelineZoom ?: 100f
+        cameraMode = view?.camera ?: false
+        selectedId = id.takeIf { scene.layer(it) != null }
+        engine.setScene(scene)
+        return true
+    }
+
+    fun restoreGroupPath(path: List<Long>) {
+        for (id in path.take(32)) if (!enterGroup(id)) break
+    }
+
+    fun renameScene(title: String) {
+        if (!editingGroup) { edit { it.withTitle(title) }; return }
+        endGesture()
+        val parent = groupPath.dropLast(1)
+        val id = groupPath.last()
+        val outer = document.groupScene(parent) ?: return
+        history.edit(null, document.withGroupScene(parent, outer.update(id) { it.withLabel(title) }))
+    }
 
     private var selection by mutableStateOf<Long?>(null)
 
     var selectedId: Long?
         get() = selection
-        set(value) { if (value != selection) Glide.interrupt(); selection = value }
+        set(value) { if (value != selection) { Glide.interrupt(); motionPathOpen = false }; selection = value }
 
     var frame by mutableIntStateOf(0)
 
@@ -87,6 +162,12 @@ class EditorState(
     var exportOpen by mutableStateOf(false)
 
     var historyOpen by mutableStateOf(false)
+    var trueStudioOpen by mutableStateOf(false)
+    var framePhotoOpen by mutableStateOf(false)
+    var motionPathOpen by mutableStateOf(false)
+    var framePhotoSource by mutableStateOf(false)
+    var audioMotionTab by mutableIntStateOf(0)
+    var trueCommandRevision by mutableIntStateOf(0)
 
     var presetsOpen by mutableStateOf(false)
 
@@ -170,7 +251,10 @@ class EditorState(
 
     var addingMedia by mutableStateOf(false)
 
-    private val history = EditHistory({ scene }, ::apply)
+    private val history = EditHistory({ document }, ::apply)
+    private val visualPreview = VisualPreview({ scene }) { next, xml -> engine.setVisualPreview(xml ?: next.toXml()) }
+    internal fun previewVisuals(owner: Any, base: Scene, shown: Scene, xml: String): Boolean = visualPreview.show(owner, base, shown, xml)
+    internal fun clearVisualPreview(owner: Any) = visualPreview.clear(owner)
 
     val selected: Layer? get() = selectedId?.let { scene.layerAt(it, sampleMs) }
 
@@ -202,9 +286,11 @@ class EditorState(
     }
 
     fun edit(key: Any? = null, change: (Scene) -> Scene) {
+        visualPreview.clear()
         Glide.interrupt()
         val before = scene
-        history.edit(key, change(before).withMattesFollowing(before))
+        val next = change(before).withMattesFollowing(before)
+        if (next != before) history.edit(key, document.withGroupScene(groupPath, next).withGroupHolds())
     }
 
     fun endGesture() {
@@ -212,8 +298,8 @@ class EditorState(
         val ended = history.endGesture()
         if (pending || ended) {
             dropDraft()
-            val xml = scene.toXml()
-            if (pending) engine.setScene(scene, xml)
+            val xml = document.toXml()
+            if (pending) engine.setScene(scene)
             if (ended) saver.commit(xml) else saver.draft(xml)
         }
         saver.flush()
@@ -224,7 +310,7 @@ class EditorState(
         drafted?.let { next ->
             drafted = null
             val xml = next.toXml()
-            engine.setScene(next, xml)
+            engine.setScene(scene)
             saver.draft(xml)
         }
     }
@@ -239,9 +325,9 @@ class EditorState(
 
     val gestureOpen: Boolean get() = history.gesturing
 
-    fun amend(next: Scene) = history.amend(next.withMattesFollowing(scene))
+    fun amend(next: Scene) = history.amend(document.withGroupScene(groupPath, next.withMattesFollowing(scene)).withGroupHolds())
 
-    internal fun forgetEdit(after: Scene?): Boolean = history.forget(after)
+    internal fun forgetEdit(after: Scene?): Boolean = if (after != null && scene.node === after.node) history.forget(document) else false
 
     fun editSelected(key: Any? = null, change: (Layer) -> Layer) {
         val id = selectedId ?: return
@@ -264,34 +350,43 @@ class EditorState(
     }
 
     fun undo() {
+        visualPreview.clear()
         Glide.interrupt()
-        val before = scene
+        val before = document
         history.undo()?.let { note(true, it to before) }
     }
 
     fun redo() {
+        visualPreview.clear()
         Glide.interrupt()
-        val before = scene
+        val before = document
         history.redo()?.let { note(false, before to it) }
     }
 
     private fun apply(next: Scene, save: Boolean) {
         val previous = scene
-        scene = next
-        if (MultiSelect.active) MultiSelect.ids = MultiSelect.ids.filter { next.layer(it) != null }.toSet()
+        document = next
+        val valid = next.validGroupPath(groupPath)
+        if (valid != groupPath) {
+            groupPath = valid
+            while (groupViews.size > valid.size) groupViews.removeLast()
+            playing = false
+            clearSelection()
+        }
+        scene = next.groupScene(groupPath)!!
+        if (MultiSelect.active) MultiSelect.ids = MultiSelect.ids.filter { scene.layer(it) != null }.toSet()
         canUndo = history.canUndo
         canRedo = history.canRedo
-        if (selectedId != null && next.layer(selectedId!!) == null) selectedId = null
-        frame = keptFrame(previous, next, frame)
+        if (selectedId != null && scene.layer(selectedId!!) == null) selectedId = null
+        frame = keptFrame(previous, scene, frame)
         if (!save) {
             if (drafted == null) Choreographer.getInstance().postFrameCallback(sendDraft)
-            drafted = next
+            drafted = document
             return
         }
         dropDraft()
-        val xml = next.toXml()
-        engine.setScene(next, xml)
-        saver.commit(xml)
+        engine.setScene(scene)
+        saver.commit(document.toXml())
     }
 
     private companion object {

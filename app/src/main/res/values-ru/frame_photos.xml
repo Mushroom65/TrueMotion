@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_photo_title">Кадр в фотослой</string>
+    <string name="true_photo_video_action">Кадр видео в фото</string>
+    <string name="true_photo_video">Исходник видео</string>
+    <string name="true_photo_composition">Композиция</string>
+    <string name="true_photo_source_hint">Кадр исходника с учётом обрезки и скорости. Геометрия и трансформация фиксируются на текущем времени; эффекты и звук не копируются.</string>
+    <string name="true_photo_composition_hint">Снимок видимой композиции с эффектами и прозрачностью. Фото хранится вместе с проектом, без экспорта в галерею.</string>
+    <string name="true_photo_duration_label">Длительность фото (секунды)</string>
+    <string name="true_photo_duration">Длительность: %1$s с</string>
+    <string name="true_photo_create">Создать фотослой</string>
+    <string name="true_photo_working">Чтение кадра…</string>
+    <string name="true_photo_choose_video">Выберите видеослой и установите время внутри него.</string>
+    <string name="true_photo_cannot_capture">Не удалось получить этот кадр.</string>
+    <string name="true_photo_changed">Проект изменился во время захвата. Создайте фотослой ещё раз.</string>
+    <string name="true_photo_source_name">Фото кадра</string>
+    <string name="true_photo_composition_name">Фото композиции</string>
+    <string name="true_speed_number">Скорость воспроизведения (0.001–100×)</string>
+</resources>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_grade_enter_value">Enter %1$s</string>
+    <string name="true_grade_title">Color grading</string>
+    <string name="true_grade_primary">Primary</string>
+    <string name="true_grade_wheels">Wheels</string>
+    <string name="true_grade_curves">Curves</string>
+    <string name="true_grade_hsl">HSL</string>
+    <string name="true_grade_output">Output</string>
+    <string name="true_grade_lift">Shadows</string>
+    <string name="true_grade_gamma">Midtones</string>
+    <string name="true_grade_gain">Highlights</string>
+    <string name="true_grade_brightness">Range brightness</string>
+    <string name="true_grade_wheel_control">%1$s color wheel</string>
+    <string name="true_grade_wheel_hint">Drag to tint. Center is neutral.</string>
+    <string name="true_grade_wheel_key">RGB keyframe</string>
+    <string name="true_grade_neutral">Neutral color</string>
+    <string name="true_grade_master">Master</string>
+    <string name="true_grade_curve_control">Color curve: drag a point vertically</string>
+    <string name="true_grade_curve_hint">Three editable points at 25%, 50% and 75%. Linear segments match the shader.</string>
+    <string name="true_grade_curve_point">Input %1$d%%</string>
+    <string name="true_grade_hue">Hue</string>
+    <string name="true_grade_saturation">Saturation</string>
+    <string name="true_grade_lightness">Lightness</string>
+    <string name="true_grade_red">Reds</string>
+    <string name="true_grade_yellow">Yellows</string>
+    <string name="true_grade_green">Greens</string>
+    <string name="true_grade_cyan">Cyans</string>
+    <string name="true_grade_blue">Blues</string>
+    <string name="true_grade_magenta">Magentas</string>
+    <string name="true_grade_exposure">Exposure, stops</string>
+    <string name="true_grade_contrast">Contrast</string>
+    <string name="true_grade_vibrance">Vibrance</string>
+    <string name="true_grade_temperature">Temperature</string>
+    <string name="true_grade_tint">Tint</string>
+    <string name="true_grade_shadows">Shadow detail</string>
+    <string name="true_grade_highlights">Highlight detail</string>
+    <string name="true_grade_black">Black point</string>
+    <string name="true_grade_white">White point</string>
+    <string name="true_grade_mix">Correction strength</string>
+    <string name="true_grade_mix_hint">0 keeps the original image; 1 applies the full correction. This property can also be animated.</string>
+    <string name="true_grade_disable">Disable correction</string>
+    <string name="true_grade_enable">Enable correction</string>
+    <string name="true_grade_reset_section">Reset section at current frame</string>
+</resources>

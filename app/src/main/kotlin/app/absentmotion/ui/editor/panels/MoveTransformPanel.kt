@@ -43,6 +43,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.sp
 import app.absentmotion.editor.EditorState
+import app.absentmotion.editor.openMotionPath
 import app.absentmotion.editor.KeypadField
 import app.absentmotion.editor.KeypadRequest
 import app.absentmotion.engine.SnapGuide
@@ -62,10 +63,10 @@ import androidx.compose.ui.res.stringResource
 import app.absentmotion.R
 
 @Composable
-internal fun MoveTransformPanel(state: EditorState, layer: Layer, tab: Int, turn: Turn?, modifier: Modifier = Modifier) {
+internal fun MoveTransformPanel(state: EditorState, layer: Layer, tab: Int, turn: Turn?, modifier: Modifier = Modifier, anchor: Boolean = false) {
     Box(modifier) {
         when (tab) {
-            0 -> PositionTab(state, layer)
+            0 -> if (anchor) AnchorPanel(state, layer, Modifier.fillMaxSize()) else PositionTab(state, layer)
             1 -> if (layer.kind == "camera") CameraSizeTab(state, layer) else SizeTab(state, layer)
             2 -> if (turn != null) TurnTab(state, layer, turn) else RotationTab(state, layer)
             3 -> TiltTab(state, layer, turn)
@@ -132,6 +133,9 @@ private fun PositionTab(state: EditorState, layer: Layer) {
         },
     ) {
         TrackpadCorners()
+        androidx.compose.material3.TextButton({ state.openMotionPath() }, Modifier.align(Alignment.BottomCenter)) {
+            Text(stringResource(R.string.true_path_title), color = Am.Accent, fontSize = 12.sp)
+        }
         Text(stringResource(if (depth) R.string.drag_to_move_along_z else R.string.drag_here_to_move_the_layer), Modifier.align(Alignment.Center), color = PanelCaption, fontSize = 15.sp, maxLines = 1, softWrap = false)
         Column(Modifier.align(Alignment.TopCenter).padding(top = 17.px)) {
             Row {

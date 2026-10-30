@@ -43,6 +43,8 @@ import app.absentmotion.model.fontNames
 import app.absentmotion.model.font
 import app.absentmotion.model.Scene
 import app.absentmotion.model.imageUris
+import app.absentmotion.truemotion.AudioReactive
+import app.absentmotion.truemotion.AudioMotion
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
@@ -52,6 +54,8 @@ import java.util.concurrent.atomic.AtomicReference
 object EngineDebug {
     @Volatile var failStart: String? = null
 }
+
+internal data class AudioEffectState(val pending: Boolean = false, val error: String? = null)
 
 class EngineThread(private val background: Int, context: Context? = null) {
     private val thread = HandlerThread("am-engine").apply { start() }
@@ -64,6 +68,23 @@ class EngineThread(private val background: Int, context: Context? = null) {
     private val media = context?.let { MediaLibrary(it, this) }
     private val videos = context?.let { VideoLibrary(it, this) }
     val audio = context?.let { AudioEngine(it) }
+    private val audioRuntime = context?.let { AudioEffectRuntime(it) }
+    private var preparedAudio: Pair<String, AudioReactive.Prepared>? = null
+    private var audioRenderJob: Job? = null
+    private var audioWantedXml: String? = null
+    private val audioEffectState = MutableStateFlow(AudioEffectState())
+    internal val audioEffects = audioEffectState.asStateFlow()
+    internal suspend fun audioEffectProfile(scene: Scene, source: Long?, volume: Boolean, force: Boolean = false, progress: (Float) -> Unit): AudioMotion.Profile =
+        checkNotNull(audioRuntime).profile(scene, source, volume, force, progress).second
+    internal fun refreshAudioEffects() {
+        handler.post {
+            if (!closed && !capturing) {
+                audioRenderJob?.cancel(); audioWantedXml = null; preparedAudio = null
+                scene?.let { setEngineScene(it) }
+                requestRender()
+            }
+        }
+    }
     private val captureLock = Mutex()
     private var capturing = false
     @Volatile var lastStillMs = 0.0
@@ -72,6 +93,22 @@ class EngineThread(private val background: Int, context: Context? = null) {
     @Volatile private var playing = false
     private val effectCatalog = MutableStateFlow(EffectCatalog(message = AppText.get(R.string.engine_loading_effects)))
     val effects = effectCatalog.asStateFlow()
+
+    suspend fun reloadEffects(context: Context) {
+        effectJob?.join()
+        val catalog = EffectCatalog.read(context)
+        withContext(dispatcher) {
+            if (!closed) {
+                val enabled = catalog.definitions.map { it.id }.toSet()
+                for (disabled in effects.value.definitions.filter { it.pluginId != null && it.id !in enabled }) {
+                    engine().loadEffect(app.absentmotion.model.XmlNode("effect", mapOf("id" to disabled.id,
+                        "sksl" to "uniform shader image; half4 main(float2 p) { return image.eval(p); }")).toXml())
+                }
+                effectCatalog.value = catalog.loadInto { engine().loadEffect(it) }
+                renderNow()
+            }
+        }
+    }
 
     suspend fun effectCheck(directory: File) {
         effectJob?.join()
@@ -157,7 +194,12 @@ class EngineThread(private val background: Int, context: Context? = null) {
         }
         return engine ?: startEngine().also { next ->
             engine = next
-            scene?.let { next.setScene(fonts?.prepareText(it, textTime) ?: it) }
+            scene?.let { xml ->
+                val prepared = preparedAudio?.takeIf { it.first == xml }?.second
+                val rendered = prepared?.scene?.node?.toXml() ?: xml
+                next.setAudioSignals(prepared?.signals.orEmpty())
+                next.setScene(fonts?.prepareText(rendered, textTime) ?: rendered)
+            }
             effects.value.loadInto(next::loadEffect)
             if (lost) {
                 lost = false
@@ -241,10 +283,23 @@ class EngineThread(private val background: Int, context: Context? = null) {
         requestRender()
     }
 
+    /** Render-only preview: the canonical audio, media ownership and export scene are unchanged. */
+    internal fun setVisualPreview(xml: String) {
+        pendingScene.set(xml)
+        requestRender()
+    }
+
     fun refreshMedia() {
         val next = mediaScene ?: return
         mediaJob?.cancel()
         mediaJob = mediaScope.launch { media?.update(next); videos?.retry() }
+        handler.post {
+            if (!closed && !capturing) {
+                audioRenderJob?.cancel(); audioWantedXml = null; preparedAudio = null
+                scene?.let { setEngineScene(it) }
+                requestRender()
+            }
+        }
     }
 
     suspend fun awaitMedia() {
@@ -349,6 +404,7 @@ class EngineThread(private val background: Int, context: Context? = null) {
             view?.let { engine().setCameraView(it.camera); engine().setAccurateBlur(it.accurateBlur) }
             pendingScene.take(scene)?.let { setEngineScene(it) }
             prepareTextTime(view?.timeMs ?: 0)
+            scene?.let(::requestAudioEffects)
         } catch (e: IllegalArgumentException) {
             Log.e("AMEngine", "scene rejected", e)
         }
@@ -358,9 +414,44 @@ class EngineThread(private val background: Int, context: Context? = null) {
     private var textTime = Int.MIN_VALUE
 
     private fun setEngineScene(xml: String, timeMs: Int = view?.timeMs ?: 0) {
-        engine().setScene(fonts?.prepareText(xml, timeMs) ?: xml)
+        val prepared = preparedAudio?.takeIf { it.first == xml }?.second
+        val rendered = prepared?.scene?.node?.toXml() ?: xml
+        engine().setAudioSignals(prepared?.signals.orEmpty())
+        engine().setScene(fonts?.prepareText(rendered, timeMs) ?: rendered)
         rememberScene(xml, timeMs)
+        requestAudioEffects(xml)
     }
+
+    private fun requestAudioEffects(xml: String) {
+        val runtime = audioRuntime ?: return
+        if (capturing || closed || audioWantedXml == xml || preparedAudio?.first == xml) return
+        audioRenderJob?.cancel()
+        audioWantedXml = xml
+        if (!xml.contains(AudioReactive.ID)) { preparedAudio = null; audioEffectState.value = AudioEffectState(); return }
+        audioEffectState.value = AudioEffectState(pending = true)
+        audioRenderJob = mediaScope.launch {
+            try {
+                val prepared = runtime.prepare(Scene.parse(xml))
+                withContext(dispatcher) {
+                    if (!closed && !capturing && scene == xml && audioWantedXml == xml) {
+                        preparedAudio = xml to prepared
+                        audioEffectState.value = AudioEffectState()
+                        setEngineScene(xml)
+                        renderNow()
+                    }
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (e: Exception) {
+                withContext(dispatcher) {
+                    if (audioWantedXml == xml && !closed) audioEffectState.value = AudioEffectState(error = e.message)
+                }
+                Log.e("AMAudioEffect", "Audio dependency could not be prepared", e)
+            }
+        }
+    }
+
+    private suspend fun prepareAudioEffects(xml: String, document: Scene): Pair<String, AudioReactive.Prepared>? =
+        audioRuntime?.let { runtime -> xml to runtime.prepare(document) }
 
     private fun rememberScene(xml: String?, timeMs: Int) {
         scene = xml
@@ -422,6 +513,14 @@ class EngineThread(private val background: Int, context: Context? = null) {
         }
     }
 
+    internal suspend fun localBounds(layerId: Long, timeMs: Int): FloatArray? = captureLock.withLock {
+        withContext(dispatcher) { applyPending(); prepareTextTime(timeMs); engine().localBounds(layerId, timeMs.toDouble()) }
+    }
+
+    internal suspend fun reanchor(layerId: Long, timeMs: Int, x: Float, y: Float): FloatArray? = captureLock.withLock {
+        withContext(dispatcher) { applyPending(); prepareTextTime(timeMs); engine().reanchor(layerId, timeMs.toDouble(), x, y) }
+    }
+
     suspend fun layerOutline(layerId: Long, timeMs: Int): String? = captureLock.withLock {
         withContext(dispatcher) {
             applyPending()
@@ -450,14 +549,17 @@ class EngineThread(private val background: Int, context: Context? = null) {
         val document = withContext(Dispatchers.Default) { Scene.parse(xml) }
         fonts?.let { library -> document.fontNames().forEach { library.resolve(it) } }
         var shown: String? = null
+        var previousAudio: Pair<String, AudioReactive.Prepared>? = null
+        var captureStarted = false
         try {
             media?.pinned = document
             media?.prepare(document)
+            val prepared = prepareAudioEffects(xml, document)
             withContext(dispatcher) {
                 check(!closed) { "engine closed" }
                 applyPending()
-                shown = scene
-                capturing = true
+                audioRenderJob?.cancel(); audioWantedXml = null
+                preparedAudio = prepared
                 setEngineScene(xml, timeMs)
             }
             suspend fun draw(): Boolean = withContext(dispatcher) {
@@ -476,6 +578,7 @@ class EngineThread(private val background: Int, context: Context? = null) {
             media?.pinned = null
             try {
                 withContext(NonCancellable + dispatcher) {
+                    if (captureStarted) preparedAudio = previousAudio
                     try { restoreScene(shown) }
                     finally { capturing = false }
                 }
@@ -516,9 +619,19 @@ class EngineThread(private val background: Int, context: Context? = null) {
         fontJob?.join()
         effectJob?.join()
         val document = Scene.parse(xml)
+        val prepared = prepareAudioEffects(xml, document)
         fonts?.let { library -> document.fontNames().forEach { library.resolve(it) } }
         var shown: String? = null
-        withContext(dispatcher) { capturing = true }
+        var previousAudio: Pair<String, AudioReactive.Prepared>? = null
+        var captureStarted = false
+        withContext(dispatcher) {
+            check(!closed) { "engine closed" }
+            applyPending()
+            shown = scene
+            previousAudio = preparedAudio
+            capturing = true
+            captureStarted = true
+        }
         val held = videos?.hold()
         try {
             held?.join()
@@ -528,8 +641,8 @@ class EngineThread(private val background: Int, context: Context? = null) {
             withContext(dispatcher) {
                 check(!closed) { "engine closed" }
                 applyPending()
-                shown = scene
-                capturing = true
+                audioRenderJob?.cancel(); audioWantedXml = null
+                preparedAudio = prepared
                 setEngineScene(xml, 0)
             }
             ExportSession(document, smoothing, fps).block()
@@ -539,6 +652,7 @@ class EngineThread(private val background: Int, context: Context? = null) {
             var noPreview = true
             try {
                 withContext(NonCancellable + dispatcher) {
+                    if (captureStarted) preparedAudio = previousAudio
                     try { restoreScene(shown) }
                     finally { capturing = false; noPreview = target == 0L }
                 }

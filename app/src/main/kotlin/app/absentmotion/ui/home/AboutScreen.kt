@@ -51,7 +51,7 @@ import androidx.compose.ui.res.stringResource
 import app.absentmotion.R
 import app.absentmotion.Tier
 
-internal const val HOME_PAGE ="https://github.com/Comett1225/AbsentMotion"
+internal const val HOME_PAGE = "https://github.com/Mushroom65/TrueMotion"
 
 internal const val LICENCES_ASSET = "licenses.txt"
 
@@ -76,7 +76,10 @@ private fun AboutPage(onClose: () -> Unit, onLicences: () -> Unit) {
         TitleBar(stringResource(R.string.settings_about), HomeIcons.Close, stringResource(R.string.action_close), onClose)
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Spacer(Modifier.height(24.dp))
-            Text("AbsentMotion", color = Am.Navy, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+            TrueBrandLogo(80.dp)
+            Spacer(Modifier.height(12.dp))
+            Text("True Motion Next", color = Am.Navy, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+            Body(stringResource(R.string.true_credits))
             if (version.isNotEmpty()) Text(stringResource(if (Tier.compatible) R.string.about_version_compatible else R.string.about_version, version),
                 Modifier.padding(top = 2.dp), color = Am.HomeMid, fontSize = 14.sp)
             Spacer(Modifier.height(20.dp))

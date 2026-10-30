@@ -128,7 +128,8 @@ class GifDecoderTest {
     }
 
     @Test fun projectGifDecodesLikeImageIo() {
-        val file = File(TestData.project, "docs/speed-comparison.gif")
+        val file = File(TestData.project, "docs/speed-comparison.gif").takeIf { it.isFile }
+            ?: File(TestData.project, "app/src/androidTest/assets/animated-v4.gif")
         val reader = ImageIO.getImageReadersByFormatName("gif").next()
         val delays = ImageIO.createImageInputStream(file).use { stream ->
             reader.input = stream

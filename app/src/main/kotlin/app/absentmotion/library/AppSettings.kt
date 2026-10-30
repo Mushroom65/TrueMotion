@@ -107,7 +107,7 @@ class AppSettings(private val context: Context) {
         get() = weeklyBackupState
         set(value) { weeklyBackupState = value; prefs.edit().putBoolean("weeklyBackup", value).apply() }
 
-    private var checkUpdatesState by mutableStateOf(prefs.getBoolean("checkUpdates", true))
+    private var checkUpdatesState by mutableStateOf(prefs.getBoolean("checkUpdates", false))
     private var updatesAskedState by mutableStateOf(prefs.getBoolean("updatesAsked", false))
 
     val checkUpdates: Boolean get() = checkUpdatesState

@@ -6,6 +6,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import app.absentmotion.model.Layer
+import app.absentmotion.model.pathAngle
+import app.absentmotion.model.pathEnabled
+import app.absentmotion.model.pathAutoOrient
 import app.absentmotion.model.MediaDeclaration
 import app.absentmotion.model.Scene
 import app.absentmotion.model.mediaUris
@@ -188,7 +191,7 @@ private fun ownPlace(layer: Layer, timeMs: Int, fps: Int): Place {
     val loc = at.location
     val piv = at.pivot
     val scale = at.scale
-    return Place(loc[0], loc[1], piv[0], piv[1], scale[0], scale[1], at.transform("rotation", 0f)[0], loc[2])
+    return Place(loc[0], loc[1], piv[0], piv[1], scale[0], scale[1], at.transform("rotation", 0f)[0] + at.pathAngle(), loc[2])
 }
 
 private fun compose(p: Place, q: Place?): Place {
@@ -228,8 +231,8 @@ internal fun Layer.rebaked(changing: Boolean, outerTimes: List<Int>, fps: Int, c
     val transform = node.child("transform")
     fun element(name: String) = transform?.child(name) ?: XmlNode(name)
     fun plain(name: String, v: FloatArray) = element(name).copy(children = element(name).children.filterNot { it.name == "kf" }).with("value", formatFloats(v))
-    var out = node
-    if (!changing && transform?.child("pivot")?.isKeyframed != true) {
+    var out = if (pathAutoOrient && transform != null) node.withChild("transform", transform.with("trueAutoOrient", null)) else node
+    if (!changing && !pathEnabled && !pathAutoOrient && transform?.child("pivot")?.isKeyframed != true) {
         val own = ownPlace(this, startTime, fps)
         for (name in MOVED) {
             val keys = element(name).keyframes
@@ -257,7 +260,7 @@ internal fun Layer.rebaked(changing: Boolean, outerTimes: List<Int>, fps: Int, c
         return before == a && after == b
     }
     val probes = listOf(Place(0f, 0f, 0f, 0f, 1f, 1f, 0f), Place(97f, -53f, 11f, 7f, 1.7f, 0.6f, 33f, 5f))
-    val pivotMoves = transform?.child("pivot")?.isKeyframed == true
+    val pivotMoves = transform?.child("pivot")?.isKeyframed == true || pathEnabled || pathAutoOrient
     val calm = marks.zipWithNext().associateWith { (a, b) ->
         !pivotMoves && probes.all { p -> convert(p, a)?.let { ref -> (frames.filter { it > a && it < b } + b).all { convert(p, it) == ref } } == true }
     }
@@ -287,9 +290,10 @@ internal fun Layer.rebaked(changing: Boolean, outerTimes: List<Int>, fps: Int, c
         }
         val first = v(startTime)
         out = out.withMoved(name, if (kept.all { v(it).contentEquals(first) }) plain(name, first)
-            else element(name).withKeyframes(kept.sorted().map { ms ->
+            else element(name).with("truePath", null).withKeyframes(kept.sorted().map { ms ->
                 val source = own[ms]
-                Keyframe((ms - startTime).toFloat() / length, formatFloats(v(ms)), source?.e?.takeIf { ms in eased }, source?.gen, source?.extra.orEmpty())
+                val extra = source?.extra.orEmpty().let { if (name == "location") it - "pathIn" - "pathOut" else it }
+                Keyframe((ms - startTime).toFloat() / length, formatFloats(v(ms)), source?.e?.takeIf { ms in eased }, source?.gen, extra)
             }))
     }
     return copy(node = out)

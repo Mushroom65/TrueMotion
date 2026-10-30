@@ -1,0 +1,20 @@
+{
+ "id": "true-plugin-builtin-unmult-unmult",
+ "runtimeId": "plugin.builtin.unmult.unmult",
+ "plugin": "builtin.unmult",
+ "name": "True UnMult",
+ "category": "true",
+ "description": "Independent True Motion implementation; not an AE binary port.",
+ "params": [
+  {
+   "id": "amount",
+   "label": "Amount",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  }
+ ],
+ "sksl": "uniform shader image;\nuniform float2 size;\nuniform float2 layer;\nuniform float3x3 toLayer;\nuniform float3x3 fromLayer;\nuniform float time;\nuniform float amount;\nfloat4 readInput(float2 uv){if(uv.x<0.0||uv.y<0.0||uv.x>1.0||uv.y>1.0)return float4(0.0);return float4(image.eval(uv * size));}\nhalf4 main(float2 coord){float4 c=readInput((coord / size));float3 rgb=c.a>.00001?c.rgb/c.a:float3(0.0);float a=max(rgb.r,max(rgb.g,rgb.b));return float4(c.rgb,c.a*mix(1.0,clamp(a,0.0,1.0),amount));}"
+}

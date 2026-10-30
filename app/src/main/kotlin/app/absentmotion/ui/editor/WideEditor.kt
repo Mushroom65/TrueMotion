@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.absentmotion.editor.EditorState
+import app.absentmotion.editor.audioMotionEditing
+import app.absentmotion.editor.particleEditing
 import app.absentmotion.editor.MultiSelect
 import app.absentmotion.ui.theme.Am
 import app.absentmotion.ui.theme.Presence
@@ -57,10 +59,12 @@ internal fun WideEditorBody(state: EditorState, onExit: () -> Unit, addLibrary: 
         val timeline = (maxHeight - 88.dp - 260.dp).coerceIn(140.dp, 320.dp)
         val textEdit = state.panel == EditorPanel.EditText && state.selected?.kind == "text"
         val textUi = remember { TextEditUi() }
-        val side = textEdit || (state.selectedId != null && !state.addOpen && !MultiSelect.active)
+        val side = textEdit || ((state.selectedId != null || state.framePhotoOpen) && !state.addOpen && !MultiSelect.active)
         val reserve = if (side) SideWidth else 0.dp
+        val extendedSide = side && !textEdit && (state.audioMotionEditing || state.particleEditing || state.framePhotoOpen || state.motionPathOpen)
         Column(Modifier.fillMaxSize()) {
             EditorTopBar(state, onExit, Modifier.fillMaxWidth().height(42.dp).enterFade())
+            GroupBreadcrumb(state)
             Box(Modifier.fillMaxWidth().weight(1f)) {
                 Preview(state, Modifier.fillMaxSize().tutorialTarget("preview"), reserveEnd = reserve)
                 Box(Modifier.fillMaxSize().padding(end = reserve)) {
@@ -68,18 +72,19 @@ internal fun WideEditorBody(state: EditorState, onExit: () -> Unit, addLibrary: 
                     AnimateButton(state, Modifier.align(Alignment.BottomEnd))
                     HistoryNotes(state, Modifier.align(Alignment.BottomCenter))
                 }
-                if (side) SidePanels(state, addLibrary, textEdit, textUi, Modifier.align(Alignment.CenterEnd))
+                if (side && !extendedSide) SidePanels(state, addLibrary, textEdit, textUi, Modifier.align(Alignment.CenterEnd))
             }
-            Box(Modifier.fillMaxWidth().height(46.dp).background(Am.TimelineBg)) {
+            Box(Modifier.fillMaxWidth().padding(end = if (extendedSide) reserve else 0.dp).height(46.dp).background(Am.TimelineBg)) {
                 PlayBar(state, Modifier.align(Alignment.Center).widthIn(max = 560.dp).fillMaxSize().tutorialTarget("playbar"))
                 if (state.selectedId == null && !state.addOpen && !MultiSelect.active) TransitionButton(state, Modifier.align(Alignment.CenterEnd).padding(end = 12.dp).tutorialTarget("transition"), compact = true)
                 LevelMeter(state, Modifier.align(Alignment.BottomStart).fillMaxWidth().height(2.1.dp))
             }
-            Box(Modifier.fillMaxWidth().height(timeline).background(Am.TimelineBg).tutorialTarget("timeline")) {
+            Box(Modifier.fillMaxWidth().padding(end = if (extendedSide) reserve else 0.dp).height(timeline).background(Am.TimelineBg).tutorialTarget("timeline")) {
                 Timeline(state, Modifier.fillMaxSize())
                 if (!side) LowerPanels(state, addLibrary, transitionHere = false)
             }
         }
+        if (extendedSide) SidePanels(state, addLibrary, textEdit, textUi, Modifier.align(Alignment.TopEnd).padding(top = 42.dp))
         if (textEdit && textUi.browser) PhoneScreen { Box(Modifier.fillMaxSize().enterFade(rise = 12.dp)) { TextFontBrowser(state, textUi) } }
     }
 }

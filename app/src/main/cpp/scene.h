@@ -11,6 +11,7 @@
 #include "easing.h"
 #include "frames.h"
 #include "xml.h"
+#include "audio_signal.h"
 #include "include/core/SkM44.h"
 #include "include/core/SkBlendMode.h"
 #include "include/core/SkColor.h"
@@ -29,6 +30,7 @@ struct Keyframe {
     float t;
     std::vector<float> v;
     Easing easing;
+    float pathIn[2] = {}, pathOut[2] = {};
 };
 
 struct Anim {
@@ -36,9 +38,11 @@ struct Anim {
     std::vector<Keyframe> keys;
     Keyframe lead;
     bool hasLead = false;
+    bool spatial = false;
 
     bool empty() const { return value.empty() && keys.empty(); }
     float get(int i, float t, float fallback) const;
+    float pathAngle(float t) const;
 };
 
 struct Property {
@@ -79,10 +83,15 @@ struct Camera {
     Anim fogColor, fogNear, fogFar;
 };
 
+struct ParticleState;
+
 struct LayerEffect {
     std::string id;
     bool hidden = false, locallyApplied = false, toChildren = false;
     std::vector<Property> props;
+    std::string audioSignalKey;
+    std::shared_ptr<const AudioSignal> audioSignal;
+    std::shared_ptr<ParticleState> particles;
 
     float value(const char* name, float t, float fallback) const;
     const Property* prop(const char* name) const;
@@ -132,6 +141,7 @@ struct Layer {
     int startTime = 0, endTime = 0;
     bool hidden = false, video = false;
     Anim location, pivot, scale, rotation, skew, opacity, fillColor, tilt;
+    bool pathAutoOrient = false;
     std::vector<Property> props;
     std::vector<LayerEffect> effects;
     Stroke stroke;

@@ -1,0 +1,83 @@
+{
+ "id": "true-plugin-builtin-optics-scan",
+ "runtimeId": "plugin.builtin.optics.scan",
+ "plugin": "builtin.optics",
+ "name": "True Glow Scan",
+ "category": "true",
+ "description": "Independent True Motion effect inspired by NodeVideo feature concepts; original shader.",
+ "params": [
+  {
+   "id": "position",
+   "label": "Band position",
+   "type": "float",
+   "default": 0.5,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "speed",
+   "label": "Scan speed",
+   "type": "float",
+   "default": 0.25,
+   "min": -5.0,
+   "max": 5.0,
+   "step": 0.01
+  },
+  {
+   "id": "width",
+   "label": "Band width",
+   "type": "float",
+   "default": 0.16,
+   "min": 0.005,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "angle",
+   "label": "Travel angle",
+   "type": "float",
+   "default": 0.0,
+   "min": -360.0,
+   "max": 360.0,
+   "step": 0.01
+  },
+  {
+   "id": "radius",
+   "label": "Glow radius, px",
+   "type": "float",
+   "default": 12.0,
+   "min": 0.0,
+   "max": 100.0,
+   "step": 0.01
+  },
+  {
+   "id": "threshold",
+   "label": "Luma threshold",
+   "type": "float",
+   "default": 0.2,
+   "min": 0.0,
+   "max": 0.99,
+   "step": 0.01
+  },
+  {
+   "id": "intensity",
+   "label": "Intensity",
+   "type": "float",
+   "default": 1.5,
+   "min": 0.0,
+   "max": 8.0,
+   "step": 0.01
+  },
+  {
+   "id": "preserveAlpha",
+   "label": "Preserve alpha (0 / 1)",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 1.0
+  }
+ ],
+ "sksl": "uniform shader image;\nuniform float2 size;\nuniform float2 layer;\nuniform float3x3 toLayer;\nuniform float3x3 fromLayer;\nuniform float time;\nuniform float position;\nuniform float speed;\nuniform float width;\nuniform float angle;\nuniform float radius;\nuniform float threshold;\nuniform float intensity;\nuniform float preserveAlpha;\n\nfloat2 turn(float2 p,float a){float c=cos(a),s=sin(a);return float2(c*p.x-s*p.y,s*p.x+c*p.y);}\nfloat4 readLayer(float2 uv){if(uv.x<0.0||uv.y<0.0||uv.x>1.0||uv.y>1.0)return float4(0.0);float2 s=((fromLayer * float3(uv * layer,1.0)).xy / size);if(s.x<0.0||s.y<0.0||s.x>1.0||s.y>1.0)return float4(0.0);return float4(image.eval(s * size));}\nfloat2 borderUV(float2 uv,float mirrorEdges){return mirrorEdges>.5?1.0-abs(mod(uv,2.0)-1.0):uv;}\nfloat light(float4 c){return c.a>.00001?dot(c.rgb/c.a,float3(.2126,.7152,.0722)):0.0;}\n\nfloat band(float2 uv){float2 v=float2(cos(angle*.01745329252),sin(angle*.01745329252));float2 tmLocalSize=max(layer,float2(1.0));float extent=dot(abs(v),tmLocalSize);float x=dot((uv-.5)*tmLocalSize,v)/max(extent,1.0)+.5;float scanPosition=abs(speed)<.000001?position:fract(position+time*speed);return 1.0-smoothstep(width*.15,max(width*.5,.00001),abs(x-scanPosition));}\nfloat4 bright(float2 uv){float4 c=readLayer(uv);return c*band(uv)*smoothstep(threshold,min(1.0,threshold+.12),light(c));}\nhalf4 main(float2 coord){float2 uv=((toLayer * float3(coord,1.0)).xy / layer);float4 src=readLayer(uv);if(intensity<=.00001){return src;}float4 g=bright(uv)*2.0;for(int i=0;i<8;i++){float a=float(i)*.7853981634;g+=bright(uv+float2(cos(a),sin(a))*radius/max(layer,float2(1.0)));}g*=intensity*.1;float alpha=preserveAlpha>.5?src.a:clamp(src.a+g.a,0.0,1.0);return float4(min(src.rgb+g.rgb,float3(alpha)),alpha);}\n"
+}

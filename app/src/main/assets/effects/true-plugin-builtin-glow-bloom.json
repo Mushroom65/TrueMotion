@@ -1,0 +1,38 @@
+{
+ "id": "true-plugin-builtin-glow-bloom",
+ "runtimeId": "plugin.builtin.glow.bloom",
+ "plugin": "builtin.glow",
+ "name": "True Bloom",
+ "category": "true",
+ "description": "Independent True Motion implementation; not an AE binary port.",
+ "params": [
+  {
+   "id": "radius",
+   "label": "Radius",
+   "type": "float",
+   "default": 0.02,
+   "min": 0.0,
+   "max": 0.1,
+   "step": 0.01
+  },
+  {
+   "id": "threshold",
+   "label": "Threshold",
+   "type": "float",
+   "default": 0.5,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "intensity",
+   "label": "Intensity",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.0,
+   "max": 5.0,
+   "step": 0.01
+  }
+ ],
+ "sksl": "uniform shader image;\nuniform float2 size;\nuniform float2 layer;\nuniform float3x3 toLayer;\nuniform float3x3 fromLayer;\nuniform float time;\nuniform float radius;\nuniform float threshold;\nuniform float intensity;\nfloat4 readInput(float2 uv){if(uv.x<0.0||uv.y<0.0||uv.x>1.0||uv.y>1.0)return float4(0.0);return float4(image.eval(uv * size));}\nfloat4 bright(float2 uv){float4 c=readInput(uv);float l=max(c.r,max(c.g,c.b));return c*smoothstep(threshold,threshold+.15,l);}\nhalf4 main(float2 coord){float4 src=readInput((coord / size)),blur=float4(0.0);float weight=0.0;for(int j=1;j<=3;j++){float r=float(j)/3.0,w=exp(-r*r*2.0);for(int i=0;i<8;i++){float a=float(i)*.7853981634;blur+=bright((coord / size)+float2(cos(a),sin(a))*radius*r)*w;weight+=w;}}blur/=max(weight,1.0);float a=clamp(src.a+blur.a*intensity,0.0,1.0);return float4(min(src.rgb+blur.rgb*intensity,float3(a)),a);}"
+}

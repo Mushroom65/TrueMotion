@@ -1,0 +1,5697 @@
+{
+  "effects": {
+    "true-plugin-builtin-distort-swirl": {
+      "name": "True Swirl",
+      "params": {
+        "amount": {
+          "label": "扭曲"
+        },
+        "radius": {
+          "label": "半径"
+        }
+      },
+      "description": "Independent True Motion implementation; not an AE binary port."
+    },
+    "true-plugin-builtin-distort-wave": {
+      "name": "True Wave",
+      "params": {
+        "amount": {
+          "label": "幅度"
+        },
+        "frequency": {
+          "label": "频率"
+        },
+        "speed": {
+          "label": "速度"
+        }
+      },
+      "description": "Independent True Motion implementation; not an AE binary port."
+    },
+    "true-plugin-builtin-distort-glitch": {
+      "name": "True Glitch",
+      "params": {
+        "amount": {
+          "label": "RGB 分离"
+        },
+        "speed": {
+          "label": "速度"
+        }
+      },
+      "description": "Independent True Motion implementation; not an AE binary port."
+    },
+    "true-plugin-builtin-distort-kaleido": {
+      "name": "True Kaleidoscope",
+      "params": {
+        "segments": {
+          "label": "扇区"
+        },
+        "angle": {
+          "label": "角度"
+        }
+      },
+      "description": "Independent True Motion implementation; not an AE binary port."
+    },
+    "true-plugin-builtin-distort-diffuse": {
+      "name": "True Diffuse",
+      "params": {
+        "amount": {
+          "label": "扩散半径"
+        },
+        "seed": {
+          "label": "随机种子"
+        }
+      },
+      "description": "Independent True Motion implementation; not an AE binary port."
+    },
+    "true-plugin-builtin-energy-beam": {
+      "name": "True Energy Beam",
+      "params": {
+        "startX": {
+          "label": "起点 X"
+        },
+        "startY": {
+          "label": "起点 Y"
+        },
+        "endX": {
+          "label": "终点 X"
+        },
+        "endY": {
+          "label": "终点 Y"
+        },
+        "width": {
+          "label": "宽度"
+        },
+        "energy": {
+          "label": "能量"
+        }
+      },
+      "description": "Independent True Motion implementation; not an AE binary port."
+    },
+    "true-plugin-builtin-energy-edges": {
+      "name": "True Neon Edge",
+      "params": {
+        "radius": {
+          "label": "轮廓宽度"
+        },
+        "intensity": {
+          "label": "强度"
+        }
+      },
+      "description": "Independent True Motion implementation; not an AE binary port."
+    },
+    "true-plugin-builtin-glow-bloom": {
+      "name": "True Bloom",
+      "params": {
+        "radius": {
+          "label": "半径"
+        },
+        "threshold": {
+          "label": "阈值"
+        },
+        "intensity": {
+          "label": "强度"
+        }
+      },
+      "description": "Independent True Motion implementation; not an AE binary port."
+    },
+    "true-plugin-builtin-unmult-unmult": {
+      "name": "True UnMult",
+      "params": {
+        "amount": {
+          "label": "强度"
+        }
+      },
+      "description": "Independent True Motion implementation; not an AE binary port."
+    },
+    "true-plugin-builtin-glow-streaks": {
+      "name": "True Streaks",
+      "params": {
+        "lengthPx": {
+          "label": "长度"
+        },
+        "angle": {
+          "label": "角度"
+        },
+        "intensity": {
+          "label": "强度"
+        }
+      },
+      "description": "Independent True Motion implementation; not an AE binary port."
+    },
+    "true-plugin-builtin-optics-split": {
+      "name": "True Split · 分割",
+      "params": {
+        "amount": {
+          "label": "两侧偏移"
+        },
+        "gap": {
+          "label": "间隙"
+        },
+        "angle": {
+          "label": "分割角度"
+        },
+        "center": {
+          "label": "分割位置"
+        },
+        "mirrorEdges": {
+          "label": "镜像边缘（0 / 1）"
+        }
+      },
+      "description": "Independent True Motion effect inspired by NodeVideo feature concepts; original shader."
+    },
+    "true-plugin-builtin-optics-squeeze": {
+      "name": "True Squeeze · 挤压",
+      "params": {
+        "amount": {
+          "label": "挤压 / 扩张"
+        },
+        "width": {
+          "label": "区域宽度"
+        },
+        "angle": {
+          "label": "角度"
+        },
+        "center": {
+          "label": "区域中心"
+        },
+        "mirrorEdges": {
+          "label": "镜像边缘（0 / 1）"
+        }
+      },
+      "description": "Independent True Motion effect inspired by NodeVideo feature concepts; original shader."
+    },
+    "true-plugin-builtin-optics-scan": {
+      "name": "True Glow Scan · 扫描光",
+      "params": {
+        "position": {
+          "label": "光带位置"
+        },
+        "speed": {
+          "label": "扫描速度"
+        },
+        "width": {
+          "label": "光带宽度"
+        },
+        "angle": {
+          "label": "移动角度"
+        },
+        "radius": {
+          "label": "辉光半径（像素）"
+        },
+        "threshold": {
+          "label": "亮度阈值"
+        },
+        "intensity": {
+          "label": "强度"
+        },
+        "preserveAlpha": {
+          "label": "保持透明度（0 / 1）"
+        }
+      },
+      "description": "Independent True Motion effect inspired by NodeVideo feature concepts; original shader."
+    },
+    "true-plugin-builtin-optics-pixelsort": {
+      "name": "True Pixel Sort · 像素排序",
+      "params": {
+        "stepPixels": {
+          "label": "8 点采样间距（像素）"
+        },
+        "angle": {
+          "label": "方向"
+        },
+        "low": {
+          "label": "亮度下限"
+        },
+        "high": {
+          "label": "亮度上限"
+        },
+        "reverse": {
+          "label": "降序（0 / 1）"
+        },
+        "amount": {
+          "label": "混合"
+        }
+      },
+      "description": "Independent True Motion effect inspired by NodeVideo feature concepts; original shader."
+    },
+    "true-grade": {
+      "name": "True Color Grade",
+      "description": "True Motion 调色：53 个参数、色轮、RGB 曲线和六组 HSL。",
+      "params": {
+        "exposure": {
+          "label": "曝光"
+        },
+        "contrast": {
+          "label": "对比度"
+        },
+        "saturation": {
+          "label": "饱和度"
+        },
+        "temperature": {
+          "label": "色温"
+        },
+        "tint": {
+          "label": "色调"
+        },
+        "lift": {
+          "label": "阴影亮度"
+        },
+        "liftR": {
+          "label": "阴影 红"
+        },
+        "liftG": {
+          "label": "阴影 绿"
+        },
+        "liftB": {
+          "label": "阴影 蓝"
+        },
+        "gamma": {
+          "label": "中间调亮度"
+        },
+        "gammaR": {
+          "label": "中间调 红"
+        },
+        "gammaG": {
+          "label": "中间调 绿"
+        },
+        "gammaB": {
+          "label": "中间调 蓝"
+        },
+        "gain": {
+          "label": "高光亮度"
+        },
+        "gainR": {
+          "label": "高光 红"
+        },
+        "gainG": {
+          "label": "高光 绿"
+        },
+        "gainB": {
+          "label": "高光 蓝"
+        },
+        "curveY1": {
+          "label": "总曲线 1"
+        },
+        "curveY2": {
+          "label": "总曲线 2"
+        },
+        "curveY3": {
+          "label": "总曲线 3"
+        },
+        "curveR1": {
+          "label": "红曲线 1"
+        },
+        "curveR2": {
+          "label": "红曲线 2"
+        },
+        "curveR3": {
+          "label": "红曲线 3"
+        },
+        "curveG1": {
+          "label": "绿曲线 1"
+        },
+        "curveG2": {
+          "label": "绿曲线 2"
+        },
+        "curveG3": {
+          "label": "绿曲线 3"
+        },
+        "curveB1": {
+          "label": "蓝曲线 1"
+        },
+        "curveB2": {
+          "label": "蓝曲线 2"
+        },
+        "curveB3": {
+          "label": "蓝曲线 3"
+        },
+        "vibrance": {
+          "label": "自然饱和度"
+        },
+        "shadows": {
+          "label": "阴影"
+        },
+        "highlights": {
+          "label": "高光"
+        },
+        "blackPoint": {
+          "label": "黑场"
+        },
+        "whitePoint": {
+          "label": "白场"
+        },
+        "gradeMix": {
+          "label": "调色强度"
+        },
+        "hslRedH": {
+          "label": "色相范围"
+        },
+        "hslRedS": {
+          "label": "饱和度范围"
+        },
+        "hslRedL": {
+          "label": "明度范围"
+        },
+        "hslYellowH": {
+          "label": "色相范围"
+        },
+        "hslYellowS": {
+          "label": "饱和度范围"
+        },
+        "hslYellowL": {
+          "label": "明度范围"
+        },
+        "hslGreenH": {
+          "label": "色相范围"
+        },
+        "hslGreenS": {
+          "label": "饱和度范围"
+        },
+        "hslGreenL": {
+          "label": "明度范围"
+        },
+        "hslCyanH": {
+          "label": "色相范围"
+        },
+        "hslCyanS": {
+          "label": "饱和度范围"
+        },
+        "hslCyanL": {
+          "label": "明度范围"
+        },
+        "hslBlueH": {
+          "label": "色相范围"
+        },
+        "hslBlueS": {
+          "label": "饱和度范围"
+        },
+        "hslBlueL": {
+          "label": "明度范围"
+        },
+        "hslMagentaH": {
+          "label": "色相范围"
+        },
+        "hslMagentaS": {
+          "label": "饱和度范围"
+        },
+        "hslMagentaL": {
+          "label": "明度范围"
+        }
+      }
+    },
+    "huesaturation": {
+      "name": "Hue & Saturation",
+      "description": "Turns colors around the color wheel and makes them stronger or weaker; vibrance strengthens the duller colors most.",
+      "params": {
+        "hue": {
+          "label": "Hue"
+        },
+        "saturation": {
+          "label": "Saturation"
+        },
+        "vibrance": {
+          "label": "Vibrance"
+        },
+        "lightness": {
+          "label": "Lightness"
+        }
+      },
+      "presets": {}
+    },
+    "brightnesscontrast": {
+      "name": "Brightness & Contrast",
+      "description": "Adjusts the brightness and contrast of the image.",
+      "params": {
+        "brightness": {
+          "label": "Brightness"
+        },
+        "contrast": {
+          "label": "Contrast"
+        }
+      },
+      "presets": {}
+    },
+    "solid": {
+      "name": "Solid Color",
+      "description": "Lays one color over the layer, keeping its shape, with a choice of blend modes.",
+      "params": {
+        "color": {
+          "label": "Color"
+        },
+        "amount": {
+          "label": "Alpha"
+        },
+        "blend": {
+          "label": "Blending Mode",
+          "options": [
+            "Normal",
+            "Multiply",
+            "Screen",
+            "Overlay",
+            "Soft Light",
+            "Hard Light",
+            "Add",
+            "Darken",
+            "Lighten",
+            "Difference",
+            "Color Dodge",
+            "Color Burn"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "backdrop": {
+      "name": "Adjustment Layer",
+      "description": "Copies what is drawn beneath the layer so later effects can change it. Mask To Layer limits the copy to the opaque parts of the layer. Mix brings the layer fill back.",
+      "params": {
+        "mix": {
+          "label": "Mix"
+        },
+        "mask": {
+          "label": "Mask To Layer"
+        }
+      },
+      "presets": {}
+    },
+    "gradientoverlay": {
+      "name": "Gradient Overlay",
+      "description": "Lays a two-color gradient over the layer with a choice of shapes and blend modes.",
+      "params": {
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "shape": {
+          "label": "Shape",
+          "options": [
+            "Linear",
+            "Radial",
+            "Reflected",
+            "Angle"
+          ]
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "opacity": {
+          "label": "Opacity"
+        },
+        "blend": {
+          "label": "Blend",
+          "options": [
+            "Normal",
+            "Multiply",
+            "Screen",
+            "Overlay",
+            "Soft Light",
+            "Hard Light",
+            "Add",
+            "Darken",
+            "Lighten",
+            "Difference",
+            "Color Dodge",
+            "Color Burn"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "fourcolor": {
+      "name": "Four-Color Gradient",
+      "description": "Blends four colors placed at four points (in pixels from the layer's center) over the layer.",
+      "params": {
+        "color1": {
+          "label": "Color 1"
+        },
+        "point1": {
+          "label": "Point 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "point2": {
+          "label": "Point 2"
+        },
+        "color3": {
+          "label": "Color 3"
+        },
+        "point3": {
+          "label": "Point 3"
+        },
+        "color4": {
+          "label": "Color 4"
+        },
+        "point4": {
+          "label": "Point 4"
+        },
+        "softness": {
+          "label": "Softness"
+        },
+        "opacity": {
+          "label": "Opacity"
+        },
+        "blend": {
+          "label": "Blend",
+          "options": [
+            "Normal",
+            "Multiply",
+            "Screen",
+            "Overlay",
+            "Soft Light",
+            "Hard Light",
+            "Add",
+            "Darken",
+            "Lighten",
+            "Difference",
+            "Color Dodge",
+            "Color Burn"
+          ]
+        },
+        "corner": {
+          "label": "Corner Offsets"
+        }
+      },
+      "presets": {}
+    },
+    "colorbalance": {
+      "name": "Color Balance",
+      "description": "Pushes the shadows, midtones and highlights towards their own colors (gray leaves a range unchanged).",
+      "params": {
+        "shadows": {
+          "label": "Shadows"
+        },
+        "midtones": {
+          "label": "Midtones"
+        },
+        "highlights": {
+          "label": "Highlights"
+        },
+        "amount": {
+          "label": "Amount"
+        }
+      },
+      "presets": {}
+    },
+    "colorwheels": {
+      "name": "Lift Gamma Gain",
+      "description": "Color wheels for the shadows (lift), midtones (gamma) and highlights (gain): a hue, how far to push it, and a level.",
+      "params": {
+        "liftHue": {
+          "label": "Lift Hue"
+        },
+        "liftAmount": {
+          "label": "Lift Amount"
+        },
+        "liftLevel": {
+          "label": "Lift Level"
+        },
+        "gammaHue": {
+          "label": "Gamma Hue"
+        },
+        "gammaAmount": {
+          "label": "Gamma Amount"
+        },
+        "gammaLevel": {
+          "label": "Gamma Level"
+        },
+        "gainHue": {
+          "label": "Gain Hue"
+        },
+        "gainAmount": {
+          "label": "Gain Amount"
+        },
+        "gainLevel": {
+          "label": "Gain Level"
+        }
+      },
+      "presets": {}
+    },
+    "splittone": {
+      "name": "Split Tone",
+      "description": "Tints the shadows towards one hue and the highlights towards another, keeping black, white and brightness.",
+      "params": {
+        "shadowHue": {
+          "label": "Shadow Hue"
+        },
+        "shadowAmount": {
+          "label": "Shadow Amount"
+        },
+        "highlightHue": {
+          "label": "Highlight Hue"
+        },
+        "highlightAmount": {
+          "label": "Highlight Amount"
+        }
+      },
+      "presets": {}
+    },
+    "temperature": {
+      "name": "Color Temperature",
+      "description": "Warms or cools the picture like light of a color temperature in kelvin; 6500 K leaves it unchanged.",
+      "params": {
+        "kelvin": {
+          "label": "Temperature"
+        },
+        "strength": {
+          "label": "Strength"
+        }
+      },
+      "presets": {}
+    },
+    "duotone": {
+      "name": "Duotone",
+      "description": "Applies a two-color gradient map based on luminance with contrast and amount controls.",
+      "params": {
+        "contrast": {
+          "label": "Contrast"
+        },
+        "amount": {
+          "label": "Amount"
+        },
+        "color1": {
+          "label": "Shadow Color"
+        },
+        "color2": {
+          "label": "Highlight Color"
+        }
+      },
+      "presets": {}
+    },
+    "gradientmap": {
+      "name": "Gradient Map",
+      "description": "Recolors the picture by brightness through three colors, with repeats and a phase. Scale Brightness multiplies the result by the picture's own brightness.",
+      "params": {
+        "color1": {
+          "label": "Shadows"
+        },
+        "color2": {
+          "label": "Midtones"
+        },
+        "color3": {
+          "label": "Highlights"
+        },
+        "repeat": {
+          "label": "Repeat"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "reverse": {
+          "label": "Reverse"
+        },
+        "scaleBrightness": {
+          "label": "Scale Brightness"
+        },
+        "opacity": {
+          "label": "Opacity"
+        }
+      },
+      "presets": {}
+    },
+    "exposure": {
+      "name": "Exposure",
+      "description": "Simulates photographic exposure with stops, offset, and gamma correction.",
+      "params": {
+        "stops": {
+          "label": "Stops"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "gamma": {
+          "label": "Gamma"
+        }
+      },
+      "presets": {}
+    },
+    "invert": {
+      "name": "Invert",
+      "description": "Inverts the color channels of the image with a blend amount and optional alpha inversion.",
+      "params": {
+        "amount": {
+          "label": "Amount"
+        },
+        "invert_alpha": {
+          "label": "Invert Alpha"
+        }
+      },
+      "presets": {}
+    },
+    "levels": {
+      "name": "Levels",
+      "description": "Adjusts the levels of the image with input black/white points, gamma, and output black/white points.",
+      "params": {
+        "inBlack": {
+          "label": "Input Black"
+        },
+        "inWhite": {
+          "label": "Input White"
+        },
+        "gamma": {
+          "label": "Gamma"
+        },
+        "outBlack": {
+          "label": "Output Black"
+        },
+        "outWhite": {
+          "label": "Output White"
+        }
+      },
+      "presets": {}
+    },
+    "posterize": {
+      "name": "Posterize",
+      "description": "Cuts each color channel into a number of flat Steps, so smooth gradients turn into bands. Offset moves where the band edges fall.",
+      "params": {
+        "levels": {
+          "label": "Steps"
+        },
+        "offset": {
+          "label": "Offset"
+        }
+      },
+      "presets": {}
+    },
+    "sepia": {
+      "name": "Sepia",
+      "description": "Warm brown tones, like an old photograph.",
+      "params": {
+        "amount": {
+          "label": "Amount"
+        }
+      },
+      "presets": {}
+    },
+    "threshold": {
+      "name": "Threshold",
+      "description": "Pure black and white, split at a brightness.",
+      "params": {
+        "level": {
+          "label": "Threshold"
+        },
+        "softness": {
+          "label": "Feather"
+        },
+        "invert": {
+          "label": "Invert"
+        },
+        "blend": {
+          "label": "Blending Mode",
+          "options": [
+            "Normal",
+            "Multiply",
+            "Screen",
+            "Overlay",
+            "Soft Light",
+            "Hard Light",
+            "Add",
+            "Darken",
+            "Lighten",
+            "Difference",
+            "Color Dodge",
+            "Color Burn"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "tint": {
+      "name": "Tint",
+      "description": "Maps the picture's luminance between a shadow color and a highlight color with a blend amount.",
+      "params": {
+        "amount": {
+          "label": "Amount"
+        },
+        "shadowColor": {
+          "label": "Shadow Color"
+        },
+        "highlightColor": {
+          "label": "Highlight Color"
+        }
+      },
+      "presets": {}
+    },
+    "colorize": {
+      "name": "Colorize",
+      "description": "Tints the whole layer with one hue while keeping its light and shade.",
+      "params": {
+        "hue": {
+          "label": "Hue"
+        },
+        "amount": {
+          "label": "Amount"
+        }
+      },
+      "presets": {}
+    },
+    "palettemap": {
+      "name": "Palette Map",
+      "description": "Maps each pixel to the nearest color in a palette of up to eight colors. Alpha blends the mapped colors with the original layer.",
+      "params": {
+        "colors": {
+          "label": "Colors"
+        },
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "color3": {
+          "label": "Color 3"
+        },
+        "color4": {
+          "label": "Color 4"
+        },
+        "color5": {
+          "label": "Color 5"
+        },
+        "color6": {
+          "label": "Color 6"
+        },
+        "color7": {
+          "label": "Color 7"
+        },
+        "color8": {
+          "label": "Color 8"
+        },
+        "dither": {
+          "label": "Dither"
+        },
+        "alpha": {
+          "label": "Alpha"
+        }
+      },
+      "presets": {}
+    },
+    "ominodiffusion": {
+      "name": "Omino Diffusion+",
+      "description": "Redraws the layer in a small palette and drags the rounding error along a direction, for a glitchy dithered look that comes alive in motion.",
+      "params": {
+        "angle": {
+          "label": "Angle"
+        },
+        "strength": {
+          "label": "Strength"
+        },
+        "steps": {
+          "label": "Steps"
+        },
+        "weight": {
+          "label": "Error Weight"
+        },
+        "falloff": {
+          "label": "Weight Falloff"
+        },
+        "palette": {
+          "label": "Palette",
+          "options": [
+            "Black/White",
+            "RGB Posterize (2 Levels)",
+            "RGB Posterize (3 Levels)",
+            "RGB Posterize (4 Levels)",
+            "Gray (3 Levels)",
+            "Gray (4 Levels)",
+            "CGA Green/Red/Yellow",
+            "CGA Cyan/Magenta/White",
+            "CGA Blue/Cyan/Magenta/White",
+            "Saturate and Posterize",
+            "Custom 2-Color",
+            "Custom 3-Color",
+            "Custom 4-Color",
+            "Custom 5-Color",
+            "Custom 6-Color"
+          ]
+        },
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "color3": {
+          "label": "Color 3"
+        },
+        "color4": {
+          "label": "Color 4"
+        },
+        "color5": {
+          "label": "Color 5"
+        },
+        "color6": {
+          "label": "Color 6"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "blend": {
+          "label": "Blending Mode",
+          "options": [
+            "Normal",
+            "Multiply",
+            "Screen"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "spotcolor": {
+      "name": "Spot Color",
+      "description": "Keeps one color and takes the saturation out of every other color in the layer.",
+      "params": {
+        "color": {
+          "label": "Color"
+        },
+        "threshold": {
+          "label": "Threshold"
+        },
+        "feather": {
+          "label": "Feather"
+        },
+        "saturation": {
+          "label": "Saturation"
+        },
+        "choke": {
+          "label": "Choke"
+        }
+      },
+      "presets": {}
+    },
+    "replacecolor": {
+      "name": "Replace Color",
+      "description": "Replaces one color with another. Alpha controls the replacement strength; Lock Luminance keeps the light and shade of the original.",
+      "params": {
+        "source": {
+          "label": "Replace Color"
+        },
+        "target": {
+          "label": "New Color"
+        },
+        "threshold": {
+          "label": "Threshold"
+        },
+        "feather": {
+          "label": "Feather"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "lockLuminance": {
+          "label": "Lock Luminance"
+        },
+        "choke": {
+          "label": "Choke"
+        }
+      },
+      "presets": {}
+    },
+    "channelremap": {
+      "name": "Channel Remap (RGB)",
+      "description": "Rebuilds each color channel from another channel of the layer, for false color or for moving luminance into alpha.",
+      "params": {
+        "r": {
+          "label": "R",
+          "options": [
+            "Red",
+            "Green",
+            "Blue",
+            "Alpha",
+            "Luminance",
+            "Zero",
+            "Full"
+          ]
+        },
+        "g": {
+          "label": "G",
+          "options": [
+            "Red",
+            "Green",
+            "Blue",
+            "Alpha",
+            "Luminance",
+            "Zero",
+            "Full"
+          ]
+        },
+        "b": {
+          "label": "B",
+          "options": [
+            "Red",
+            "Green",
+            "Blue",
+            "Alpha",
+            "Luminance",
+            "Zero",
+            "Full"
+          ]
+        },
+        "a": {
+          "label": "A",
+          "options": [
+            "Red",
+            "Green",
+            "Blue",
+            "Alpha",
+            "Luminance",
+            "Zero",
+            "Full"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "channelremaphsv": {
+      "name": "Channel Remap (HSV)",
+      "description": "Rebuilds hue, saturation, value and alpha from other channels of the layer.",
+      "params": {
+        "h": {
+          "label": "H",
+          "options": [
+            "Hue",
+            "Saturation",
+            "Value",
+            "Alpha",
+            "Luminance",
+            "Zero",
+            "Full"
+          ]
+        },
+        "s": {
+          "label": "S",
+          "options": [
+            "Hue",
+            "Saturation",
+            "Value",
+            "Alpha",
+            "Luminance",
+            "Zero",
+            "Full"
+          ]
+        },
+        "v": {
+          "label": "V",
+          "options": [
+            "Hue",
+            "Saturation",
+            "Value",
+            "Alpha",
+            "Luminance",
+            "Zero",
+            "Full"
+          ]
+        },
+        "a": {
+          "label": "A",
+          "options": [
+            "Hue",
+            "Saturation",
+            "Value",
+            "Alpha",
+            "Luminance",
+            "Zero",
+            "Full"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "blur": {
+      "name": "Blur",
+      "description": "A smooth, even blur.",
+      "params": {
+        "strength": {
+          "label": "Strength"
+        }
+      },
+      "presets": {}
+    },
+    "innerblur": {
+      "name": "Inner Blur",
+      "description": "Blurs the picture inside the layer while keeping its outline sharp.",
+      "params": {
+        "blur": {
+          "label": "Strength"
+        }
+      },
+      "presets": {}
+    },
+    "directionalblur": {
+      "name": "Directional Blur",
+      "description": "Motion blur by averaging samples along a directional angle.",
+      "params": {
+        "blurLength": {
+          "label": "Length"
+        },
+        "angle": {
+          "label": "Angle"
+        }
+      },
+      "presets": {}
+    },
+    "motionblur": {
+      "name": "Motion Blur",
+      "description": "Blurs the layer along the way it moves, turns and grows, from its keyframes and from motion effects such as Auto-Shake and Oscillate. Tune scales the blur. The preview shows a quicker blur unless Full Blur is on.",
+      "params": {
+        "tune": {
+          "label": "Tune"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "rotation": {
+          "label": "Angle"
+        }
+      },
+      "presets": {}
+    },
+    "smear": {
+      "name": "Smear",
+      "description": "Smears the layer in one direction by a fixed length, as if it moved fast.",
+      "params": {
+        "angle": {
+          "label": "Direction"
+        },
+        "length": {
+          "label": "Length"
+        }
+      },
+      "presets": {}
+    },
+    "radialblur": {
+      "name": "Zoom Blur",
+      "description": "Applies a radial zoom blur by averaging samples along rays from a center point with adjustable strength.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "amount": {
+          "label": "Strength"
+        }
+      },
+      "presets": {}
+    },
+    "zoomstreaks": {
+      "name": "Zoom Streaks",
+      "description": "Makes streaks that shoot out from a point by scaling copies of the layer around it and keeping the brightest pixels. Average gives a zoom blur. R, G, B and A choose per channel whether the copies keep the lowest, highest or average value, or leave that channel alone.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "strength": {
+          "label": "Strength"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "bias": {
+          "label": "Bias"
+        },
+        "r": {
+          "label": "R",
+          "options": [
+            "Min",
+            "Max",
+            "Avg",
+            "Off"
+          ]
+        },
+        "g": {
+          "label": "G",
+          "options": [
+            "Min",
+            "Max",
+            "Avg",
+            "Off"
+          ]
+        },
+        "b": {
+          "label": "B",
+          "options": [
+            "Min",
+            "Max",
+            "Avg",
+            "Off"
+          ]
+        },
+        "a": {
+          "label": "A",
+          "options": [
+            "Min",
+            "Max",
+            "Avg",
+            "Off"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "spinstreaks": {
+      "name": "Spin Streaks",
+      "description": "Makes arc-shaped streaks by turning copies of the layer around a point and blending where they overlap. R, G, B and A choose per channel whether the copies keep the lowest, highest or average value, or leave that channel alone.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "sweep": {
+          "label": "Sweep"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "bias": {
+          "label": "Bias"
+        },
+        "r": {
+          "label": "R",
+          "options": [
+            "Min",
+            "Max",
+            "Avg",
+            "Off"
+          ]
+        },
+        "g": {
+          "label": "G",
+          "options": [
+            "Min",
+            "Max",
+            "Avg",
+            "Off"
+          ]
+        },
+        "b": {
+          "label": "B",
+          "options": [
+            "Min",
+            "Max",
+            "Avg",
+            "Off"
+          ]
+        },
+        "a": {
+          "label": "A",
+          "options": [
+            "Min",
+            "Max",
+            "Avg",
+            "Off"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "linearstreaks": {
+      "name": "Linear Streaks",
+      "description": "Makes straight streaks by sliding copies of the layer along an angle and blending where they overlap.",
+      "params": {
+        "angle": {
+          "label": "Angle"
+        },
+        "reach": {
+          "label": "Length"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "bias": {
+          "label": "Bias"
+        },
+        "mode": {
+          "label": "Blending",
+          "options": [
+            "Lighten",
+            "Average",
+            "Darken"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "spinblur": {
+      "name": "Spin Blur",
+      "description": "Blurs the layer in circles around a point, as if it were spinning.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "sweep": {
+          "label": "Angle"
+        }
+      },
+      "presets": {}
+    },
+    "lensblur": {
+      "name": "Lens Blur",
+      "description": "A spinning blur that leaves a sharp area around the center and grows towards the edges.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "sweep": {
+          "label": "Angle"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "feather": {
+          "label": "Feather"
+        }
+      },
+      "presets": {}
+    },
+    "maskblur": {
+      "name": "Mask Blur",
+      "description": "Blurs the layers behind this one inside its shape; brighter parts of the layer blur more, so a gradient makes a tilt-shift.",
+      "params": {
+        "strength": {
+          "label": "Strength"
+        },
+        "invert": {
+          "label": "Invert"
+        }
+      },
+      "presets": {}
+    },
+    "fillbehind": {
+      "name": "Fill Behind",
+      "description": "Fills the frame behind the layer with a blurred, zoomed copy of itself, the usual fix for a portrait video in a landscape project.",
+      "params": {
+        "blur": {
+          "label": "Strength"
+        },
+        "feather": {
+          "label": "Feather"
+        },
+        "saturation": {
+          "label": "Saturation"
+        },
+        "brightness": {
+          "label": "Brightness"
+        },
+        "gamma": {
+          "label": "Gamma"
+        },
+        "fgAlpha": {
+          "label": "Foreground Alpha"
+        },
+        "bgAlpha": {
+          "label": "Background Alpha"
+        },
+        "tintColor": {
+          "label": "Tint Color"
+        },
+        "tint": {
+          "label": "Tint"
+        },
+        "edgeColor": {
+          "label": "Edge Color"
+        },
+        "edgeStrength": {
+          "label": "Edge Strength"
+        },
+        "scanStrength": {
+          "label": "Scan Line Strength"
+        },
+        "scanCount": {
+          "label": "Scan Line Count"
+        },
+        "fgOffset": {
+          "label": "FG Offset"
+        },
+        "fgScale": {
+          "label": "FG Scale"
+        },
+        "bgOffset": {
+          "label": "BG Offset"
+        },
+        "bgScale": {
+          "label": "BG Scale"
+        }
+      },
+      "presets": {}
+    },
+    "twirl": {
+      "name": "Swirl",
+      "description": "Twists the layer around Center like a whirlpool, strongest in the middle and fading out at Radius (a share of the layer size). Negative Strength twists the other way.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "strength": {
+          "label": "Strength"
+        },
+        "radius": {
+          "label": "Radius"
+        }
+      },
+      "presets": {}
+    },
+    "bulge": {
+      "name": "Pinch/Bulge",
+      "description": "Bulges the layer out like a lens (positive Strength) or pinches it in toward Center (negative) inside a circle of Radius, a share of the layer size.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "amount": {
+          "label": "Strength"
+        },
+        "radius": {
+          "label": "Radius"
+        }
+      },
+      "presets": {}
+    },
+    "innerbulge": {
+      "name": "Inner Pinch/Bulge",
+      "description": "Bulges the middle of the layer out or pinches it in, while the edges of the layer stay where they are.",
+      "params": {
+        "strength": {
+          "label": "Strength"
+        }
+      },
+      "presets": {}
+    },
+    "glitch": {
+      "name": "Glitch",
+      "description": "Random horizontal block displacement and color channel offsets, changing a few times per second.",
+      "params": {
+        "intensity": {
+          "label": "Intensity"
+        },
+        "blockHeight": {
+          "label": "Block Height"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "noisedisplace": {
+      "name": "Noise Displace",
+      "description": "Displaces pixels using smooth value noise that animates over time.",
+      "params": {
+        "amount": {
+          "label": "Amount"
+        },
+        "scale": {
+          "label": "Noise Scale"
+        },
+        "speed": {
+          "label": "Animation Speed"
+        }
+      },
+      "presets": {}
+    },
+    "ripple": {
+      "name": "Ripple",
+      "description": "Concentric ripples radiating from a center point with configurable amplitude, wavelength, and speed.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "amplitude": {
+          "label": "Amplitude"
+        },
+        "wavelength": {
+          "label": "Wavelength"
+        },
+        "speed": {
+          "label": "Speed"
+        }
+      },
+      "presets": {}
+    },
+    "circularripple": {
+      "name": "Circular Ripple",
+      "description": "Makes circular ripples spread out from a point, like a drop falling into water.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "frequency": {
+          "label": "Frequency"
+        },
+        "strength": {
+          "label": "Strength"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "feather": {
+          "label": "Feather"
+        }
+      },
+      "presets": {}
+    },
+    "wavewarp": {
+      "name": "Wave Warp",
+      "description": "Bends the layer with a sine wave: Spacing sets how many waves cross it, Magnitude how far they push, Angle the direction the waves run and Warp Angle the direction they push.",
+      "params": {
+        "phase": {
+          "label": "Phase"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "spacing": {
+          "label": "Spacing"
+        },
+        "magnitude": {
+          "label": "Magnitude"
+        },
+        "warpAngle": {
+          "label": "Warp Angle"
+        },
+        "speed": {
+          "label": "Speed"
+        }
+      },
+      "presets": {}
+    },
+    "turbulentdisplace": {
+      "name": "Turbulent Displace",
+      "description": "Pushes the layer around with smooth fractal noise, for fire, water, heat haze or rough natural edges.",
+      "params": {
+        "parallax": {
+          "label": "Parallax"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "strength": {
+          "label": "Strength"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "direction": {
+          "label": "Direction",
+          "options": [
+            "Both",
+            "Horizontal",
+            "Vertical",
+            "Radial",
+            "Twist"
+          ]
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "octaves": {
+          "label": "Octaves"
+        },
+        "bias": {
+          "label": "Bias"
+        }
+      },
+      "presets": {}
+    },
+    "fractalwarp": {
+      "name": "Fractal Warp",
+      "description": "Warps the layer with folded fractal noise, for fire, water and heat shimmer.",
+      "params": {
+        "strength": {
+          "label": "Strength"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "complexity": {
+          "label": "Complexity"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "tiles": {
+      "name": "Tiles",
+      "description": "Repeats the layer to fill the screen. Raise Crop to make smaller tiles, with optional mirroring, row offset and rotation. Legacy Scale preserves older projects.",
+      "params": {
+        "zoom": {
+          "label": "Crop"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "mirror": {
+          "label": "Mirror"
+        },
+        "vertical": {
+          "label": "Offset Vertically"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "sizing": {
+          "label": "Sizing",
+          "options": [
+            "Crop",
+            "Legacy Scale"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "hexagontiling": {
+      "name": "Hexagon Tiling",
+      "description": "Repeats the middle of the layer in hexagonal tiles that fill the screen.",
+      "params": {
+        "scale": {
+          "label": "Scale"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "mirror": {
+          "label": "Mirror"
+        }
+      },
+      "presets": {}
+    },
+    "tilerotate": {
+      "name": "Tile Rotate",
+      "description": "Divides the layer into a grid of tiles and turns the picture inside every tile on its own.",
+      "params": {
+        "rotation": {
+          "label": "Rotation"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "count": {
+          "label": "Count"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "random": {
+          "label": "Randomize"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "tileshift": {
+      "name": "Tile Shift",
+      "description": "Divides the layer into a grid of tiles and slides the picture inside every tile in a random direction.",
+      "params": {
+        "strength": {
+          "label": "Strength"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "count": {
+          "label": "Count"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "hexagontilerotate": {
+      "name": "Hexagon Tile Rotate",
+      "description": "Divides the layer into hexagonal tiles and turns the picture inside every tile on its own.",
+      "params": {
+        "rotation": {
+          "label": "Rotation"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "count": {
+          "label": "Count"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "random": {
+          "label": "Randomize"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "hexagontileshift": {
+      "name": "Hexagon Tile Shift",
+      "description": "Divides the layer into hexagonal tiles and slides the picture inside every tile in a random direction.",
+      "params": {
+        "strength": {
+          "label": "Strength"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "count": {
+          "label": "Count"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "squeeze": {
+      "name": "Squeeze",
+      "description": "Pinches the middle of the layer inward with positive Strength and bulges it outward with negative Strength. Legacy preserves the shape of older projects.",
+      "params": {
+        "amount": {
+          "label": "Strength"
+        },
+        "shape": {
+          "label": "Shape",
+          "options": [
+            "Pinch/Bulge",
+            "Legacy"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "polar": {
+      "name": "Polar Coordinates",
+      "description": "Bends the layer around its center, turning straight lines into circles, or unrolls circles into straight lines.",
+      "params": {
+        "amount": {
+          "label": "Interpolation"
+        },
+        "direction": {
+          "label": "Type",
+          "options": [
+            "Rectangular to Polar",
+            "Polar to Rectangular"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "viewer360": {
+      "name": "360° Viewer",
+      "description": "Shows a 360° panorama layer through a virtual camera that you can turn and zoom.",
+      "params": {
+        "yaw": {
+          "label": "Yaw"
+        },
+        "pitch": {
+          "label": "Pitch"
+        },
+        "roll": {
+          "label": "Roll"
+        },
+        "fov": {
+          "label": "Field of View"
+        }
+      },
+      "presets": {}
+    },
+    "reorient360": {
+      "name": "360° Reorient Sphere",
+      "description": "Turns a 360° panorama layer around inside its sphere, to level the horizon or change where the front is.",
+      "params": {
+        "yaw": {
+          "label": "Yaw"
+        },
+        "pitch": {
+          "label": "Pitch"
+        },
+        "roll": {
+          "label": "Roll"
+        }
+      },
+      "presets": {}
+    },
+    "stretch": {
+      "name": "Stretch Segment",
+      "description": "Cuts the layer along a line and pulls the two halves apart, stretching the pixels on the line into the gap.",
+      "params": {
+        "angle": {
+          "label": "Angle"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "spread": {
+          "label": "Spread"
+        }
+      },
+      "presets": {}
+    },
+    "bend": {
+      "name": "Bend",
+      "description": "Bends the layer along a circular arc; the Origin side stays put and the far side turns to the angle you set, a positive angle to the left. Best on long, thin layers.",
+      "params": {
+        "origin": {
+          "label": "Origin",
+          "options": [
+            "Left",
+            "Right",
+            "Top",
+            "Bottom"
+          ]
+        },
+        "amount": {
+          "label": "Angle"
+        },
+        "start": {
+          "label": "Start"
+        },
+        "before": {
+          "label": "Before Start",
+          "options": [
+            "Freeze",
+            "Bend to Same Side",
+            "Bend to Opposite Side"
+          ]
+        },
+        "tuneHead": {
+          "label": "Tune Head"
+        },
+        "tuneTail": {
+          "label": "Tune Tail"
+        }
+      },
+      "presets": {}
+    },
+    "curl": {
+      "name": "Curl",
+      "description": "Rolls one end of the layer around a circle while the other end stays flat; animate Offset to roll or unroll it. Best on wide, thin layers.",
+      "params": {
+        "offset": {
+          "label": "Offset"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "curlFrom": {
+          "label": "Curl From",
+          "options": [
+            "Left",
+            "Right"
+          ]
+        },
+        "direction": {
+          "label": "Direction",
+          "options": [
+            "Up",
+            "Down"
+          ]
+        },
+        "stretch": {
+          "label": "Stretch"
+        }
+      },
+      "presets": {}
+    },
+    "magnifybackground": {
+      "name": "Magnify Background",
+      "description": "Makes the layer a magnifying glass: its shape shows the layers behind it enlarged around its center.",
+      "params": {
+        "scale": {
+          "label": "Scale"
+        },
+        "magnify": {
+          "label": "Magnify Layer"
+        },
+        "sampling": {
+          "label": "Sampling",
+          "options": [
+            "Nearest",
+            "Linear"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "glass": {
+      "name": "Glass",
+      "description": "Turns the layer's shape into beveled glass that bends the layers behind it, with a highlight along the rim.",
+      "params": {
+        "blur": {
+          "label": "Bevel"
+        },
+        "refraction": {
+          "label": "Refraction"
+        },
+        "angle": {
+          "label": "Light Angle"
+        },
+        "highlight": {
+          "label": "Highlight"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "tint": {
+          "label": "Tint"
+        }
+      },
+      "presets": {}
+    },
+    "displacementmap": {
+      "name": "Displacement Map",
+      "description": "Uses the layer's colors to push the layers behind it around, then hides itself; or, with Map set to Layer Below, pushes this layer by the layer beneath.",
+      "params": {
+        "offset": {
+          "label": "Offset"
+        },
+        "xchannel": {
+          "label": "X",
+          "options": [
+            "R",
+            "G",
+            "B"
+          ]
+        },
+        "ychannel": {
+          "label": "Y",
+          "options": [
+            "R",
+            "G",
+            "B"
+          ]
+        },
+        "edges": {
+          "label": "Edges",
+          "options": [
+            "Repeat",
+            "Mirror",
+            "Clear",
+            "Tile"
+          ]
+        },
+        "fromCenter": {
+          "label": "From Center"
+        },
+        "invert": {
+          "label": "Invert"
+        },
+        "map": {
+          "label": "Map",
+          "options": [
+            "This Layer",
+            "Layer Below"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "polardisplacement": {
+      "name": "Polar Displacement Map",
+      "description": "Turns and pulls the layers behind this one around a center point by the layer's colors, then hides the layer.",
+      "params": {
+        "angle": {
+          "label": "Angle"
+        },
+        "reach": {
+          "label": "Inset/Outset"
+        },
+        "angleChannel": {
+          "label": "Angle From",
+          "options": [
+            "R",
+            "G",
+            "B",
+            "Luminance",
+            "Alpha"
+          ]
+        },
+        "distanceChannel": {
+          "label": "Distance From",
+          "options": [
+            "R",
+            "G",
+            "B",
+            "Luminance",
+            "Alpha"
+          ]
+        },
+        "edges": {
+          "label": "Edges",
+          "options": [
+            "Repeat",
+            "Mirror",
+            "Clear",
+            "Tile"
+          ]
+        },
+        "center": {
+          "label": "Center"
+        },
+        "fromCenter": {
+          "label": "From Center"
+        },
+        "invert": {
+          "label": "Invert"
+        }
+      },
+      "presets": {}
+    },
+    "ominoglass": {
+      "name": "Omino Glass",
+      "description": "Glass made from the layer's brightness: refracts what is behind it with rainbow fringes and lights the surface like a lens.",
+      "params": {
+        "blur": {
+          "label": "Bevel"
+        },
+        "refraction": {
+          "label": "Refraction"
+        },
+        "aberration": {
+          "label": "Chromatic Aberration"
+        },
+        "feature": {
+          "label": "Feature Size"
+        },
+        "samples": {
+          "label": "Smoothing Samples"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "blend": {
+          "label": "Blend"
+        },
+        "shading": {
+          "label": "Shading",
+          "options": [
+            "None",
+            "Point Light",
+            "Directional Light"
+          ]
+        },
+        "intensity": {
+          "label": "Intensity"
+        },
+        "shine": {
+          "label": "Shine"
+        },
+        "specularity": {
+          "label": "Specularity"
+        },
+        "ambient": {
+          "label": "Ambient"
+        },
+        "light": {
+          "label": "Light Color"
+        },
+        "direction": {
+          "label": "Direction"
+        },
+        "elevation": {
+          "label": "Elevation"
+        },
+        "useLuma": {
+          "label": "Use Layer Luminance"
+        },
+        "amount": {
+          "label": "Roughness"
+        },
+        "scale": {
+          "label": "Roughness Scale"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "glow": {
+      "name": "Glow",
+      "description": "A halo in one color around the outside of the layer's shape. Hardness turns it from a soft fade into a solid outline.",
+      "params": {
+        "radius": {
+          "label": "Radius"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "hardness": {
+          "label": "Hardness"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "blendMode": {
+          "label": "Blending Mode",
+          "options": [
+            "Normal",
+            "Multiply",
+            "Screen"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "lightglow": {
+      "name": "Light Glow",
+      "description": "Adds a colored glow around the parts of the picture brighter than a threshold.",
+      "params": {
+        "blur": {
+          "label": "Size"
+        },
+        "threshold": {
+          "label": "Threshold"
+        },
+        "intensity": {
+          "label": "Intensity"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "opacity": {
+          "label": "Opacity"
+        }
+      },
+      "presets": {}
+    },
+    "softglow": {
+      "name": "Soft Glow",
+      "description": "Screens a soft, blurred copy of the picture over it for a dreamy glow, mostly from the highlights.",
+      "params": {
+        "blur": {
+          "label": "Size"
+        },
+        "brightness": {
+          "label": "Brightness"
+        },
+        "contrast": {
+          "label": "Contrast"
+        },
+        "highlights": {
+          "label": "Highlights"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "opacity": {
+          "label": "Opacity"
+        }
+      },
+      "presets": {}
+    },
+    "innerglow": {
+      "name": "Inner Glow",
+      "description": "Adds a glow along the inside edges of the opaque parts of the layer.",
+      "params": {
+        "blur": {
+          "label": "Size"
+        },
+        "intensity": {
+          "label": "Intensity"
+        },
+        "color": {
+          "label": "Color"
+        }
+      },
+      "presets": {}
+    },
+    "edgeglow": {
+      "name": "Edge Glow",
+      "description": "Finds the edges in the layer and makes them glow like neon over a darkened picture.",
+      "params": {
+        "threshold": {
+          "label": "Threshold"
+        },
+        "blur": {
+          "label": "Blur"
+        },
+        "spread": {
+          "label": "Spread"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "blend": {
+          "label": "Blend"
+        },
+        "invert": {
+          "label": "Invert"
+        }
+      },
+      "presets": {}
+    },
+    "contourlines": {
+      "name": "Contour Lines",
+      "description": "Draws outline rings around the opaque parts of the layer, for stacked sticker or neon outlines.",
+      "params": {
+        "color": {
+          "label": "Color"
+        },
+        "blur": {
+          "label": "Outset"
+        },
+        "width": {
+          "label": "Width"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "fill": {
+          "label": "Fill"
+        },
+        "count": {
+          "label": "Count"
+        },
+        "phase": {
+          "label": "Phase"
+        }
+      },
+      "presets": {}
+    },
+    "contourgradient": {
+      "name": "Contour Gradient",
+      "description": "Paints a two-color gradient outwards from the edges of the opaque parts of the layer, like a soft colored halo.",
+      "params": {
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "blur": {
+          "label": "Width"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "fill": {
+          "label": "Fill"
+        },
+        "fade": {
+          "label": "Fade"
+        }
+      },
+      "presets": {}
+    },
+    "electricedges": {
+      "name": "Electric Edges",
+      "description": "Draws a crackling, glowing outline around the layer that jitters like electricity when Seed or Evolution is animated, with optional contour lines inside.",
+      "params": {
+        "blur": {
+          "label": "Distance"
+        },
+        "thickness": {
+          "label": "Thickness"
+        },
+        "detail": {
+          "label": "Detail"
+        },
+        "distortion": {
+          "label": "Distortion"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "glowColor": {
+          "label": "Glow Color"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "glow": {
+          "label": "Glow"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "fill": {
+          "label": "Fill"
+        },
+        "maskStrength": {
+          "label": "Mask Strength"
+        },
+        "maskEvolution": {
+          "label": "Mask Evolution"
+        },
+        "maskScale": {
+          "label": "Mask Scale"
+        },
+        "maskSeed": {
+          "label": "Mask Seed"
+        },
+        "maskColor": {
+          "label": "Mask Color"
+        },
+        "contours": {
+          "label": "Render Contours"
+        },
+        "count": {
+          "label": "Contour Count"
+        },
+        "phase": {
+          "label": "Contour Phase"
+        },
+        "contourAngle": {
+          "label": "Contour Angle"
+        }
+      },
+      "presets": {}
+    },
+    "contourstrips": {
+      "name": "Contour Strips",
+      "description": "Draws stacked paper strips whose height follows the layer's brightness or opacity, like a ridge-line landscape.",
+      "params": {
+        "count": {
+          "label": "Count"
+        },
+        "height": {
+          "label": "Height"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "thickness": {
+          "label": "Thickness"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "invert": {
+          "label": "Invert"
+        },
+        "edgeColor": {
+          "label": "Edge Color"
+        },
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "light": {
+          "label": "Light Color"
+        },
+        "lightAngle": {
+          "label": "Light Angle"
+        },
+        "map": {
+          "label": "Height Map",
+          "options": [
+            "Alpha",
+            "Luminance"
+          ]
+        },
+        "mask": {
+          "label": "Mask To Layer"
+        }
+      },
+      "presets": {}
+    },
+    "glowscan": {
+      "name": "Glow Scan",
+      "description": "Blurs and lights up only the parts of the layer whose brightness falls in a band; animate Position to sweep the glow from shadows to highlights.",
+      "params": {
+        "blur": {
+          "label": "Blur"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "width": {
+          "label": "Width"
+        },
+        "softness": {
+          "label": "Softness"
+        },
+        "intensity": {
+          "label": "Intensity"
+        },
+        "color": {
+          "label": "Glow Color"
+        },
+        "show": {
+          "label": "Show Band Only"
+        }
+      },
+      "presets": {}
+    },
+    "ribbon": {
+      "name": "Ribbon",
+      "description": "Draws a twisting ribbon of changing width across the opaque parts of the layer; animate Phase to make it flow, or punch it out of the layer.",
+      "params": {
+        "magnitude": {
+          "label": "Magnitude"
+        },
+        "frequency": {
+          "label": "Frequency"
+        },
+        "width": {
+          "label": "Width"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "punch": {
+          "label": "Punch Out"
+        },
+        "smoothing": {
+          "label": "Smoothing"
+        },
+        "tint": {
+          "label": "Tint"
+        },
+        "tintAmount": {
+          "label": "Tint Amount"
+        },
+        "angle": {
+          "label": "Angle"
+        }
+      },
+      "presets": {}
+    },
+    "edgedetect": {
+      "name": "Edge Detect",
+      "description": "Bright lines where the picture changes, dark elsewhere.",
+      "params": {
+        "strength": {
+          "label": "Strength"
+        }
+      },
+      "presets": {}
+    },
+    "emboss": {
+      "name": "Emboss",
+      "description": "Applies an emboss effect using luminance gradients along a specified light angle.",
+      "params": {
+        "angle": {
+          "label": "Light Angle"
+        },
+        "strength": {
+          "label": "Strength"
+        }
+      },
+      "presets": {}
+    },
+    "smoothbevel": {
+      "name": "Smooth Bevel",
+      "description": "Gives the opaque parts of the layer a smooth, rounded bevel lit from one side.",
+      "params": {
+        "blur": {
+          "label": "Size"
+        },
+        "angle": {
+          "label": "Light Angle"
+        },
+        "depth": {
+          "label": "Depth"
+        },
+        "intensity": {
+          "label": "Intensity"
+        },
+        "highlight": {
+          "label": "Highlight"
+        },
+        "shadow": {
+          "label": "Shadow"
+        }
+      },
+      "presets": {}
+    },
+    "bumpmap": {
+      "name": "Bump Map",
+      "description": "Lights the layer as if its brightness were a raised surface, for an embossed, textured look that keeps the colors.",
+      "params": {
+        "angle": {
+          "label": "Light Angle"
+        },
+        "height": {
+          "label": "Height"
+        },
+        "ambient": {
+          "label": "Ambient"
+        },
+        "shine": {
+          "label": "Shine"
+        },
+        "light": {
+          "label": "Light Color"
+        }
+      },
+      "presets": {}
+    },
+    "roughenedges": {
+      "name": "Roughen Edges",
+      "description": "Eats into the edges of the opaque parts with noise, for a torn, worn or burnt outline.",
+      "params": {
+        "blur": {
+          "label": "Border"
+        },
+        "roughness": {
+          "label": "Roughness"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "octaves": {
+          "label": "Octaves"
+        }
+      },
+      "presets": {}
+    },
+    "halftone": {
+      "name": "Halftone",
+      "description": "Printed dots that grow where the picture is dark.",
+      "params": {
+        "cell": {
+          "label": "Size"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "colored": {
+          "label": "Color Dots"
+        }
+      },
+      "presets": {}
+    },
+    "halftonelines": {
+      "name": "Halftone Lines",
+      "description": "Redraws the layer as printed lines that get thicker in dark areas and thinner in light ones.",
+      "params": {
+        "amount": {
+          "label": "Amount"
+        },
+        "strength": {
+          "label": "Strength"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        }
+      },
+      "presets": {}
+    },
+    "cmykhalftone": {
+      "name": "CMYK Halftone Dots",
+      "description": "Redraws the layer like a magazine print: cyan, magenta, yellow and black dots on four rotated screens.",
+      "params": {
+        "amount": {
+          "label": "Amount"
+        },
+        "strength": {
+          "label": "Strength"
+        },
+        "black": {
+          "label": "Black"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "phase": {
+          "label": "Phase"
+        }
+      },
+      "presets": {}
+    },
+    "lensflare": {
+      "name": "Light Flare",
+      "description": "A bright light with a halo, laid over the picture.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "brightness": {
+          "label": "Brightness"
+        },
+        "color": {
+          "label": "Color"
+        }
+      },
+      "presets": {}
+    },
+    "longshadow": {
+      "name": "Long Shadow",
+      "description": "Casts long, parallel shadows from the opaque parts of the layer.",
+      "params": {
+        "angle": {
+          "label": "Angle"
+        },
+        "reach": {
+          "label": "Length"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "fade": {
+          "label": "Fade"
+        }
+      },
+      "presets": {}
+    },
+    "radialshadow": {
+      "name": "Radial Shadow",
+      "description": "Casts long shadows from the opaque parts of the layer, spreading out away from a light point.",
+      "params": {
+        "light": {
+          "label": "Light"
+        },
+        "reach": {
+          "label": "Length"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "fade": {
+          "label": "Fade"
+        }
+      },
+      "presets": {}
+    },
+    "pixelate": {
+      "name": "Pixelate",
+      "description": "Turns the layer into blocks of one color each, taken from the middle of the block, on a grid centered on the layer (or on the frame with Screen Space). Stretch, Offset and Angle shape the grid and Vignette darkens each block toward its edges.",
+      "params": {
+        "blockSize": {
+          "label": "Size"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "vignette": {
+          "label": "Vignette"
+        },
+        "screenSpace": {
+          "label": "Screen Space"
+        }
+      },
+      "presets": {}
+    },
+    "mosaic": {
+      "name": "Mosaic",
+      "description": "Divides the layer into squares and fills each one with its average color.",
+      "params": {
+        "count": {
+          "label": "Count"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "offset": {
+          "label": "Offset"
+        }
+      },
+      "presets": {}
+    },
+    "rgbsplit": {
+      "name": "RGB Split",
+      "description": "Splits the red, green and blue channels: the Center channel stays put and the other two shift in opposite directions along Angle. Light adds the shifted colors, Dark keeps them solid, Mask keeps only where all three overlap and Luma makes the fringes as opaque as they are bright.",
+      "params": {
+        "strength": {
+          "label": "Strength"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "center": {
+          "label": "Center",
+          "options": [
+            "R",
+            "G",
+            "B"
+          ]
+        },
+        "mode": {
+          "label": "Mode",
+          "options": [
+            "Light",
+            "Dark",
+            "Mask",
+            "Luma"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "scanlines": {
+      "name": "Scanlines",
+      "description": "Adds horizontal scanlines for a CRT monitor effect with optional vertical rolling.",
+      "params": {
+        "spacing": {
+          "label": "Line Spacing"
+        },
+        "darkness": {
+          "label": "Darkness"
+        },
+        "roll_speed": {
+          "label": "Roll Speed"
+        }
+      },
+      "presets": {}
+    },
+    "stripes": {
+      "name": "Stripes",
+      "description": "Draws a pattern of stripes over the opaque parts of the layer, or punches the stripes out of it.",
+      "params": {
+        "count": {
+          "label": "Count"
+        },
+        "width": {
+          "label": "Width"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "punch": {
+          "label": "Punch Out"
+        },
+        "smoothing": {
+          "label": "Smoothing"
+        },
+        "screenSpace": {
+          "label": "Screen Space"
+        }
+      },
+      "presets": {}
+    },
+    "voronoicells": {
+      "name": "Voronoi Cells",
+      "description": "Fills the opaque parts of the layer with a pattern of cells around randomly placed points.",
+      "params": {
+        "scale": {
+          "label": "Scale"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "lineWidth": {
+          "label": "Line Width"
+        },
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "lineColor": {
+          "label": "Line Color"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "star": {
+      "name": "Star",
+      "description": "Draws one glowing star on the layer.",
+      "params": {
+        "position": {
+          "label": "Position"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "brightness": {
+          "label": "Brightness"
+        },
+        "shine": {
+          "label": "Shine"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "points": {
+          "label": "Points"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "blend": {
+          "label": "Blending Mode",
+          "options": [
+            "Normal",
+            "Multiply",
+            "Screen",
+            "Overlay",
+            "Soft Light",
+            "Hard Light",
+            "Add",
+            "Darken",
+            "Lighten",
+            "Difference",
+            "Color Dodge",
+            "Color Burn"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "checker": {
+      "name": "Checker",
+      "description": "Draws a checkerboard over the opaque parts of the layer, or punches the checkers out of it.",
+      "params": {
+        "offset": {
+          "label": "Offset"
+        },
+        "count": {
+          "label": "Count"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "punch": {
+          "label": "Punch Out"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "screenSpace": {
+          "label": "Screen Space"
+        }
+      },
+      "presets": {}
+    },
+    "grid": {
+      "name": "Grid",
+      "description": "Draws grid lines over the opaque parts of the layer, or cuts them out of it.",
+      "params": {
+        "offset": {
+          "label": "Offset"
+        },
+        "count": {
+          "label": "Count"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "width": {
+          "label": "Width"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "punch": {
+          "label": "Punch Out"
+        },
+        "angle": {
+          "label": "Angle"
+        }
+      },
+      "presets": {}
+    },
+    "dots": {
+      "name": "Dots",
+      "description": "Draws a random but even pattern of soft dots over the layer, or uses the layer only as a mask for the dots.",
+      "params": {
+        "scale": {
+          "label": "Scale"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "feather": {
+          "label": "Feather"
+        },
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "density": {
+          "label": "Density"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "fill": {
+          "label": "Fill"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "blend": {
+          "label": "Blending Mode",
+          "options": [
+            "Normal",
+            "Multiply",
+            "Screen"
+          ]
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "slack": {
+          "label": "Slack"
+        }
+      },
+      "presets": {}
+    },
+    "radialrays": {
+      "name": "Radial Rays",
+      "description": "Paints solid sunburst rays from a point over the opaque parts of the layer.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "count": {
+          "label": "Count"
+        },
+        "width": {
+          "label": "Width"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "alpha": {
+          "label": "Alpha"
+        }
+      },
+      "presets": {}
+    },
+    "lightning": {
+      "name": "Lightning",
+      "description": "Draws a forked bolt of lightning between two points on the layer.",
+      "params": {
+        "from": {
+          "label": "Start"
+        },
+        "to": {
+          "label": "End"
+        },
+        "width": {
+          "label": "Width"
+        },
+        "jag": {
+          "label": "Detail"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "glow": {
+          "label": "Glow"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "iridescence": {
+      "name": "Iridescence",
+      "description": "Covers the opaque parts of the layer with a flowing rainbow sheen, like oil on water or a soap bubble.",
+      "params": {
+        "scale": {
+          "label": "Scale"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "shift": {
+          "label": "Hue Shift"
+        },
+        "saturation": {
+          "label": "Saturation"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "blend": {
+          "label": "Blending Mode",
+          "options": [
+            "Normal",
+            "Multiply",
+            "Screen",
+            "Overlay",
+            "Soft Light",
+            "Hard Light",
+            "Add",
+            "Darken",
+            "Lighten",
+            "Difference",
+            "Color Dodge",
+            "Color Burn"
+          ]
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "rays": {
+      "name": "Rays",
+      "description": "Shines rays of light out from the bright parts of the layer, away from a center point.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "reach": {
+          "label": "Length"
+        },
+        "threshold": {
+          "label": "Threshold"
+        },
+        "intensity": {
+          "label": "Intensity"
+        },
+        "color": {
+          "label": "Color"
+        }
+      },
+      "presets": {}
+    },
+    "starfield": {
+      "name": "Starfield",
+      "description": "Fills the opaque parts of the layer with a deep field of stars. Offset moves through the field, with nearby stars moving farther than distant stars.",
+      "params": {
+        "offset": {
+          "label": "Offset"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "brightness": {
+          "label": "Brightness"
+        },
+        "darkMatter": {
+          "label": "Dark Matter"
+        }
+      },
+      "presets": {}
+    },
+    "sharpen": {
+      "name": "Sharpen",
+      "description": "Applies an unsharp mask using a 3x3 neighborhood to enhance fine details.",
+      "params": {
+        "amount": {
+          "label": "Strength"
+        },
+        "radius": {
+          "label": "Radius"
+        }
+      },
+      "presets": {}
+    },
+    "vignette": {
+      "name": "Vignette",
+      "description": "Darkens the layer toward its edges outside a rounded shape: Size sets the shape, Roundness how round it is, Feather how soft its edge is, Strength how dark it gets and Tint how much it takes on Color. Punch Out makes the edges transparent instead.",
+      "params": {
+        "extent": {
+          "label": "Size"
+        },
+        "rounding": {
+          "label": "Roundness"
+        },
+        "feather": {
+          "label": "Feather"
+        },
+        "strength": {
+          "label": "Strength"
+        },
+        "tint": {
+          "label": "Tint"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "punch": {
+          "label": "Punch Out"
+        }
+      },
+      "presets": {}
+    },
+    "filmgrain": {
+      "name": "Film Grain",
+      "description": "Animated monochrome film grain with adjustable amount, grain size, and animation speed.",
+      "params": {
+        "amount": {
+          "label": "Amount"
+        },
+        "grainSize": {
+          "label": "Grain Size"
+        },
+        "speed": {
+          "label": "Speed"
+        }
+      },
+      "presets": {}
+    },
+    "turbulence": {
+      "name": "Turbulence",
+      "description": "Fills the opaque parts of the layer with smooth fractal noise, for clouds, smoke or a brightness map.",
+      "params": {
+        "parallax": {
+          "label": "Parallax"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "intensity": {
+          "label": "Intensity"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "blend": {
+          "label": "Blending Mode",
+          "options": [
+            "Normal",
+            "Multiply",
+            "Screen",
+            "Overlay",
+            "Soft Light",
+            "Hard Light",
+            "Add",
+            "Darken",
+            "Lighten",
+            "Difference",
+            "Color Dodge",
+            "Color Burn"
+          ]
+        },
+        "bias": {
+          "label": "Bias"
+        },
+        "octaves": {
+          "label": "Octaves"
+        }
+      },
+      "presets": {}
+    },
+    "clouds": {
+      "name": "Clouds",
+      "description": "Covers the opaque parts of the layer with a soft cloud pattern, also handy as a noise source.",
+      "params": {
+        "parallax": {
+          "label": "Parallax"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "intensity": {
+          "label": "Intensity"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "octaves": {
+          "label": "Octaves"
+        }
+      },
+      "presets": {}
+    },
+    "fractalridges": {
+      "name": "Fractal Ridges",
+      "description": "Fills the opaque parts of the layer with sharp, turbulent ridges of fractal noise.",
+      "params": {
+        "offset": {
+          "label": "Offset"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "intensity": {
+          "label": "Intensity"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "octaves": {
+          "label": "Octaves"
+        }
+      },
+      "presets": {}
+    },
+    "dissolve": {
+      "name": "Dissolve",
+      "description": "Removes random pixels or blocks from the layer. Animate Strength for a dissolve transition; Seed chooses the pattern and Size sets the size of each speck.",
+      "params": {
+        "progress": {
+          "label": "Strength"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "grain": {
+          "label": "Size"
+        }
+      },
+      "presets": {}
+    },
+    "blockdissolve": {
+      "name": "Block Dissolve",
+      "description": "Removes random grid-aligned blocks from the layer. Animate Strength to take away more and more blocks.",
+      "params": {
+        "strength": {
+          "label": "Strength"
+        },
+        "blockSize": {
+          "label": "Size"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "fade": {
+          "label": "Fade"
+        },
+        "offset": {
+          "label": "Offset"
+        }
+      },
+      "presets": {}
+    },
+    "blocknoise": {
+      "name": "Block Noise",
+      "description": "Flickers random blocks of noise over the layer. Multiply modulates the existing colors; Add adds noise to them. Freeze holds the pattern still.",
+      "params": {
+        "blockSize": {
+          "label": "Size"
+        },
+        "stretch": {
+          "label": "Stretch"
+        },
+        "strength": {
+          "label": "Strength"
+        },
+        "mono": {
+          "label": "Monochrome"
+        },
+        "freeze": {
+          "label": "Freeze"
+        },
+        "extremes": {
+          "label": "Extremes"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "overshoot": {
+          "label": "Overshoot"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "blending": {
+          "label": "Blending Mode",
+          "options": [
+            "Add",
+            "Multiply"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "static": {
+      "name": "Static",
+      "description": "Flickering gray noise, like a television with no signal.",
+      "params": {
+        "amount": {
+          "label": "Amount"
+        },
+        "grain": {
+          "label": "Size"
+        }
+      },
+      "presets": {}
+    },
+    "blink": {
+      "name": "Blink",
+      "description": "Switches the layer on and off a number of times per second.",
+      "params": {
+        "frequency": {
+          "label": "Frequency"
+        }
+      },
+      "presets": {}
+    },
+    "fade": {
+      "name": "Fade In/Out",
+      "description": "Fades the layer in at its start and out again at its end, over the times you set.",
+      "params": {
+        "fadeIn": {
+          "label": "In"
+        },
+        "fadeOut": {
+          "label": "Out"
+        }
+      },
+      "presets": {}
+    },
+    "kaleidoscope": {
+      "name": "Kaleidoscope",
+      "description": "Mirrored slices around a point.",
+      "params": {
+        "center": {
+          "label": "Center"
+        },
+        "segments": {
+          "label": "Segments"
+        },
+        "angle": {
+          "label": "Angle"
+        }
+      },
+      "presets": {}
+    },
+    "mirror": {
+      "name": "Mirror",
+      "description": "Reflects one half of the image across a mirror line defined by an angle and a center point.",
+      "params": {
+        "angle": {
+          "label": "Angle"
+        },
+        "center": {
+          "label": "Center"
+        }
+      },
+      "presets": {}
+    },
+    "tile": {
+      "name": "Tile",
+      "description": "Repeats the picture in a grid.",
+      "params": {
+        "scale": {
+          "label": "Scale"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "mirror": {
+          "label": "Mirror"
+        }
+      },
+      "presets": {}
+    },
+    "chromakey": {
+      "name": "Chroma Key",
+      "description": "Removes one color, such as a green screen.",
+      "params": {
+        "key": {
+          "label": "Key Color"
+        },
+        "tolerance": {
+          "label": "Tolerance"
+        },
+        "softness": {
+          "label": "Softness"
+        }
+      },
+      "presets": {}
+    },
+    "lumakey": {
+      "name": "Luma Key",
+      "description": "Removes the dark parts of the layer (or the light ones).",
+      "params": {
+        "threshold": {
+          "label": "Threshold"
+        },
+        "softness": {
+          "label": "Softness"
+        },
+        "invert": {
+          "label": "Invert"
+        }
+      },
+      "presets": {}
+    },
+    "wipe": {
+      "name": "Wipe",
+      "description": "Hides the layer from two opposite sides. Animate Start or End for a wipe transition.",
+      "params": {
+        "start": {
+          "label": "Start"
+        },
+        "end": {
+          "label": "End"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "feather": {
+          "label": "Feather"
+        }
+      },
+      "presets": {}
+    },
+    "feather": {
+      "name": "Feather",
+      "description": "Softens the alpha edges of the layer. Inward fades into the existing outline; Blur Alpha also spreads the softened edge outside it.",
+      "params": {
+        "blur": {
+          "label": "Strength"
+        },
+        "mode": {
+          "label": "Edges",
+          "options": [
+            "Inward",
+            "Blur Alpha"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "radialwipe": {
+      "name": "Radial Wipe",
+      "description": "Hides a wedge of the layer swept round Center from Start Angle, like a clock hand. Progress is the angle swept, Count repeats the wedge round the circle and Both sweeps both ways. Animate Progress for a transition.",
+      "params": {
+        "progress": {
+          "label": "Progress"
+        },
+        "start": {
+          "label": "Start Angle"
+        },
+        "center": {
+          "label": "Center"
+        },
+        "feather": {
+          "label": "Feather"
+        },
+        "direction": {
+          "label": "Direction",
+          "options": [
+            "Clockwise",
+            "Counterclockwise",
+            "Both"
+          ]
+        },
+        "count": {
+          "label": "Count"
+        }
+      },
+      "presets": {}
+    },
+    "mattechoker": {
+      "name": "Matte Choker",
+      "description": "Shrinks the opaque parts of the layer by eating into their edges.",
+      "params": {
+        "blur": {
+          "label": "Size"
+        },
+        "amount": {
+          "label": "Choke"
+        },
+        "softness": {
+          "label": "Softness"
+        }
+      },
+      "presets": {}
+    },
+    "unsharpmask": {
+      "name": "Unsharp Mask",
+      "description": "Sharpens by adding back the difference between the layer and a blurred copy of it. Strength sets how wide the blur is, Amount how much is added back, and Threshold above 50% leaves small differences alone.",
+      "params": {
+        "radius": {
+          "label": "Strength"
+        },
+        "amount": {
+          "label": "Amount"
+        },
+        "threshold": {
+          "label": "Threshold"
+        },
+        "showMask": {
+          "label": "Show Mask"
+        }
+      },
+      "presets": {}
+    },
+    "highlightshadow": {
+      "name": "Highlights & Shadows",
+      "description": "Recovers or boosts bright highlights and lifts or deepens dark shadows, going by the brightness of each pixel.",
+      "params": {
+        "highlights": {
+          "label": "Highlights"
+        },
+        "shadows": {
+          "label": "Shadows"
+        }
+      },
+      "presets": {}
+    },
+    "darkglow": {
+      "name": "Dark Glow",
+      "description": "Spreads the dark parts of the layer out over the bright ones, like a glow made of shadow.",
+      "params": {
+        "blur": {
+          "label": "Diffusion"
+        },
+        "threshold": {
+          "label": "Threshold"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "blend": {
+          "label": "Blend"
+        },
+        "alpha": {
+          "label": "Alpha"
+        }
+      },
+      "presets": {}
+    },
+    "denoise": {
+      "name": "Denoise",
+      "description": "Removes image noise with an edge-preserving bilateral filter that averages nearby pixels only when their colors are similar.",
+      "params": {
+        "strength": {
+          "label": "Strength"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "detail": {
+          "label": "Detail"
+        }
+      },
+      "presets": {}
+    },
+    "flicker": {
+      "name": "Flicker",
+      "description": "Flickers the opacity of the layer at random.",
+      "params": {
+        "speed": {
+          "label": "Frequency"
+        },
+        "intensity": {
+          "label": "Strength"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "autoshake": {
+      "name": "Auto-Shake",
+      "description": "Moves the layer randomly over time within the set limits.",
+      "params": {
+        "magnitude": {
+          "label": "Magnitude"
+        },
+        "frequency": {
+          "label": "Frequency"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "slack": {
+          "label": "Slack"
+        },
+        "zshake": {
+          "label": "Z Shake"
+        }
+      },
+      "presets": {}
+    },
+    "randomdisplace": {
+      "name": "Random Displacement",
+      "description": "Automatically moves the layer smoothly but randomly over time. Seed picks a different movement, Speed sets how fast it wanders and Evolution shifts the pattern.",
+      "params": {
+        "magnitude": {
+          "label": "Magnitude"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "scatter": {
+          "label": "Scatter"
+        },
+        "speed": {
+          "label": "Speed"
+        }
+      },
+      "presets": {}
+    },
+    "randomjitter": {
+      "name": "Random Jitter",
+      "description": "Makes the layer jump back and forth at random along an angle.",
+      "params": {
+        "angle": {
+          "label": "Angle"
+        },
+        "frequency": {
+          "label": "Frequency"
+        },
+        "magnitude": {
+          "label": "Magnitude"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "slack": {
+          "label": "Slack"
+        },
+        "zjitter": {
+          "label": "Z Jitter"
+        }
+      },
+      "presets": {}
+    },
+    "oscillate": {
+      "name": "Oscillate",
+      "description": "Moves the layer back and forth along an angle, in depth or round in an orbit.",
+      "params": {
+        "direction": {
+          "label": "Direction",
+          "options": [
+            "Angle",
+            "Depth",
+            "Orbit"
+          ]
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "frequency": {
+          "label": "Frequency"
+        },
+        "magnitude": {
+          "label": "Magnitude"
+        },
+        "wave": {
+          "label": "Wave",
+          "options": [
+            "Sine",
+            "Triangle"
+          ]
+        },
+        "phase": {
+          "label": "Phase"
+        }
+      },
+      "presets": {}
+    },
+    "swing": {
+      "name": "Swing",
+      "description": "Turns the layer back and forth between two angles.",
+      "params": {
+        "frequency": {
+          "label": "Frequency"
+        },
+        "angle1": {
+          "label": "Angle 1"
+        },
+        "angle2": {
+          "label": "Angle 2"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "wave": {
+          "label": "Wave",
+          "options": [
+            "Sine",
+            "Triangle"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "spin": {
+      "name": "Spin",
+      "description": "Turns the layer round and round at a steady speed; below zero it turns the other way.",
+      "params": {
+        "rpm": {
+          "label": "RPM"
+        }
+      },
+      "presets": {}
+    },
+    "pulsesize": {
+      "name": "Pulse Size",
+      "description": "Grows and shrinks the layer over and over, on a sine or triangle wave.",
+      "params": {
+        "frequency": {
+          "label": "Frequency"
+        },
+        "shrink": {
+          "label": "Shrink"
+        },
+        "grow": {
+          "label": "Grow"
+        },
+        "phase": {
+          "label": "Starting Phase"
+        },
+        "wave": {
+          "label": "Wave",
+          "options": [
+            "Sine",
+            "Triangle"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "pulseopacity": {
+      "name": "Pulse Opacity",
+      "description": "Fades the layer out and in over and over, on a sine or triangle wave.",
+      "params": {
+        "frequency": {
+          "label": "Frequency"
+        },
+        "strength": {
+          "label": "Strength"
+        },
+        "phase": {
+          "label": "Starting Phase"
+        },
+        "wave": {
+          "label": "Wave",
+          "options": [
+            "Sine",
+            "Triangle"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "stretchaxis": {
+      "name": "Stretch Axis",
+      "description": "Stretches the layer in any direction.",
+      "params": {
+        "scale": {
+          "label": "Scale"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "mask": {
+          "label": "Mask To Layer"
+        }
+      },
+      "presets": {}
+    },
+    "offset": {
+      "name": "Offset",
+      "description": "Shifts the layer's picture, wrapping it round at the edges of the layer's box.",
+      "params": {
+        "offset": {
+          "label": "Offset"
+        },
+        "feather": {
+          "label": "Feather"
+        },
+        "mask": {
+          "label": "Mask To Layer"
+        }
+      },
+      "presets": {}
+    },
+    "movealongpath": {
+      "name": "Move Along Path",
+      "description": "Places the layer partway along the outline of the layer just beneath it.",
+      "params": {
+        "progress": {
+          "label": "Progress"
+        },
+        "orientation": {
+          "label": "Orientation"
+        },
+        "rotate": {
+          "label": "Rotate Automatically"
+        },
+        "inset": {
+          "label": "Inset/Outset"
+        },
+        "offset": {
+          "label": "Offset"
+        }
+      },
+      "presets": {}
+    },
+    "echo": {
+      "name": "Echo Keyframes",
+      "description": "Draws copies of the layer as it was a moment ago, following its animation.",
+      "params": {
+        "seconds": {
+          "label": "Seconds"
+        },
+        "count": {
+          "label": "Count"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "composite": {
+          "label": "Composite",
+          "options": [
+            "Behind",
+            "Atop"
+          ]
+        }
+      },
+      "presets": {}
+    },
+    "timequant": {
+      "name": "Frame Rate",
+      "description": "Makes this layer move at a lower frame rate, like choppy or stop-motion footage.",
+      "params": {
+        "fps": {
+          "label": "Frames/sec"
+        }
+      },
+      "presets": {}
+    },
+    "shutterblur": {
+      "name": "True Motion Blur",
+      "description": "Blurs the layer along the way it really moves, turns and grows, like a camera shutter. A wider shutter angle gives longer trails and more samples give smoother ones. The preview shows a quicker blur unless Full Blur is on.",
+      "params": {
+        "shutter": {
+          "label": "Shutter Angle"
+        },
+        "samples": {
+          "label": "Samples"
+        }
+      },
+      "presets": {}
+    },
+    "vhs": {
+      "name": "VHS",
+      "description": "Looks like an old video tape: color bleed, smeared lines, scanlines, tape noise and rolling tracking bands.",
+      "params": {
+        "chroma": {
+          "label": "Color Bleed"
+        },
+        "smear": {
+          "label": "Smear"
+        },
+        "scanlines": {
+          "label": "Scanlines"
+        },
+        "noise": {
+          "label": "Noise"
+        },
+        "tracking": {
+          "label": "Tracking"
+        },
+        "wobble": {
+          "label": "Wobble"
+        },
+        "saturation": {
+          "label": "Saturation"
+        },
+        "headSwitch": {
+          "label": "Head Switching"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "cube": {
+      "name": "Cube",
+      "description": "Wraps the layer onto every face of a turning cube with rounded edges and lighting.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "edge": {
+          "label": "Size"
+        },
+        "smoothing": {
+          "label": "Smoothing"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "box": {
+      "name": "Box",
+      "description": "Wraps the layer onto a box whose width, height and depth you choose.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "width": {
+          "label": "Width"
+        },
+        "height": {
+          "label": "Height"
+        },
+        "depth": {
+          "label": "Depth"
+        },
+        "smoothing": {
+          "label": "Smoothing"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "hollowbox": {
+      "name": "Hollow Box",
+      "description": "A box with open top and bottom: the layer covers the outside and the inside takes the interior color.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "width": {
+          "label": "Width"
+        },
+        "height": {
+          "label": "Height"
+        },
+        "depth": {
+          "label": "Depth"
+        },
+        "thickness": {
+          "label": "Thickness"
+        },
+        "smoothing": {
+          "label": "Smoothing"
+        },
+        "interior": {
+          "label": "Interior Color"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "cylinder": {
+      "name": "Cylinder",
+      "description": "Wraps the layer around a cylinder and onto its round ends.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "height": {
+          "label": "Height"
+        },
+        "smoothing": {
+          "label": "Smoothing"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "ellipsoid": {
+      "name": "Ellipsoid",
+      "description": "Wraps the layer around a sphere that you can squeeze and flatten.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "squeezeRatio": {
+          "label": "Squeeze"
+        },
+        "flattenRatio": {
+          "label": "Flatten"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "torus": {
+      "name": "Torus",
+      "description": "Wraps the layer around a ring.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "thickness": {
+          "label": "Thickness"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "pyramid": {
+      "name": "Pyramid",
+      "description": "Puts the layer on the faces of a square pyramid.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "base": {
+          "label": "Base"
+        },
+        "height": {
+          "label": "Height"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "octahedron": {
+      "name": "Octahedron",
+      "description": "Puts the layer on the eight faces of an octahedron.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "hexprism": {
+      "name": "Hexagonal Prism",
+      "description": "Puts the layer on the front and back of a six-sided prism.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "depth": {
+          "label": "Depth"
+        },
+        "smoothing": {
+          "label": "Smoothing"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "starprism": {
+      "name": "Star Prism",
+      "description": "Cuts the layer into a star and gives it depth.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "points": {
+          "label": "Points"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "inner": {
+          "label": "Inner Radius"
+        },
+        "depth": {
+          "label": "Depth"
+        },
+        "smoothing": {
+          "label": "Smoothing"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "starpolyhedron": {
+      "name": "Star Polyhedron",
+      "description": "Puts the layer on a star made of two crossed pyramids.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "heart": {
+      "name": "Heart",
+      "description": "Cuts the layer into a puffy heart.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "heartSize": {
+          "label": "Size"
+        },
+        "depth": {
+          "label": "Depth"
+        },
+        "smoothing": {
+          "label": "Smoothing"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "cross": {
+      "name": "Three-axis Cross",
+      "description": "Puts the layer on three bars that cross at the middle.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "reach": {
+          "label": "Length"
+        },
+        "thickness": {
+          "label": "Thickness"
+        },
+        "smoothing": {
+          "label": "Smoothing"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "rasterextrude": {
+      "name": "Raster Extrude",
+      "description": "Pushes the layer's picture out into a solid block; the sides take the interior color.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "depth": {
+          "label": "Depth"
+        },
+        "interior": {
+          "label": "Interior Color"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "flip": {
+      "name": "Flip Layer",
+      "description": "Turns the layer like a card in 3D, with its back see-through, a picture or a color.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "back": {
+          "label": "Back",
+          "options": [
+            "See-through",
+            "Picture",
+            "Color"
+          ]
+        },
+        "backColor": {
+          "label": "Back Color"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "spherize": {
+      "name": "Spherize",
+      "description": "Wraps the layer onto a sphere using a front projection or an equirectangular texture.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "coverage": {
+          "label": "Coverage"
+        },
+        "projection": {
+          "label": "Projection",
+          "options": [
+            "Front",
+            "Equirectangular"
+          ]
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "perspective": {
+          "label": "Perspective"
+        },
+        "shading": {
+          "label": "Shading"
+        },
+        "light": {
+          "label": "Light Angle"
+        },
+        "shine": {
+          "label": "Shine"
+        }
+      },
+      "presets": {}
+    },
+    "tunnel": {
+      "name": "Tunnel",
+      "description": "Lines an endless tunnel with the layer and flies through it. Phase shifts the texture along its length.",
+      "params": {
+        "rotX": {
+          "label": "Rotation X"
+        },
+        "rotY": {
+          "label": "Rotation Y"
+        },
+        "rotZ": {
+          "label": "Rotation Z"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "speed": {
+          "label": "Speed"
+        },
+        "twist": {
+          "label": "Twist"
+        },
+        "repeat": {
+          "label": "Repeat"
+        },
+        "fog": {
+          "label": "Fog"
+        },
+        "fogColor": {
+          "label": "Fog Color"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        }
+      },
+      "presets": {}
+    },
+    "repeat": {
+      "name": "Repeat",
+      "description": "Dynamically generates multiple copies of the layer.",
+      "params": {
+        "count": {
+          "label": "Count"
+        },
+        "time": {
+          "label": "Time"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "alpha": {
+          "label": "Alpha"
+        }
+      },
+      "presets": {}
+    },
+    "linearrepeat": {
+      "name": "Linear Repeat",
+      "description": "Dynamically generates multiple copies of the layer, arranged along a line.",
+      "params": {
+        "count": {
+          "label": "Count"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "rangePosition": {
+          "label": "Range Position"
+        },
+        "rangeScale": {
+          "label": "Range Scale"
+        },
+        "rangeRotation": {
+          "label": "Range Rotation"
+        },
+        "rangeOpacity": {
+          "label": "Range Opacity"
+        },
+        "fillColor": {
+          "label": "Fill Color"
+        },
+        "fillAmount": {
+          "label": "Fill Amount"
+        },
+        "rangeStart": {
+          "label": "Range Start"
+        },
+        "rangeEnd": {
+          "label": "Range End"
+        },
+        "rangeOffset": {
+          "label": "Range Offset"
+        },
+        "easing": {
+          "label": "Easing",
+          "options": [
+            "Linear",
+            "Ease In",
+            "Ease Out",
+            "Ease In Out"
+          ]
+        },
+        "randomOrder": {
+          "label": "Random Order"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "radialrepeat": {
+      "name": "Radial Repeat",
+      "description": "Dynamically generates multiple copies of the layer, arranged in a circular pattern.",
+      "params": {
+        "count": {
+          "label": "Count"
+        },
+        "radius": {
+          "label": "Radius"
+        },
+        "orientation": {
+          "label": "Orientation"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "sweep": {
+          "label": "Sweep"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "rangePosition": {
+          "label": "Range Position"
+        },
+        "rangeScale": {
+          "label": "Range Scale"
+        },
+        "rangeRotation": {
+          "label": "Range Rotation"
+        },
+        "rangeOpacity": {
+          "label": "Range Opacity"
+        },
+        "fillColor": {
+          "label": "Fill Color"
+        },
+        "fillAmount": {
+          "label": "Fill Amount"
+        },
+        "rangeStart": {
+          "label": "Range Start"
+        },
+        "rangeEnd": {
+          "label": "Range End"
+        },
+        "rangeOffset": {
+          "label": "Range Offset"
+        },
+        "easing": {
+          "label": "Easing",
+          "options": [
+            "Linear",
+            "Ease In",
+            "Ease Out",
+            "Ease In Out"
+          ]
+        },
+        "randomOrder": {
+          "label": "Random Order"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "gridrepeat": {
+      "name": "Grid Repeat",
+      "description": "Dynamically generates multiple copies of the layer, arranged in a grid.",
+      "params": {
+        "count": {
+          "label": "Count"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "stagger": {
+          "label": "Stagger"
+        },
+        "rangePosition": {
+          "label": "Range Position"
+        },
+        "rangeScale": {
+          "label": "Range Scale"
+        },
+        "rangeRotation": {
+          "label": "Range Rotation"
+        },
+        "rangeOpacity": {
+          "label": "Range Opacity"
+        },
+        "fillColor": {
+          "label": "Fill Color"
+        },
+        "fillAmount": {
+          "label": "Fill Amount"
+        },
+        "rangeStart": {
+          "label": "Range Start"
+        },
+        "rangeEnd": {
+          "label": "Range End"
+        },
+        "rangeOffset": {
+          "label": "Range Offset"
+        },
+        "easing": {
+          "label": "Easing",
+          "options": [
+            "Linear",
+            "Ease In",
+            "Ease Out",
+            "Ease In Out"
+          ]
+        },
+        "randomOrder": {
+          "label": "Random Order"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "repeatalongpath": {
+      "name": "Repeat Along Path",
+      "description": "Dynamically generates multiple copies of the layer along the outline path of the layer immediately beneath.",
+      "params": {
+        "count": {
+          "label": "Count"
+        },
+        "start": {
+          "label": "Start"
+        },
+        "end": {
+          "label": "End"
+        },
+        "phase": {
+          "label": "Phase"
+        },
+        "tangent": {
+          "label": "Tangent"
+        },
+        "rangePosition": {
+          "label": "Range Position"
+        },
+        "rangeScale": {
+          "label": "Range Scale"
+        },
+        "rangeRotation": {
+          "label": "Range Rotation"
+        },
+        "rangeOpacity": {
+          "label": "Range Opacity"
+        },
+        "fillColor": {
+          "label": "Fill Color"
+        },
+        "fillAmount": {
+          "label": "Fill Amount"
+        },
+        "rangeStart": {
+          "label": "Range Start"
+        },
+        "rangeEnd": {
+          "label": "Range End"
+        },
+        "rangeOffset": {
+          "label": "Range Offset"
+        },
+        "easing": {
+          "label": "Easing",
+          "options": [
+            "Linear",
+            "Ease In",
+            "Ease Out",
+            "Ease In Out"
+          ]
+        },
+        "randomOrder": {
+          "label": "Random Order"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {}
+    },
+    "scatterfield": {
+      "name": "Scatter Field",
+      "description": "Scatters copies of the layer within an infinite 3D field while hiding the original layer, and allows simulated motion within the field in three dimensions through keyframe animation.",
+      "params": {
+        "position": {
+          "label": "Position"
+        },
+        "z": {
+          "label": "Position Z"
+        },
+        "density": {
+          "label": "Density"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "seed": {
+          "label": "Seed"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "size": {
+          "label": "Size"
+        },
+        "angle": {
+          "label": "Angle"
+        },
+        "sizeVariance": {
+          "label": "Size Variance"
+        },
+        "angleVariance": {
+          "label": "Angle Variance"
+        },
+        "amount": {
+          "label": "Amount"
+        },
+        "fade": {
+          "label": "Fade"
+        },
+        "alpha": {
+          "label": "Alpha"
+        },
+        "slack": {
+          "label": "Slack"
+        },
+        "blending": {
+          "label": "Blending Mode",
+          "options": [
+            "Normal",
+            "Add",
+            "Screen",
+            "Multiply",
+            "Lighten",
+            "Darken",
+            "Overlay",
+            "Difference"
+          ]
+        },
+        "coloring": {
+          "label": "Coloring",
+          "options": [
+            "None",
+            "Random",
+            "Depth"
+          ]
+        },
+        "color1": {
+          "label": "Color 1"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "color3": {
+          "label": "Color 3"
+        },
+        "lockLuminance": {
+          "label": "Lock Luminance"
+        },
+        "lockSaturation": {
+          "label": "Lock Saturation"
+        },
+        "interpolateHue": {
+          "label": "Interpolate Hue"
+        }
+      },
+      "presets": {}
+    },
+    "datamosh": {
+      "name": "Datamosh",
+      "description": "Between the start and end times, in seconds from the beginning of the layer, the picture stops refreshing and is dragged around by the motion that follows, as if a key frame were missing. Video layers are smeared by their real motion, other layers by moving blocks.",
+      "params": {
+        "start": {
+          "label": "Start"
+        },
+        "end": {
+          "label": "End"
+        },
+        "intensity": {
+          "label": "Intensity"
+        },
+        "block": {
+          "label": "Block Size"
+        },
+        "decay": {
+          "label": "Decay"
+        },
+        "glitch": {
+          "label": "Glitch"
+        },
+        "bloom": {
+          "label": "Bloom"
+        }
+      },
+      "presets": {}
+    },
+    "textprogress": {
+      "name": "Text Progress",
+      "description": "Shows the text between Start and End, by character, word or line, with optional fades, slides, scaling or blur.",
+      "params": {
+        "start": {
+          "label": "Start"
+        },
+        "progress": {
+          "label": "End"
+        },
+        "unit": {
+          "label": "Based On",
+          "options": [
+            "Character",
+            "Word",
+            "Line"
+          ]
+        },
+        "direction": {
+          "label": "Direction",
+          "options": [
+            "From Start",
+            "From End",
+            "From Center",
+            "Random"
+          ]
+        },
+        "appearance": {
+          "label": "Appear As",
+          "options": [
+            "Pop",
+            "Fade",
+            "Slide Up",
+            "Slide Down",
+            "Slide Left",
+            "Slide Right",
+            "Grow",
+            "Shrink",
+            "Blur"
+          ]
+        },
+        "softness": {
+          "label": "Softness"
+        },
+        "distance": {
+          "label": "Distance"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {
+        "typewriter": "Typewriter",
+        "fade-in-by-word": "Fade In by Word",
+        "slide-up-by-letter": "Slide Up by Letter",
+        "pop-in": "Pop In"
+      }
+    },
+    "texttransform": {
+      "name": "Text Transform",
+      "description": "Moves, scales, turns, fades and tints letters, words or lines inside a range. Anchor sets whether scaling and rotation use each component or the center of the layer. Move the range with Offset to make the change travel through the text.",
+      "params": {
+        "unit": {
+          "label": "Based On",
+          "options": [
+            "Character",
+            "Word",
+            "Line"
+          ]
+        },
+        "anchor": {
+          "label": "Anchor",
+          "options": [
+            "Component",
+            "Layer"
+          ]
+        },
+        "start": {
+          "label": "Start"
+        },
+        "end": {
+          "label": "End"
+        },
+        "offset": {
+          "label": "Offset"
+        },
+        "shape": {
+          "label": "Shape",
+          "options": [
+            "Square",
+            "Ramp Up",
+            "Ramp Down",
+            "Triangle",
+            "Round",
+            "Smooth"
+          ]
+        },
+        "smoothness": {
+          "label": "Smoothness"
+        },
+        "position": {
+          "label": "Position"
+        },
+        "scale": {
+          "label": "Scale"
+        },
+        "rotation": {
+          "label": "Rotation"
+        },
+        "opacity": {
+          "label": "Opacity"
+        },
+        "tint": {
+          "label": "Tint"
+        },
+        "randomOrder": {
+          "label": "Random Order"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {
+        "wave": "Wave",
+        "spin-cascade": "Spin Cascade"
+      }
+    },
+    "textrandomizer": {
+      "name": "Text Randomizer",
+      "description": "Randomly replaces Amount of the characters between Start and End. Animate Evolution or raise Speed to change the replacements; Reveal settles them back into the original text.",
+      "params": {
+        "amount": {
+          "label": "Amount"
+        },
+        "evolution": {
+          "label": "Evolution"
+        },
+        "progress": {
+          "label": "Reveal"
+        },
+        "direction": {
+          "label": "Direction",
+          "options": [
+            "From Start",
+            "From End",
+            "From Center",
+            "Random"
+          ]
+        },
+        "start": {
+          "label": "Start"
+        },
+        "end": {
+          "label": "End"
+        },
+        "charset": {
+          "label": "Characters",
+          "options": [
+            "Letters",
+            "Upper Case",
+            "Lower Case",
+            "Numbers",
+            "Letters and Numbers",
+            "Symbols",
+            "Custom"
+          ]
+        },
+        "characters": {
+          "label": "Custom"
+        },
+        "speed": {
+          "label": "Speed"
+        },
+        "keepSpaces": {
+          "label": "Keep Spaces"
+        },
+        "seed": {
+          "label": "Seed"
+        }
+      },
+      "presets": {
+        "scramble": "Scramble"
+      }
+    },
+    "countupdown": {
+      "name": "Count Up/Down",
+      "description": "Changes every number in a text layer: multiplies it and adds to it, so keyframing Multiply from 0% to 100% counts up to the number you typed. Words around the numbers stay as they are.",
+      "params": {
+        "add": {
+          "label": "Add"
+        },
+        "multiply": {
+          "label": "Multiply"
+        },
+        "decimals": {
+          "label": "Decimal Places",
+          "options": [
+            "As Typed",
+            "0",
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "separator": {
+          "label": "Thousands",
+          "options": [
+            "1000.5",
+            "1,000.5",
+            "1.000,5",
+            "1 000.5"
+          ]
+        }
+      },
+      "presets": {
+        "count-up": "Count Up"
+      }
+    },
+    "timecode": {
+      "name": "Timecode",
+      "description": "Replaces the text of a layer with a running clock of the layer or project time. Start At and a negative Speed make a countdown.",
+      "params": {
+        "format": {
+          "label": "Format",
+          "options": [
+            "HH:MM:SS:FF",
+            "HH:MM:SS",
+            "MM:SS",
+            "MM:SS.hh",
+            "SS.hh",
+            "Frames"
+          ]
+        },
+        "source": {
+          "label": "Time",
+          "options": [
+            "Layer",
+            "Project"
+          ]
+        },
+        "offset": {
+          "label": "Start At"
+        },
+        "speed": {
+          "label": "Speed"
+        }
+      },
+      "presets": {}
+    },
+    "drawingprogress": {
+      "name": "Drawing Progress",
+      "description": "Draws a freehand drawing stroke by stroke, or the outline of a shape, from Start to End. Keyframe End from 0% to 100% to watch it being drawn. Works best on shapes with Fill off and a Stroke.",
+      "params": {
+        "start": {
+          "label": "Start"
+        },
+        "end": {
+          "label": "End"
+        }
+      },
+      "presets": {}
+    },
+    "stroketaper": {
+      "name": "Stroke Taper",
+      "description": "Thins the pen and brush strokes of a freehand drawing to a point: from nothing up to Start, and from End down to nothing. Squeeze makes the taper sharper.",
+      "params": {
+        "start": {
+          "label": "Start"
+        },
+        "end": {
+          "label": "End"
+        },
+        "squeeze": {
+          "label": "Squeeze"
+        }
+      },
+      "presets": {}
+    },
+    "true-audio-reactive": {
+      "name": "音频响应",
+      "description": "选择音频或视频图层来驱动运动，不生成关键帧。",
+      "params": {
+        "target": {
+          "label": "属性",
+          "options": [
+            "缩放",
+            "旋转",
+            "Y 位置",
+            "不透明度"
+          ]
+        },
+        "amount": {
+          "label": "强度"
+        },
+        "offsetMs": {
+          "label": "偏移（毫秒）"
+        }
+      }
+    },
+    "true-particles": {
+      "name": "粒子",
+      "description": "原生粒子物理、生命周期参数和其他图层纹理。",
+      "params": {
+        "amount": {
+          "label": "粒子数量"
+        },
+        "life": {
+          "label": "生命周期（秒）"
+        },
+        "lifeRandom": {
+          "label": "寿命随机性"
+        },
+        "timeScale": {
+          "label": "时间速度"
+        },
+        "timeOffset": {
+          "label": "时间偏移（秒）"
+        },
+        "seed": {
+          "label": "随机种子"
+        },
+        "emitter": {
+          "label": "发射器形状",
+          "options": [
+            "点",
+            "球体",
+            "盒体",
+            "圆形"
+          ]
+        },
+        "originX": {
+          "label": "位置 X"
+        },
+        "originY": {
+          "label": "位置 Y"
+        },
+        "originZ": {
+          "label": "位置 Z"
+        },
+        "spawnX": {
+          "label": "生成半径 X"
+        },
+        "spawnY": {
+          "label": "生成半径 Y"
+        },
+        "spawnZ": {
+          "label": "生成半径 Z"
+        },
+        "velocityX": {
+          "label": "速度 X"
+        },
+        "velocityY": {
+          "label": "速度 Y"
+        },
+        "velocityZ": {
+          "label": "速度 Z"
+        },
+        "spread": {
+          "label": "速度散布"
+        },
+        "directionSpread": {
+          "label": "方向锥角（度）"
+        },
+        "velocityRandom": {
+          "label": "速度随机性"
+        },
+        "speedStart": {
+          "label": "出生速度倍数"
+        },
+        "speedEnd": {
+          "label": "结束速度倍数"
+        },
+        "gravityX": {
+          "label": "重力 X"
+        },
+        "gravity": {
+          "label": "重力 Y"
+        },
+        "gravityZ": {
+          "label": "重力 Z"
+        },
+        "windX": {
+          "label": "风加速度 X"
+        },
+        "windY": {
+          "label": "风加速度 Y"
+        },
+        "windZ": {
+          "label": "风加速度 Z"
+        },
+        "forceRandom": {
+          "label": "力随机性"
+        },
+        "drag": {
+          "label": "阻力"
+        },
+        "turbulence": {
+          "label": "湍流"
+        },
+        "noiseFrequency": {
+          "label": "噪声频率"
+        },
+        "attractorX": {
+          "label": "吸引器位置 X"
+        },
+        "attractorY": {
+          "label": "吸引器位置 Y"
+        },
+        "attractorZ": {
+          "label": "吸引器位置 Z"
+        },
+        "attractStrength": {
+          "label": "吸引（+）/ 排斥（−）"
+        },
+        "attractRadius": {
+          "label": "吸引器软化半径"
+        },
+        "radius": {
+          "label": "粒子半径"
+        },
+        "sizeStart": {
+          "label": "出生大小倍数"
+        },
+        "sizeEnd": {
+          "label": "结束大小倍数"
+        },
+        "lifeCurve": {
+          "label": "生命周期曲线"
+        },
+        "variation": {
+          "label": "大小随机性"
+        },
+        "tint": {
+          "label": "整体颜色"
+        },
+        "colorStart": {
+          "label": "出生颜色倍数"
+        },
+        "colorEnd": {
+          "label": "结束颜色倍数"
+        },
+        "colorRandom": {
+          "label": "颜色随机性"
+        },
+        "opacityStart": {
+          "label": "出生不透明度"
+        },
+        "opacityEnd": {
+          "label": "结束不透明度"
+        },
+        "opacityRandom": {
+          "label": "不透明度随机性"
+        },
+        "softFade": {
+          "label": "淡入淡出"
+        },
+        "rotation": {
+          "label": "旋转（度）"
+        },
+        "rotationRandom": {
+          "label": "旋转随机范围"
+        },
+        "rotationSpeed": {
+          "label": "旋转速度（度/秒）"
+        },
+        "spinRandom": {
+          "label": "旋转速度随机性"
+        },
+        "alignVelocity": {
+          "label": "沿速度方向对齐"
+        },
+        "useTexture": {
+          "label": "使用纹理"
+        },
+        "additive": {
+          "label": "叠加混合"
+        },
+        "cameraX": {
+          "label": "发射器相机位置 X"
+        },
+        "cameraY": {
+          "label": "发射器相机位置 Y"
+        },
+        "cameraZ": {
+          "label": "发射器相机位置 Z"
+        },
+        "camRotationX": {
+          "label": "发射器相机旋转 X"
+        },
+        "camRotationY": {
+          "label": "发射器相机旋转 Y"
+        },
+        "camRotationZ": {
+          "label": "发射器相机旋转 Z"
+        },
+        "fov": {
+          "label": "视野角（度）"
+        },
+        "worldScale": {
+          "label": "世界单位（像素）"
+        },
+        "spriteAspect": {
+          "label": "纹理宽高比 X/Y"
+        },
+        "textureResolution": {
+          "label": "纹理精度（像素）"
+        },
+        "sourceLayer": {
+          "label": "纹理源图层"
+        }
+      }
+    }
+  },
+  "categories": {
+    "true": "True Motion",
+    "new": "new",
+    "ai": "ai",
+    "color": "color",
+    "blur": "blur",
+    "distort": "distort",
+    "stylize": "stylize",
+    "noise": "noise",
+    "repeat": "repeat",
+    "key": "key",
+    "move": "move",
+    "3d": "3d",
+    "text": "text"
+  }
+}

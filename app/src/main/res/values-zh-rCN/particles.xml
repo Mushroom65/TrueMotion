@@ -1,0 +1,18 @@
+<resources>
+    <string name="true_particles_title">粒子</string>
+    <string name="true_particles_emitter">发射器</string>
+    <string name="true_particles_motion">运动</string>
+    <string name="true_particles_forces">力</string>
+    <string name="true_particles_look">外观</string>
+    <string name="true_particles_camera">相机</string>
+    <string name="true_particles_source">纹理：%1$s</string>
+    <string name="true_particles_dot">圆形 / 当前图层媒体</string>
+    <string name="true_particles_source_missing">纹理源图层不存在，请选择其他图层。</string>
+    <string name="true_particles_hint">原生实时预览。双击数值可输入数字。关键帧按钮用于动画当前参数。</string>
+    <string name="true_particles_camera_hint">这是发射器自身的相机。项目相机变换生成的图层。</string>
+    <string name="true_particles_seed_hint">随机种子为 0 至 9223372036854775807 的整数，不生成关键帧。</string>
+    <string name="true_particles_reset">重置当前部分</string>
+    <string name="true_particles_enable">启用粒子</string>
+    <string name="true_particles_disable">禁用粒子</string>
+    <string name="true_particles_source_hint">使用其他图层当前的内容和效果，不包含位置和变换。不允许循环依赖。</string>
+</resources>

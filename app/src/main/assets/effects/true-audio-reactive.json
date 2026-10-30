@@ -1,0 +1,38 @@
+{
+  "id": "true-audio-reactive",
+  "runtimeId": "lab.true.audioMotion",
+  "name": "Audio reaction",
+  "category": "true",
+  "native": true,
+  "description": "Choose an audio or video layer to drive scale, rotation, Y or opacity. Native motion effect, no generated keyframes. Opens its own audio panel.",
+  "params": [
+    {
+      "id": "target",
+      "label": "Property",
+      "type": "choice",
+      "default": 0,
+      "options": [
+        "Scale",
+        "Rotation",
+        "Y",
+        "Opacity"
+      ]
+    },
+    {
+      "id": "amount",
+      "label": "Amount",
+      "type": "float",
+      "default": 0.3,
+      "min": -5000,
+      "max": 5000
+    },
+    {
+      "id": "offsetMs",
+      "label": "Offset (ms)",
+      "type": "float",
+      "default": 0,
+      "min": -3000,
+      "max": 3000
+    }
+  ]
+}

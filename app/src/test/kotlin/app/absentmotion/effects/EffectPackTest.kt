@@ -20,14 +20,14 @@ class EffectPackTest {
         assertEquals("index.json and the effect files", files.sorted(), index.sorted())
         assertEquals("ids are unique", index.size, index.toSet().size)
         assertEquals("every listed effect parses", index, catalog.definitions.map { it.key })
-        assertTrue(catalog.definitions.all { it.id == "absent.${it.key}" && it.category in EffectCatalog.Categories })
+        assertTrue(catalog.definitions.all { (it.id == "absent.${it.key}" || it.id in setOf("lab.true.grade", "lab.true.audioMotion", "lab.true.particles") || it.pluginId != null && it.id.startsWith("plugin.${it.pluginId}.")) && it.category in EffectCatalog.Categories })
     }
 
     @Test fun shadersDeclareTheContractAndOneUniformPerParam() {
         val declared = Regex("""(layout\s*\(\s*color\s*\)\s*)?uniform\s+(\w+)\s+(\w+)\s*;""")
         for (effect in catalog.definitions) {
             if (effect.native) {
-                assertTrue("${effect.key} is not a built-in", effect.category in setOf("move", "repeat", "text") || effect.id in setOf("absent.blur", "absent.glow", "absent.motionblur", "absent.smear", "absent.backdrop", "absent.drawingprogress", "absent.stroketaper"))
+                assertTrue("${effect.key} is not a built-in", effect.category in setOf("move", "repeat", "text") || effect.id in setOf("absent.blur", "absent.glow", "absent.motionblur", "absent.smear", "absent.backdrop", "absent.drawingprogress", "absent.stroketaper", "lab.true.audioMotion", "lab.true.particles"))
                 assertNull(effect.sksl)
                 continue
             }

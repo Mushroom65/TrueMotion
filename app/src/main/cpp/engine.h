@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
+#include "audio_signal.h"
 
 struct ANativeWindow;
 struct AHardwareBuffer;
@@ -74,6 +76,9 @@ public:
     virtual std::string timing(Target* target) = 0;
 
     virtual bool setScene(const std::string& xml, std::string* error) = 0;
+    virtual void setAudioSignals(const std::map<std::string, std::shared_ptr<const AudioSignal>>& signals) = 0;
+    virtual bool localBounds(int64_t layerId, double timeMs, float bounds[4]) = 0;
+    virtual bool reanchor(int64_t layerId, double timeMs, float x, float y, float location[3]) = 0;
 
     virtual std::string loadEffect(const std::string& xml) = 0;
 

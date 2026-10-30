@@ -1,0 +1,7 @@
+{
+  "branding/true-motion-source.png": "57f1f7baac5207091da2f28c2ff5bb366beae12aaa3bc7c8bfbd7d818c5d2c0e",
+  "branding/icon.png": "1270a6fd95fa6672e786e13973f12e92f10c5453b15c3a97675c48c34ca9493a",
+  "app/src/main/res/drawable/true_motion_logo.png": "1270a6fd95fa6672e786e13973f12e92f10c5453b15c3a97675c48c34ca9493a",
+  "app/src/main/res/drawable/true_motion_launcher_foreground.png": "99eef7aa56cb9b87ec65d28bdd36940b2ccc171d8e4f21bc0683ef888286a100",
+  "app/src/main/res/drawable/true_motion_launcher_monochrome.png": "45637bb5ffe229c33c4c103d757c41f0616d852bd45d099beb823a6dcf19d562"
+}

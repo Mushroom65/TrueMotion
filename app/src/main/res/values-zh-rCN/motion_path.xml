@@ -1,0 +1,16 @@
+<resources>
+    <string name="true_path_title">运动路径</string>
+    <string name="true_path_fit">适应视图</string>
+    <string name="true_path_need_keys">添加两个位置关键帧，或创建初始路径。</string>
+    <string name="true_path_create">创建路径</string>
+    <string name="true_path_smooth">全部平滑</string>
+    <string name="true_path_smooth_key">平滑关键帧</string>
+    <string name="true_path_corner">尖角</string>
+    <string name="true_path_point">节点</string>
+    <string name="true_path_in">入点手柄</string>
+    <string name="true_path_out">出点手柄</string>
+    <string name="true_path_enabled">曲线</string>
+    <string name="true_path_link">联动手柄</string>
+    <string name="true_path_orient">自动朝向</string>
+    <string name="true_path_hint">拖动节点和手柄，双指平移和缩放。坐标相对于父图层，时间节奏仍由时间轴关键帧控制。</string>
+</resources>

@@ -92,6 +92,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import app.absentmotion.editor.EditorPanel
+import app.absentmotion.editor.PreviewCache
 import app.absentmotion.editor.MultiSelect
 import app.absentmotion.editor.EditorState
 import app.absentmotion.editor.toggleBookmark
@@ -228,6 +229,10 @@ fun Timeline(state: EditorState, modifier: Modifier = Modifier) {
     val outline = remember { Path() }
     val strips by remember(view) { derivedStateOf { view.stripWindow() } }
     val proxies by VideoProxies.progress.collectAsState()
+    val mediaRevision by state.engine.mediaRevision.collectAsState()
+    val renderedRange by remember(state, mediaRevision) { derivedStateOf {
+        if (cacheMatches(state, mediaRevision)) PreviewCache.first..PreviewCache.last else null
+    } }
     val mediaPictures = buildMap {
         for (row in strips.rows) {
             val layer = view.layerAt(row) ?: continue
@@ -257,7 +262,7 @@ fun Timeline(state: EditorState, modifier: Modifier = Modifier) {
             })
             .onSizeChanged { view.size = it }
             .pointerInput(view) { timelineGestures(view) { if (state.settings.vibration) haptic.performHapticFeedback(HapticFeedbackType.LongPress) } }
-            .drawBehind { drawTimeline(view, measurer, eye, eyeOff, outline, mediaPictures, proxies, appear.value) },
+            .drawBehind { drawTimeline(view, measurer, eye, eyeOff, outline, mediaPictures, proxies, appear.value, renderedRange) },
     ) {
         HeaderPictures(view) { drawLifted(view, measurer, eye, eyeOff, outline, mediaPictures, appear.value) }
         RowSemantics(view)
@@ -1079,12 +1084,23 @@ private suspend fun PointerInputScope.timelineGestures(view: TimelineView, onLon
     }
 }
 
-private fun DrawScope.drawTimeline(view: TimelineView, measurer: TextMeasurer, eye: Painter, eyeOff: Painter, outline: Path, pictures: Map<Long, StripPicture>, proxies: Map<String, Float>, appear: Float = 1f) {
+private fun DrawScope.drawTimeline(view: TimelineView, measurer: TextMeasurer, eye: Painter, eyeOff: Painter, outline: Path, pictures: Map<Long, StripPicture>, proxies: Map<String, Float>, appear: Float = 1f, renderedRange: IntRange? = null) {
     val state = view.state
     val fps = view.fps
     val time = view.timeScale()
     val step = TimelineMath.tickStep(fps, view.dpPerSecond)
     if (view.layers.isNotEmpty()) drawRuler(time, fps, state.scene.lastFrame, step)
+    if (renderedRange != null && !renderedRange.isEmpty()) {
+        val green = Color(0xFF50D995)
+        val from = time.x(state.scene.frameStart(renderedRange.first).toFloat()).coerceAtLeast(0f)
+        val to = time.x(state.scene.frameStart(renderedRange.last + 1).toFloat()).coerceAtMost(size.width)
+        if (to > from) drawLine(green, Offset(from, 2.dp.toPx()), Offset(to, 2.dp.toPx()), 2.dp.toPx(), StrokeCap.Round)
+        if (1000f / fps * time.pxPerMs >= 3.dp.toPx()) {
+            val first = max(renderedRange.first, state.scene.frameAt(time.time(0f).toInt()) - 1)
+            val last = min(renderedRange.last, state.scene.frameAt(time.time(size.width).toInt()) + 1)
+            for (frame in first..last) drawCircle(green, 1.dp.toPx(), Offset(time.x(state.scene.frameTime(frame).toFloat()), 7.dp.toPx()))
+        }
+    }
     if (view.layers.isNotEmpty() && state.scene.isElement) drawRetimeMarks(state.scene, time)
     val stripe = TimelineMath.frameTimeMs(2 * step, fps) * time.pxPerMs
     clipRect(top = view.rulerH) {

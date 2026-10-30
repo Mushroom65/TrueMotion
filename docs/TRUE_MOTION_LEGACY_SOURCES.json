@@ -1,0 +1,750 @@
+{
+  "source": "True Motion local work/modsrc/lab/toji",
+  "files": [
+    {
+      "file": "AddLauncher90.java",
+      "sha256": "0f3ee7dff5b3d8fc14d4246e57010a2520dc8ea1eb5fe171034ce70871b28571",
+      "bytes": 452
+    },
+    {
+      "file": "AdvancedExport.java",
+      "sha256": "cf47e846296f1e9729ad06425fd0aefad6830a4352d3978aeac790c0cd111cda",
+      "bytes": 6572
+    },
+    {
+      "file": "AnimationMath.java",
+      "sha256": "e1463f9be01ea0581dac35f044e684071a2f9c510484c67775e9a0a93c08436f",
+      "bytes": 1857
+    },
+    {
+      "file": "AnimationTools.java",
+      "sha256": "3a882b69833e816d8911ef7aa5f342a8344eac669fd265308efe939df5b258a5",
+      "bytes": 18435
+    },
+    {
+      "file": "AudioBounds.java",
+      "sha256": "0159301964fa56e23e2104c7a93d2c225ef138b53cc1bf9fe203cf41dd2fe30c",
+      "bytes": 2200
+    },
+    {
+      "file": "AudioDriver.java",
+      "sha256": "e1abcdacb3899d0e7ecd83728af4a04bf03a1dae96548da775e28dfe4848ae4e",
+      "bytes": 26271
+    },
+    {
+      "file": "AudioDriverCache.java",
+      "sha256": "52b8784dcd765f8a52bcddbd419ea59d1a716d62098d9e30344506c2f7d0c9f2",
+      "bytes": 11078
+    },
+    {
+      "file": "AudioReaction.java",
+      "sha256": "33909e04a4dc9287ccd1f424bc782892bf49a8bbd35e3d12bf99d68e7773644c",
+      "bytes": 6693
+    },
+    {
+      "file": "AutoCaptions.java",
+      "sha256": "a008f90293403e67643b1424f41160a7da781f072bf161a5f95d9b39d759ca3c",
+      "bytes": 12610
+    },
+    {
+      "file": "BeatBop.java",
+      "sha256": "4ae9e51af20770867643212628439f046e5ff42490bf8721b4cc79bbfa76f1ff",
+      "bytes": 2124
+    },
+    {
+      "file": "BeatDetector.java",
+      "sha256": "2716b5d2de49ec76f414b1ee5557fe31cbf2cae75961f55b30fcd51044cc1226",
+      "bytes": 4729
+    },
+    {
+      "file": "BeatMarkers.java",
+      "sha256": "d1ec18bf3a9eb015e72d3c8e48d015512cbfa3265ef2e27dbb727fc5a7d66704",
+      "bytes": 10152
+    },
+    {
+      "file": "Branding.java",
+      "sha256": "05b9e6e0371d8ce25f30f9965682b3cac98f3a7ef3a58fe6b1351963745e03f6",
+      "bytes": 2586
+    },
+    {
+      "file": "Bridge.java",
+      "sha256": "1ff5d542a7823c7992746e4af305e3a78726def86dac07f5032365db9be6072c",
+      "bytes": 6278
+    },
+    {
+      "file": "CachedViewport.java",
+      "sha256": "d172caa02574328746e8437768ce349eb5d3b1ec88504e5f8ab6f5ab8a3aadbe",
+      "bytes": 5815
+    },
+    {
+      "file": "CanvasTouchRouter.java",
+      "sha256": "b09330eda9043a35de3bc5ab0e3793ca727685aef6bcdfe4458e0717e40a294a",
+      "bytes": 3144
+    },
+    {
+      "file": "CaptionMath.java",
+      "sha256": "73d1320a2c6135eb25580fec75d8d6c2260d517cbf3fbc74ec77527dcb330838",
+      "bytes": 3338
+    },
+    {
+      "file": "ColorGrade.java",
+      "sha256": "b1afb106c344e1a287426a5b7ca6f1e878ad0425efd12bfc1928ae7eeab35a91",
+      "bytes": 18346
+    },
+    {
+      "file": "EditorChrome90.java",
+      "sha256": "03cf2db54699d00fdeeb6f8cc4906d289ca7fba5f100682042b5f3b7f653d80d",
+      "bytes": 2067
+    },
+    {
+      "file": "EditorLayout88.java",
+      "sha256": "ead2c7fce25a977ba7d4c627f2793e2073098fadf6cc255c289092116ccec9fd",
+      "bytes": 3364
+    },
+    {
+      "file": "EffectAssets.java",
+      "sha256": "8352fcd10ad69bb017d7422ff098c92f49d86c30f564663555de61ce510e1546",
+      "bytes": 1517
+    },
+    {
+      "file": "EffectCatalog.java",
+      "sha256": "5ea29f1b457edf007c7b229b9b405e8403267ed12ae8aebb8da27d2e590bb06b",
+      "bytes": 4119
+    },
+    {
+      "file": "EffectCollections.java",
+      "sha256": "18f830f4486d6d927738d92a6e28fa363b0fb4a0fb4a21b05a82bd6dcbab7981",
+      "bytes": 3176
+    },
+    {
+      "file": "EffectPackage.java",
+      "sha256": "2a222c2b274848650d4e1333e1a190c9ed630b840b74453f47f0d047e8276321",
+      "bytes": 2580
+    },
+    {
+      "file": "EffectTemplate.java",
+      "sha256": "4349208dca50f77d7c88678850f34a62e77fb52515b467e699766c70fd25c8f7",
+      "bytes": 1804
+    },
+    {
+      "file": "ExportSize.java",
+      "sha256": "c030c7ee51ed8b44b841336dc631b05cc6cea695851497b56aa13e42d091fb57",
+      "bytes": 1555
+    },
+    {
+      "file": "ExpressionMath.java",
+      "sha256": "2f108e8c1c65f5047dbebeb6824369675cb9ee846958a9cbc8a6c4e8205c3b41",
+      "bytes": 10475
+    },
+    {
+      "file": "Expressions.java",
+      "sha256": "d4a73072bb2bfd04ae774ebb1adc7d0f430cd88d5f1cf35e08ed81baa3030115",
+      "bytes": 16833
+    },
+    {
+      "file": "FfxFile.java",
+      "sha256": "f0de3637083e61a747f38ffd28f3553cb097299077bf82c4c99ed5ec2acae2d4",
+      "bytes": 7737
+    },
+    {
+      "file": "FfxImportActivity.java",
+      "sha256": "217963f78a6b59b229b6cded00905ec73bc330189c7dae22611e82a9d595d9fd",
+      "bytes": 5654
+    },
+    {
+      "file": "Framebuffer95.java",
+      "sha256": "5fdec62d586f42543c631491899ba07a0929421f2c25885fc27689d1a92a142d",
+      "bytes": 3784
+    },
+    {
+      "file": "FramePhoto.java",
+      "sha256": "36fac820d607a7298e426d5f3b27776ce0fd591250c9524e839daa38489152f3",
+      "bytes": 6664
+    },
+    {
+      "file": "FramePreview97.java",
+      "sha256": "85f1462c6c2e603a9706d0317e4df1a7f0f8f7f75f34477b03412e3085acd62d",
+      "bytes": 11525
+    },
+    {
+      "file": "FrameStore97.java",
+      "sha256": "296116f954ccb94634cdbdd2bc12e0d665018a1bac31a8ff7eeaee238f765409",
+      "bytes": 1555
+    },
+    {
+      "file": "GeometryPanels.java",
+      "sha256": "ffbbde99a188ebad6bb6172fc18f98643661e52e58d3d69fbac75ad1a6cdaeb2",
+      "bytes": 3165
+    },
+    {
+      "file": "GroupCache.java",
+      "sha256": "1d2fa550c6b95b21b1bb2964e9a50f3e71b65353b74208c23b717282c75503c6",
+      "bytes": 4534
+    },
+    {
+      "file": "GroupCacheKey.java",
+      "sha256": "2d7eb32de6b4222f0cbc4e06f401f105482c5e012dd3cf78e378cf1c96147e72",
+      "bytes": 663
+    },
+    {
+      "file": "L10n.java",
+      "sha256": "103799c7d74201851a8d0bdf54de31005ee93cf3eae09e61e1645b5fa468327a",
+      "bytes": 1959
+    },
+    {
+      "file": "LabMenu.java",
+      "sha256": "61aa988381c973c35f901ba6d9fadf440dbc4a07c125fe3d9eb4eb1b4d8826cb",
+      "bytes": 10261
+    },
+    {
+      "file": "LayerButton.java",
+      "sha256": "d0fb55560e52d5ad68f0e1fa3c7bd25bcfdb6aa4e75788f75d11c78654fa0ed7",
+      "bytes": 1174
+    },
+    {
+      "file": "LayerCategoryButton.java",
+      "sha256": "0f13a1838266f63789d5468a5edfce0c98f397b64814c669a058fbae2e63515a",
+      "bytes": 2795
+    },
+    {
+      "file": "LayerCategoryPanel.java",
+      "sha256": "e2661ecc67f088b7109aea95bd0145b29c6fe2430657901c03d011fc314baf92",
+      "bytes": 1371
+    },
+    {
+      "file": "LayerTools.java",
+      "sha256": "7115595f6fffd1b6daf7348bd534b84f6a40503e4d9de52ccf537bf1b56c58d1",
+      "bytes": 1849
+    },
+    {
+      "file": "Legacy3D.java",
+      "sha256": "503c23ac60d3d2a5ef44173a31c1bc5c55b6695649764b5cd83252482fa606d8",
+      "bytes": 2409
+    },
+    {
+      "file": "MagicTouch.java",
+      "sha256": "294e3ab1a5c503c0484cdbc3fc5a45047ac5ba208d7b2e84bff8d4b22597fd8b",
+      "bytes": 2029
+    },
+    {
+      "file": "MediaAudit.java",
+      "sha256": "b3fc63b79f739d1082ba64a0824aa17d894cd34eecb453a9925a7fb977d84433",
+      "bytes": 1882
+    },
+    {
+      "file": "MediaCompat.java",
+      "sha256": "d4afacb003c61fb31b81ea839ef0a1361ea7864c3c0c50dd8c9307540861b3f9",
+      "bytes": 16436
+    },
+    {
+      "file": "MediaMenu.java",
+      "sha256": "503460ae3e9526ce8e6e81796d34ff0eefbbc2f50a37772840bc785a5a16ab2f",
+      "bytes": 3669
+    },
+    {
+      "file": "MediaWork.java",
+      "sha256": "5047aed32a7d776d38976797ad9520d5e7e9cfe61d9b1007abb917164ee61379",
+      "bytes": 8819
+    },
+    {
+      "file": "ModelImport.java",
+      "sha256": "4b0e27bbdd9c45be35003327026e7aaaa1545ae494b79a3115014425f9823bf8",
+      "bytes": 3442
+    },
+    {
+      "file": "ModelImportActivity.java",
+      "sha256": "6ce8b26eb7207571d65d8fdef6185ea4dbafbf02ddc0bfeb7df97828f67b11bd",
+      "bytes": 3826
+    },
+    {
+      "file": "ModelMesh.java",
+      "sha256": "f986bb160a3155ac667391ca47f14d4667ce09a059df476498440d33c2ec75a7",
+      "bytes": 4263
+    },
+    {
+      "file": "ModelProjection.java",
+      "sha256": "661bcb49b26d37c105e225b25603c18371b914c95a742a4bf85a6d2e0a5f3129",
+      "bytes": 1045
+    },
+    {
+      "file": "ModelRasterizer.java",
+      "sha256": "4108392140b422c7d7d1e5b2299c75ccc2bf3e32d1bd346a82f38c0bc793b768",
+      "bytes": 5348
+    },
+    {
+      "file": "ModUi.java",
+      "sha256": "9eb53fed8b123ced500039233819725aa1bd3ceede769b6b8337373b89a04088",
+      "bytes": 11180
+    },
+    {
+      "file": "MotionPath.java",
+      "sha256": "8cbb0e8fd6e69944cef68155ba1ee0e267e1db7e66ac4bb775ac9378d7810a9a",
+      "bytes": 8746
+    },
+    {
+      "file": "MotionPathMath.java",
+      "sha256": "7a3d9c5387b3e4d57d5c64884a2d6d065e6946f2ba151ff0f3b39ceb666d0ddd",
+      "bytes": 741
+    },
+    {
+      "file": "MotionPathPanel.java",
+      "sha256": "d88722e3c537f04c1943600bd99bb6a974ad171a86910d26913dc780406119ff",
+      "bytes": 9958
+    },
+    {
+      "file": "MotionTracker.java",
+      "sha256": "8e576007d689a0936d895fa0db64390355cb8607f829046e5ebffd8e9c472074",
+      "bytes": 15110
+    },
+    {
+      "file": "NewProject.java",
+      "sha256": "5779ba5b96daef67fef9c91c9fc14f52184e3c05c53e0132a55c3c0fbbe9edce",
+      "bytes": 2750
+    },
+    {
+      "file": "OpticalFlow.java",
+      "sha256": "3079f181270d0576438b16e80fb8578a10ddf07fd644cb129ed140319213cf99",
+      "bytes": 7586
+    },
+    {
+      "file": "OpticalFlowPlan.java",
+      "sha256": "704f4478bfc50fa2a2cfdbae9bbf852f527d1493b47f21e03b06aba8c72e3338",
+      "bytes": 2502
+    },
+    {
+      "file": "PlaybackClockMath.java",
+      "sha256": "a7b5160692792ccec9468b44b5ccdef59d17dc7394f2465c4b7aec8fa14e1706",
+      "bytes": 746
+    },
+    {
+      "file": "PluginActivity.java",
+      "sha256": "73bf7fd647a9dc0722d18c8547e86f1638b89a037596cfabe20873e045adfe0a",
+      "bytes": 20307
+    },
+    {
+      "file": "PluginBundles.java",
+      "sha256": "d345ed729b9055e65da40281ebc21dcffac02bd04a62e88b3b6a068e872b4475",
+      "bytes": 1518
+    },
+    {
+      "file": "PluginCommands.java",
+      "sha256": "fcb8c6f2fa87d095b77e92202aa8d0694268782ba7159056f722bf62cc8221f2",
+      "bytes": 1929
+    },
+    {
+      "file": "PluginEditor.java",
+      "sha256": "8382cdf6276b2266482f78341130d19b4368b3f769e5e041f18db5554c35fff8",
+      "bytes": 13677
+    },
+    {
+      "file": "PluginEffects.java",
+      "sha256": "7f1045c94e02cdc2a75af5bb1764044543396cf775f70dd1b4fc78166153f49a",
+      "bytes": 4045
+    },
+    {
+      "file": "PluginEvents.java",
+      "sha256": "3d35560fc723872d5cafc3ad08a06911d5f38bd8b4110f656ed1cd16d9bb2b55",
+      "bytes": 7618
+    },
+    {
+      "file": "PluginHooks.java",
+      "sha256": "5e23d2e241a69cb312da8e383198bd5cb7c723315343756bbbca4cb07f010e6c",
+      "bytes": 831
+    },
+    {
+      "file": "PluginPackage.java",
+      "sha256": "dc5849599a5896ab8d7d27fbec8d15f3ebe69fef32fef095042236095500ea59",
+      "bytes": 4406
+    },
+    {
+      "file": "PluginRuntime.java",
+      "sha256": "01fdd9924027aa2f888d42601833706d2d3f6cd71ae4ebb6996adcef1a261d88",
+      "bytes": 6367
+    },
+    {
+      "file": "PluginStore.java",
+      "sha256": "148fe12a0cc0760e15dc4bc9a03eb3c252d3a6f2be44207841c1028e564b8b92",
+      "bytes": 5870
+    },
+    {
+      "file": "PngAlpha.java",
+      "sha256": "8c24981fde5fd6373d2071e22aa78855a5ae346743f4dd03811e46665ea04f72",
+      "bytes": 552
+    },
+    {
+      "file": "PortableEffects.java",
+      "sha256": "daadf7aa7adee87ef17898a104252b79cb157eeb200f9f4c6dc984e6f0a2266f",
+      "bytes": 4213
+    },
+    {
+      "file": "PreRender.java",
+      "sha256": "a97a5f70b3e8260977cfa4ecd36901c94b9cf4663ba3e360101ef29669e95283",
+      "bytes": 7895
+    },
+    {
+      "file": "PreviewAudio.java",
+      "sha256": "fc3b2ebfdd08a758ceacc74642dd96f6231092f1ad37417b6c8315ab797b92cc",
+      "bytes": 6101
+    },
+    {
+      "file": "PreviewMath97.java",
+      "sha256": "5a19a33ee25e4e6644b9b2831ce1da85a7889c4cb49c09296fd48d901dc48fbc",
+      "bytes": 708
+    },
+    {
+      "file": "PreviewSurfaceSize.java",
+      "sha256": "c3993e0cdc5027cdffa88f28246002c8871ac35ed6f868e5d03113d09afdc840",
+      "bytes": 2055
+    },
+    {
+      "file": "PreviewTools97.java",
+      "sha256": "8c0d5dcaf2d5ec5c35d5d54cedb96ca9e21454fa83f3298060fd0b89572abd3a",
+      "bytes": 13471
+    },
+    {
+      "file": "ProjectBundle.java",
+      "sha256": "88d72de1da0341b018afae6622faed2b66b4a765d09302ce1a2a3c6135787553",
+      "bytes": 13966
+    },
+    {
+      "file": "ProjectSaveActivity.java",
+      "sha256": "32c2cb71083d74d0fbbd7d19088fdde1a901bd90c3156f211e4bf113315565b4",
+      "bytes": 15148
+    },
+    {
+      "file": "PsdFile.java",
+      "sha256": "fa535628d371df96ccb7d410c4ffe0656b3ce190f38d3c0bba262a5b7ea3154a",
+      "bytes": 8431
+    },
+    {
+      "file": "PsdImportActivity.java",
+      "sha256": "2175d298cb5a3e0eba0161a3ee3829cff5a635945183074ecb36496a3e684997",
+      "bytes": 2152
+    },
+    {
+      "file": "PsdRaster.java",
+      "sha256": "b265c01936f0d98aa8641ca9f5c958a092c1f04ea14815755a314c6688fa6c1f",
+      "bytes": 1776
+    },
+    {
+      "file": "RasterFill.java",
+      "sha256": "70e70719a07d2093e41302537fc3953d0620b677953a840f60c8954f2b896782",
+      "bytes": 1256
+    },
+    {
+      "file": "RenderBudget94.java",
+      "sha256": "50ccc3ce8dde83806e76132311360044ed01ce912b314416207b2ba8e8390597",
+      "bytes": 620
+    },
+    {
+      "file": "RenderContent.java",
+      "sha256": "370f8589d85561ef579e8e8a7d9738c8de395fcfbee66d796b8a518fbe2678eb",
+      "bytes": 20776
+    },
+    {
+      "file": "Rigging.java",
+      "sha256": "c82c0a413c029e0dc9bc04c4910d17f4f55e46686385067ef5aea289e7751fa5",
+      "bytes": 29436
+    },
+    {
+      "file": "RigMath.java",
+      "sha256": "2867e02c6545740faa55d58a8556a22fe0c2b8f91f82f22f9d0dc5a0eb98f4c0",
+      "bytes": 1362
+    },
+    {
+      "file": "RotationPanel.java",
+      "sha256": "896e6a29a856c850cd9395a8f9b446f9d6e5e0860a64d318d847aca026045641",
+      "bytes": 6808
+    },
+    {
+      "file": "SaveMediaActivity.java",
+      "sha256": "284f02d4aba07ad627e9a8dcc48f1630ff6e17bb587ffc30cf5d228a16eaca05",
+      "bytes": 1917
+    },
+    {
+      "file": "Scene3Activity.java",
+      "sha256": "32cd4e27afba3e813926ddba75c56218fe0f12f99b2e9f693353e8375fafe74e",
+      "bytes": 28122
+    },
+    {
+      "file": "Scene3Bake.java",
+      "sha256": "72d01fdb6cd2e4d6bd17dafe4394ad7a02d8a38088d3f504df4797efc13195ba",
+      "bytes": 3492
+    },
+    {
+      "file": "Scene3Document.java",
+      "sha256": "81ecb78d3dfd3cf222b2d77cba9289a63f2c039f0a08fdf399dbf41d09410e1d",
+      "bytes": 6641
+    },
+    {
+      "file": "Scene3Geometry.java",
+      "sha256": "13edfe5c53aaf81041e3d96f3c83a16a2342379d472d8679b4f5f2813daf6c0f",
+      "bytes": 3279
+    },
+    {
+      "file": "Scene3Layer.java",
+      "sha256": "52c98a705a1346dfdf6744166b4d5f08546d4fcb42b501382030b672ab9bcaa4",
+      "bytes": 6198
+    },
+    {
+      "file": "Scene3Renderer.java",
+      "sha256": "ae5662f4cb958d84b9355f9c760ead6c3ef57ed17ae1595b4bae4e6e27995abc",
+      "bytes": 12008
+    },
+    {
+      "file": "Scene3Sources.java",
+      "sha256": "8049c3691905ecf68016ad29e85c22f718be03503d3eab1cbc0b16b8797862d2",
+      "bytes": 5554
+    },
+    {
+      "file": "Scene3Stage.java",
+      "sha256": "9a7d480fc47e9466852ad1ed87c5b35aaa29254ab5bfc3ef4d57b96b5022be89",
+      "bytes": 8101
+    },
+    {
+      "file": "Search.java",
+      "sha256": "f8619a5f207179b09e0c61a8e1da4a73689b0da2e86fbb6fef5288ace82b384e",
+      "bytes": 8557
+    },
+    {
+      "file": "SettingsBackground.java",
+      "sha256": "7cbde35a3a57cea90fcf1ef7c682e7abbfbbb6910698069ec7010557e0c30afa",
+      "bytes": 2187
+    },
+    {
+      "file": "SourceClock.java",
+      "sha256": "fc57d13da63cb9eb5cdb9c7fd2f6194c0c93461b02bdc8d2b96694afb39f11d7",
+      "bytes": 1071
+    },
+    {
+      "file": "StringDecode96.java",
+      "sha256": "734c4867b4695ed88b0140e809eed668ccc7ce1afbafe96ae9b30f385fbb6d85",
+      "bytes": 2012
+    },
+    {
+      "file": "StudioMath98.java",
+      "sha256": "7c1bc78f75c55f35c7939feb59bb8360a88e87f9fe2a1c9e4dd4e792527dadd9",
+      "bytes": 1033
+    },
+    {
+      "file": "StudioTools98.java",
+      "sha256": "4939b5df1dddf07cc559c3f975da184dcf3c5f6eec7e5cbddaf035855858b571",
+      "bytes": 17014
+    },
+    {
+      "file": "ThreeD.java",
+      "sha256": "63a0d3c7349d8e17fcff0631ce127bea7bb3b9492651dc09df9a20883cae3ab5",
+      "bytes": 28807
+    },
+    {
+      "file": "ToolButton90.java",
+      "sha256": "fbb1ed9aef5b68db001cb960c3d7914e5e79dc1884ac56e9a269f9dd2dc148bf",
+      "bytes": 1084
+    },
+    {
+      "file": "Trace95.java",
+      "sha256": "e7ef33a0a84a5c5f80accae302925571def10c02622ba5e25cdd354523ee5185",
+      "bytes": 1000
+    },
+    {
+      "file": "TrackerMath.java",
+      "sha256": "a0653b749f32e9477c4db752480ba690e9856b0fc13b55522592a076c1adaf31",
+      "bytes": 3050
+    },
+    {
+      "file": "TransformHooks94.java",
+      "sha256": "269285597baac249fead941e4cd8e882d261285762e6c730138eb5fa25598782",
+      "bytes": 1899
+    },
+    {
+      "file": "TrueColors.java",
+      "sha256": "1e0beefb90f6c73967c15e1743908a05739f83c302b91636f726b03a90a9a85e",
+      "bytes": 3175
+    },
+    {
+      "file": "TrueSheet.java",
+      "sha256": "a301a10c0ce6a69b3e7362fc9f1e31f1f6a6a8d6e69062072efd27399c404617",
+      "bytes": 7811
+    },
+    {
+      "file": "VectorAnimation.java",
+      "sha256": "faee39e30955793fb2e3c0a37bd2019d76f09439d3179bce6899e05bc8c248ea",
+      "bytes": 9530
+    },
+    {
+      "file": "VectorAtlas.java",
+      "sha256": "ce03ad4aee6641146d07b0bab6fa525a283ffc03563132b483b0d6178c0571e2",
+      "bytes": 3057
+    },
+    {
+      "file": "VectorBucket.java",
+      "sha256": "a2ab1f51196d359a68ae2616ae287af2987ab1f886c8f5dab01689f1ff072a98",
+      "bytes": 407
+    },
+    {
+      "file": "VectorCanvas.java",
+      "sha256": "ed245a861a92f385b1df4ba1f65d7c7b6b77a5665a5d7a34da7a59c911a31444",
+      "bytes": 3597
+    },
+    {
+      "file": "VectorColorDialog.java",
+      "sha256": "c6239e5f1b9d7046931b913fed10f9d355c5593923456dc00b45bdaec8460193",
+      "bytes": 5958
+    },
+    {
+      "file": "VectorDocument.java",
+      "sha256": "f054a0ee52b5670568da078ee98bedc6c88ac92f14ee68782a0a6cd4545fae9d",
+      "bytes": 31036
+    },
+    {
+      "file": "VectorEditor.java",
+      "sha256": "7fecc6109db1230e3f27864f635ba3f1d2b126d80c7c578ab061f32f4eae74ef",
+      "bytes": 48263
+    },
+    {
+      "file": "VectorFaces.java",
+      "sha256": "28f85bb5a5f2c66fa05ff503f418f4e085ffd5863312be864cf10d1b660f6c75",
+      "bytes": 10078
+    },
+    {
+      "file": "VectorFileActivity.java",
+      "sha256": "2efd9b1faad3182ba1cb65b88c4f45692e543aa77a266e0d8557c9f6e7c6fd22",
+      "bytes": 10151
+    },
+    {
+      "file": "VectorFillRegion.java",
+      "sha256": "a8e46960229164a492c18481f3e20faa25bf5375f01e31a2c2906719c023a050",
+      "bytes": 2971
+    },
+    {
+      "file": "VectorIcon.java",
+      "sha256": "2fed21d3597930199124db034156dcab86bc6606d08d859b191e491115208475",
+      "bytes": 2446
+    },
+    {
+      "file": "VectorImage.java",
+      "sha256": "d0c88d3844ad75053e0634d67f839799a84a750c55bb61460a3857de76124ccf",
+      "bytes": 648
+    },
+    {
+      "file": "VectorMedia.java",
+      "sha256": "dc35ebd6be34fbc328e86ed1ca84d19e7128fab298738e5a813f9e99473d47cd",
+      "bytes": 6950
+    },
+    {
+      "file": "VectorMediaCompile.java",
+      "sha256": "c2cd3561f4df0d45dfda4d502c1ef44b7c7baf70a5f86d803443ecefa6c57129",
+      "bytes": 2718
+    },
+    {
+      "file": "VectorMediaIO.java",
+      "sha256": "271152d320f2da2e6bb02e2d08f5762f61c143cf55f50b8ecb650258186b6057",
+      "bytes": 1391
+    },
+    {
+      "file": "VectorMediaPortable.java",
+      "sha256": "39ab70674c9c599d7236a787a91484c88bce43330a19306d244404c1a9f70584",
+      "bytes": 1597
+    },
+    {
+      "file": "VectorPaintOrder.java",
+      "sha256": "07f4ece88d28f9ef4998765b988301572c1628c7f7a5825850afcc3f6abcf8ac",
+      "bytes": 949
+    },
+    {
+      "file": "VectorProgram.java",
+      "sha256": "470c70c2b099385b400655bb708c861b49199a838b0d10904595012e10419bf7",
+      "bytes": 6371
+    },
+    {
+      "file": "VectorRaster.java",
+      "sha256": "33cd29cfa9b1ef8a60a1bc3dd4e1bbae23c3b2ffaf05945e8fe2be4fc5807c85",
+      "bytes": 2622
+    },
+    {
+      "file": "VectorRasterBucket.java",
+      "sha256": "a9c7c414eecac21802ab1ed70aef2f2009a098ff010825bbf57fca25f707ec20",
+      "bytes": 1182
+    },
+    {
+      "file": "VectorRig.java",
+      "sha256": "f9fdc340ebb65b2f406d0d9c5892785670a5585850f0a06d9b9a14b54a72e3bb",
+      "bytes": 5942
+    },
+    {
+      "file": "VectorSession.java",
+      "sha256": "1e145a65ae24ccfbb03b3e84f4e9cf55dd37d2f26f1033202ffe506587ecb09f",
+      "bytes": 2443
+    },
+    {
+      "file": "VectorSprites.java",
+      "sha256": "8a13401c2ebf09339d1cb93b2097392a83201179a780991c0fec9d2d1fd224e6",
+      "bytes": 3664
+    },
+    {
+      "file": "VectorSvg.java",
+      "sha256": "a7b2fe461a38e4a8a40e3e86f4bd8f6812af6934833707372f7387de437b96a8",
+      "bytes": 15180
+    },
+    {
+      "file": "VectorSymbol.java",
+      "sha256": "cf1e42fbbf94d3ff73dc028c7d92736fa7ea0c8fab4567e27a2ecb23ba1ec3ad",
+      "bytes": 603
+    },
+    {
+      "file": "VectorWorkspace.java",
+      "sha256": "27898be8b8bea7b59d6efe3130fc6e4e87799227872e041173a802cabffa144c",
+      "bytes": 9933
+    },
+    {
+      "file": "VectorXfl.java",
+      "sha256": "fa2c5f98c90758dfe40cc6241d67ebf8a164a4cb47a0c9092f79ac33e143d9dc",
+      "bytes": 18617
+    },
+    {
+      "file": "VideoCutout.java",
+      "sha256": "8697eb24ab6cbee2709626555874f13e596ecdddd4aeedaec8dd754b4338a64d",
+      "bytes": 10705
+    },
+    {
+      "file": "ViewLookup95.java",
+      "sha256": "de60126ada594870de13b31bf4ff19906aa206ee64b943dc48772518c0015333",
+      "bytes": 1448
+    },
+    {
+      "file": "ViewportCache99.java",
+      "sha256": "00d50fe8ced7e63725858484d0844b897fa0d741aff2314ebbcb44010dbc82f4",
+      "bytes": 4996
+    },
+    {
+      "file": "Warp.java",
+      "sha256": "0238f9f0c119a58340868b8fee8bd96d2b140392dc299e8875be98bd280dfaa6",
+      "bytes": 3280
+    },
+    {
+      "file": "WarpMath.java",
+      "sha256": "eaa3e7f1cf75e10a447fca9fcf388fef7c0106beecbd97ee66662970ebd070f4",
+      "bytes": 2383
+    },
+    {
+      "file": "WarpPanel.java",
+      "sha256": "c81e8a578e237596750a2728cb31431af437d61dfbc437dcd83467b6a9cce69a",
+      "bytes": 8428
+    },
+    {
+      "file": "WeakIdentityMemo.java",
+      "sha256": "997b623ee90772d037543b38c671066845fd892e304b537eeaa8d2507e608b81",
+      "bytes": 1013
+    },
+    {
+      "file": "Welcome.java",
+      "sha256": "411bfc83b1914055f7365835d86fc6a12a9ef84f3e1a33e6fc1c8c5f1a445ddf",
+      "bytes": 1388
+    },
+    {
+      "file": "WorkBudget.java",
+      "sha256": "def530198265dcf22fd28684647f2cb46891c286d139979d7d164d7156929bf0",
+      "bytes": 784
+    }
+  ]
+}

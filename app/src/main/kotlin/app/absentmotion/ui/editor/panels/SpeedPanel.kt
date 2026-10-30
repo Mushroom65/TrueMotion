@@ -41,6 +41,7 @@ import app.absentmotion.editor.retimeVideo
 import app.absentmotion.editor.setVideoSpeed
 import app.absentmotion.model.Layer
 import app.absentmotion.model.VideoTiming
+import app.absentmotion.model.PlaybackSpeed
 import app.absentmotion.model.atVideoTime
 import app.absentmotion.model.isKeyframed
 import app.absentmotion.ui.editor.PanelIcons
@@ -72,7 +73,18 @@ fun SpeedPanel(state: EditorState, layer: Layer, modifier: Modifier = Modifier) 
                 }
             }
         }
-        Text(formatFixed(speed, 2) + "x", Modifier.align(Alignment.TopCenter).offset(y = 85.dp), color = Am.OnDark, fontSize = 12.sp)
+        fun applySpeed(value: Float) {
+            val original = state.selected ?: return
+            state.playing = false
+            state.setVideoSpeed(value, original.atVideoTime(state.sampleMs, state.scene.fps).t, original)
+            state.endGesture()
+        }
+        Row(Modifier.offset(y = 54.dp).fillMaxWidth().height(26.dp).horizontalScroll(rememberScrollState()).padding(horizontal = 15.dp), Arrangement.spacedBy(4.dp)) {
+            for (preset in PlaybackSpeed.presets) RampChip(formatPlain(preset) + "x", true) { applySpeed(preset) }
+        }
+        val speedLabel = stringResource(R.string.true_speed_number)
+        Text(formatFixed(speed, 2) + "x", Modifier.align(Alignment.TopCenter).offset(y = 80.dp)
+            .clickable { state.askNumber(speedLabel, speed, min = .001f, max = 100f, onDone = ::applySpeed) }.padding(horizontal = 12.dp, vertical = 4.dp), color = Am.OnDark, fontSize = 12.sp)
         Row(Modifier.offset(y = 105.dp).fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
             PaceIcon(PanelIcons.Turtle, Modifier.width(44.dp).height(40.dp))
             SpeedSlider(speed, state, Modifier.weight(1f).fillMaxHeight())
@@ -101,39 +113,32 @@ private fun RampChip(label: String, enabled: Boolean, onClick: () -> Unit) {
     }
 }
 
-private val snaps = listOf(250, 500, 750, 1000, 2000, 3000)
-
 @Composable
 private fun SpeedSlider(speed: Float, state: EditorState, modifier: Modifier) {
     val liveLayer by rememberUpdatedState(state.selected)
     val haptic = rememberHaptic(state)
-    fun coord(value: Int, width: Float, thumb: Float, margin: Float): Float = thumb / 2 +
-        (value - 1).coerceAtLeast(0) * (width - thumb - snaps.size * margin) / 3999 +
-        snaps.count { it < value } * margin + if (value in snaps) margin / 2 else 0f
-    Canvas(modifier.sliderSemantics(speed, 0.001f..4f) { v ->
+    fun coord(value: Float, width: Float, thumb: Float): Float = thumb / 2 + PlaybackSpeed.position(value) * (width - thumb).coerceAtLeast(1f)
+    Canvas(modifier.sliderSemantics(speed, PlaybackSpeed.Min..PlaybackSpeed.Max) { v ->
         liveLayer?.let { state.setVideoSpeed(v, it.atVideoTime(state.sampleMs, state.scene.fps).t, it); state.endGesture() }
     }.pointerInput(state) {
         awaitEachGesture {
             val down = awaitFirstDown()
             val original = liveLayer ?: return@awaitEachGesture
+            state.playing = false
             val anchor = original.atVideoTime(state.sampleMs, state.scene.fps).t
-            val thumb = 24.dp.toPx(); val margin = 20.px.toPx()
-            var detent: Int? = null
+            val thumb = 24.dp.toPx()
+            var detent: Float? = null
             var moved = false
             fun update(x: Float) {
-                val usable = (size.width - thumb - snaps.size * margin).coerceAtLeast(1f)
-                var value: Int? = null
-                var passed = 0
-                for ((i, snap) in snaps.withIndex()) {
-                    val left = thumb / 2 + (snap - 1) * usable / 3999 + i * margin
-                    if (x in left..(left + margin)) { value = snap; break }
-                    if (x > left + margin) passed++
-                }
+                val u = ((x - thumb / 2) / (size.width - thumb).coerceAtLeast(1f)).coerceIn(0f, 1f)
+                val value = PlaybackSpeed.presets.minByOrNull { kotlin.math.abs(PlaybackSpeed.position(it) - u) }
+                    ?.takeIf { kotlin.math.abs(PlaybackSpeed.position(it) - u) < .012f }
                 if (moved && value != null && value != detent) haptic(HapticFeedbackType.SegmentTick)
                 moved = true
                 detent = value
-                val raw = value ?: (((x - thumb / 2 - passed * margin) * 3999 / usable + 1) / 50).roundToInt() * 50
-                state.setVideoSpeed(raw.coerceIn(1, 4000) / 1000f, anchor, original)
+                val raw = PlaybackSpeed.value(u)
+                val precision = if (raw < 1f) 1000f else if (raw < 10f) 100f else 10f
+                state.setVideoSpeed(value ?: ((raw * precision).roundToInt() / precision).coerceIn(PlaybackSpeed.Min, PlaybackSpeed.Max), anchor, original)
             }
             down.consume(); update(down.position.x)
             try {
@@ -145,15 +150,15 @@ private fun SpeedSlider(speed: Float, state: EditorState, modifier: Modifier) {
             } finally { state.endGesture() }
         }
     }) {
-        val thumb = 24.dp.toPx(); val margin = 20.px.toPx(); val cy = size.height / 2
+        val thumb = 24.dp.toPx(); val cy = size.height / 2
         val grey = Am.Caption
         drawLine(grey, Offset(thumb / 2, cy), Offset(size.width - thumb / 2, cy), 2.5.dp.toPx(), StrokeCap.Round)
-        for (v in listOf(1, 500, 1000, 2000, 3000, 4000)) {
-            val x = coord(v, size.width, thumb, margin)
+        for (v in listOf(.001f, .1f, 1f, 4f, 10f, 100f)) {
+            val x = coord(v, size.width, thumb)
             drawLine(grey, Offset(x, cy - 15.dp.toPx()), Offset(x, cy - 10.dp.toPx()), 1.dp.toPx(), StrokeCap.Round)
             drawLine(grey, Offset(x, cy + 10.dp.toPx()), Offset(x, cy + 15.dp.toPx()), 1.dp.toPx(), StrokeCap.Round)
         }
-        drawCircle(Am.OnDark, thumb / 2, Offset(coord((speed * 1000).toInt().coerceIn(1, 4000), size.width, thumb, margin), cy))
+        drawCircle(Am.OnDark, thumb / 2, Offset(coord(speed, size.width, thumb), cy))
     }
 }
 

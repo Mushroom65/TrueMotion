@@ -85,6 +85,7 @@ internal object Updates {
     }
 
     private fun fetchLatest(): Release? {
+        if (app.absentmotion.BuildConfig.APPLICATION_ID == "app.truemotion") return null
         val connection = URI(RELEASES).toURL().openConnection() as HttpURLConnection
         try {
             connection.connectTimeout = TIMEOUT_MS

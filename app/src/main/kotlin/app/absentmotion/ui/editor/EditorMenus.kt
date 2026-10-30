@@ -1,6 +1,7 @@
 package app.absentmotion.ui.editor
 
 import app.absentmotion.platform.Toast
+import app.absentmotion.editor.openFramePhoto
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -106,6 +107,7 @@ import app.absentmotion.editor.pasteCount
 import app.absentmotion.editor.copySelected
 import app.absentmotion.editor.duplicateSelected
 import app.absentmotion.editor.extractAudio
+import app.absentmotion.editor.openAudioMotion
 import app.absentmotion.editor.startTracking
 import app.absentmotion.editor.markIntroEnd
 import app.absentmotion.editor.markOutroStart
@@ -190,6 +192,7 @@ internal fun LayerMenu(state: EditorState, onDismiss: () -> Unit) {
     }
     val saveElement = rememberSaveToMyElements(state)
     MenuPopup(position, onDismiss) {
+        if (!MultiSelect.active) MenuRow(stringResource(R.string.true_audio_title)) { state.openAudioMotion(); onDismiss() }
         if (state.selected?.link == null && !MultiSelect.active) MenuRow(stringResource(R.string.menu_save_to_my_assets)) { saveElement(onDismiss) }
         if (state.selected?.kind != "audio") {
             MenuRow(stringResource(R.string.menu_flip_horizontally)) {
@@ -212,6 +215,10 @@ internal fun LayerMenu(state: EditorState, onDismiss: () -> Unit) {
             }
         }
         if (video != null) {
+            MenuRow(stringResource(R.string.true_photo_video_action), enabled = !MultiSelect.active) {
+                state.openFramePhoto(true)
+                onDismiss()
+            }
             MenuRow(stringResource(R.string.menu_extract_audio)) {
                 state.extractAudio()
                 onDismiss()
@@ -254,7 +261,7 @@ internal object AboveLeft : PopupPositionProvider {
 
 @Composable
 internal fun TransformMenu(state: EditorState, tab: Int, turn: Turn?, onDismiss: () -> Unit) {
-    val resetName = listOf(R.string.menu_reset_location, R.string.menu_reset_scale, R.string.menu_reset_rotation, R.string.menu_reset_3d_rotation, R.string.menu_reset_skew)[tab]
+    val resetName = listOf(R.string.menu_reset_location, R.string.menu_reset_scale, R.string.menu_reset_rotation, R.string.menu_reset_3d_rotation, R.string.menu_reset_skew, R.string.true_pivot_reset)[tab]
     MenuPopup(AboveLeft, onDismiss, TransformOrigin(0f, 1f)) {
         MenuRow(stringResource(resetName)) {
             if (tab == ROTATE_TAB && turn != null) state.editSelected { turn.reset(it) } else state.resetTransform(listOf(tab))

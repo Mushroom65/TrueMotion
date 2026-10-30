@@ -66,8 +66,10 @@ fun EditorState.addShape(def: ShapeDef) {
 
 fun EditorState.stepBack(): Boolean {
     when {
+        motionPathOpen -> { endGesture(); motionPathOpen = false }
+        framePhotoOpen -> framePhotoOpen = false
         MultiSelect.active -> MultiSelect.clear()
-        selectedId == null -> return false
+        selectedId == null -> return leaveGroup()
         easingOpen -> easingOpen = false
         panel == EditorPanel.Effects && effectIndex >= 0 -> effectIndex = -1
         panel != EditorPanel.Tools -> panel = EditorPanel.Tools
@@ -144,6 +146,7 @@ fun EditorState.resetTransform(tabs: List<Int>) = editSelected { layer ->
             1 -> if (l.kind == "camera") l.withCameraFov(60f) else l.withTransform("scale", 1f, 1f)
             2 -> l.withRotation(0f)
             3 -> l.withTilt(0f, 0f)
+            5 -> l.withTransform("pivot", 0f, 0f)
             else -> l.withSkew(0f, 0f)
         }
     }
@@ -297,7 +300,7 @@ fun EditorState.pasteLayer() {
 fun EditorState.changeSettings(width: Int, height: Int, fps: Int, bgColor: Int) =
     edit { it.withSettings(width, height, fps, bgColor) }
 
-fun EditorState.rename(title: String) = edit { it.withTitle(title) }
+fun EditorState.rename(title: String) = renameScene(title)
 
 fun EditorState.renameLayer(id: Long, label: String) = edit { it.update(id) { layer -> layer.withLabel(label) } }
 

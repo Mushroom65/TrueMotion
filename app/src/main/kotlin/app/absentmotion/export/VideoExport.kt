@@ -213,8 +213,20 @@ private suspend fun encode(
                 Log.i("AMExport", "$frames frames in ${spent[2] / 1_000_000} ms; per frame: ${perFrame(spent[2])} ms, drawing ${perFrame(spent[0] - spent[1])} ms, waiting for copies ${perFrame(spent[1])} ms")
             }
             val buffers = turn || ExportDebug.forceBuffers || Build.VERSION.SDK_INT < 33 || !stampsPresentTime()
-            Log.i("AMExport", "rendering $frames frames at ${width}x$height through ${if (buffers) "encoder buffers" else "the swapchain"}")
-            if (buffers && !turn && Build.VERSION.SDK_INT >= 33) {
+            // ARM translation on x86 Android can successfully import an AHB yet
+            // expose unrelated storage to MediaCodec. Use the verified readback
+            // path there; native ARM devices keep their usual GPU pipeline.
+            val translated = Build.SUPPORTED_ABIS.any { it.startsWith("x86") }
+            Log.i("AMExport", "rendering $frames frames at ${width}x$height through ${if (translated) "pixel readback" else if (buffers) "encoder buffers" else "the swapchain"}")
+            if (translated) {
+                val copy = EncoderCopy(input, turn = turn, pixels = true)
+                try {
+                    eachFrame { k, presentNs ->
+                        val pixels = still(frameTimeMs(scene,s.fps,k),width,height)
+                        exportCheck(pixels != null && copy.pixels(pixels,width,height,presentNs)) { txt(R.string.export_error_draw_frame,k.toString()) }
+                    }
+                } finally { copy.close() }
+            } else if (buffers && !turn && Build.VERSION.SDK_INT >= 33) {
                 val writer = ImageWriter.Builder(input).setMaxImages(2).setHardwareBufferFormat(HardwareBuffer.RGBA_8888)
                     .setUsage(HardwareBuffer.USAGE_GPU_COLOR_OUTPUT or HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE).build()
                 try {
@@ -273,7 +285,8 @@ private suspend fun encode(
     progress(1f)
 }
 
-internal fun fixedBt601(info: MediaCodecInfo): Boolean = Build.VERSION.SDK_INT <= 30 && !info.hardware
+internal fun fixedBt601(info: MediaCodecInfo): Boolean =
+    (Build.VERSION.SDK_INT <= 30 || Build.SUPPORTED_ABIS.any { it.startsWith("x86") }) && !info.hardware
 
 internal fun drain(codec: MediaCodec, mux: Mux, stop: AtomicBoolean, ptsShift: Long,
                   audioDelay: AtomicInteger? = null, totalUs: Long = Long.MAX_VALUE, trace: Boolean = false, rate: Int = ExportAudio.SAMPLE_RATE,

@@ -1,0 +1,38 @@
+{
+ "id": "true-plugin-builtin-distort-wave",
+ "runtimeId": "plugin.builtin.distort.wave",
+ "plugin": "builtin.distort",
+ "name": "True Wave",
+ "category": "true",
+ "description": "Independent True Motion implementation; not an AE binary port.",
+ "params": [
+  {
+   "id": "amount",
+   "label": "Amplitude",
+   "type": "float",
+   "default": 0.015,
+   "min": 0.0,
+   "max": 0.2,
+   "step": 0.01
+  },
+  {
+   "id": "frequency",
+   "label": "Frequency",
+   "type": "float",
+   "default": 10.0,
+   "min": 0.0,
+   "max": 100.0,
+   "step": 0.01
+  },
+  {
+   "id": "speed",
+   "label": "Speed",
+   "type": "float",
+   "default": 1.0,
+   "min": -10.0,
+   "max": 10.0,
+   "step": 0.01
+  }
+ ],
+ "sksl": "uniform shader image;\nuniform float2 size;\nuniform float2 layer;\nuniform float3x3 toLayer;\nuniform float3x3 fromLayer;\nuniform float time;\nuniform float amount;\nuniform float frequency;\nuniform float speed;\nfloat4 readInput(float2 uv){if(uv.x<0.0||uv.y<0.0||uv.x>1.0||uv.y>1.0)return float4(0.0);return float4(image.eval(uv * size));}\nhalf4 main(float2 coord){float2 uv=(coord / size);uv.x+=sin(uv.y*frequency*6.2831853+time*speed)*amount;return readInput(uv);}"
+}

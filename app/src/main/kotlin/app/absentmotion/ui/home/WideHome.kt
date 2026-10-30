@@ -45,7 +45,7 @@ internal fun WideHeader(page: Int, tab: Int, onTab: (page: Int, tab: Int) -> Uni
     val compact = maxWidth < FullHeaderWidth * LocalDensity.current.fontScale.coerceAtLeast(1f)
     Row(Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 20.dp), Arrangement.spacedBy(12.dp), Alignment.CenterVertically) {
         if (!compact) {
-            Text("AbsentMotion", color = Am.Navy, fontSize = 22.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+            TrueBrandTitle()
             Spacer(Modifier.width(16.dp))
         }
         Chip(stringResource(R.string.home_tab_projects), page == 0 && tab == 0) { onTab(0, 0) }

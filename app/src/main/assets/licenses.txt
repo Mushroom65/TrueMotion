@@ -2758,8 +2758,9 @@ COUNTS
 LAUNCHER ICON
 -------------
 
-- adaptive icon mark (own drawing (tools/icon/make_icon.py)) - Apache-2.0 (own) - app/src/main/res/drawable/ic_launcher_foreground.xml
-- flat colour #FF5A36 (own) - Apache-2.0 (own) - app/src/main/res/drawable/ic_launcher_background.xml
+- Active True Motion icon: user-provided artwork, 2026-10-30; original in branding/true-motion-source.png; packaging script tools/icon/package_true_motion.py.
+- Retained upstream mark source (not the active launcher icon): own drawing (tools/icon/make_icon.py), Apache-2.0, drawable/ic_launcher_foreground.xml
+- flat colour #000000 (True Motion launcher background) - Apache-2.0 (own) - app/src/main/res/drawable/ic_launcher_background.xml
 - the mark on its background (own drawing) - Apache-2.0 (own) - tools/icon/mark.svg
 
 ICONS

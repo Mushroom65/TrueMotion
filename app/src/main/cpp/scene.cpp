@@ -1,4 +1,6 @@
 #include "scene.h"
+#include "particles.h"
+#include "motion_path_math.h"
 
 #include <algorithm>
 #include <cmath>
@@ -33,7 +35,26 @@ float Anim::get(int i, float t, float fallback) const {
     const Keyframe& b = *next;
     const Keyframe& a = *(next - 1);
     const float u = Ease(b.easing, b.t > a.t ? (t - a.t) / (b.t - a.t) : 0.0f);
+    if (spatial && i < 2 && a.v.size() >= 2 && b.v.size() >= 2) {
+        const auto p = SampleMotionPath(a.v[0], a.v[1], b.v[0], b.v[1], a.pathOut[0], a.pathOut[1], b.pathIn[0], b.pathIn[1], u);
+        return i == 0 ? p.x : p.y;
+    }
     return at(a.v) + (at(b.v) - at(a.v)) * u;
+}
+
+float Anim::pathAngle(float t) const {
+    if (keys.size() < 2 || !std::isfinite(t)) return 0;
+    auto next = std::upper_bound(keys.begin(), keys.end(), t,
+                                [](float time, const Keyframe& k) { return time < k.t; });
+    if (next == keys.begin()) ++next;
+    if (next == keys.end()) --next;
+    const auto& a = *(next - 1);
+    const auto& b = *next;
+    if (a.v.size() < 2 || b.v.size() < 2 || b.t <= a.t) return 0;
+    const float u = Ease(b.easing, std::clamp((t-a.t)/(b.t-a.t), 0.0f, 1.0f));
+    return MotionPathHeading(a.v[0],a.v[1],b.v[0],b.v[1],
+        spatial ? a.pathOut[0] : 0, spatial ? a.pathOut[1] : 0,
+        spatial ? b.pathIn[0] : 0, spatial ? b.pathIn[1] : 0, u);
 }
 
 const Property* Layer::prop(const char* propName) const {
@@ -100,11 +121,20 @@ Anim ParseAnim(const XmlNode* node) {
     Anim a;
     if (!node) return a;
     a.value = ParseValue(node->attr("value"));
+    a.spatial = node->name == "location" && node->attr("truePath") && !strcmp(node->attr("truePath"), "true");
     for (const auto& c : node->children) {
         if (c->name != "kf") continue;
         const char* t = c->attr("t");
         const float time = t ? strtof(t, nullptr) : 0.0f;
-        if (std::isfinite(time)) a.keys.push_back({time, ParseValue(c->attr("v")), ParseEasing(c->attr("e"))});
+        if (std::isfinite(time)) {
+            Keyframe key{time, ParseValue(c->attr("v")), ParseEasing(c->attr("e"))};
+            const auto in = ParseValue(c->attr("pathIn")), out = ParseValue(c->attr("pathOut"));
+            for (int i = 0; i < 2; ++i) {
+                if (i < (int)in.size() && std::isfinite(in[i])) key.pathIn[i] = in[i];
+                if (i < (int)out.size() && std::isfinite(out[i])) key.pathOut[i] = out[i];
+            }
+            a.keys.push_back(key);
+        }
     }
     std::stable_sort(a.keys.begin(), a.keys.end(), [](const Keyframe& x, const Keyframe& y) { return x.t < y.t; });
     return a;
@@ -307,7 +337,8 @@ bool ParseLayer(const XmlNode& node, int fps, Layer* out) {
     l.hidden = StrAttr(*n, "hidden") == "true";
     if (const XmlNode* t = n->child("transform")) {
         l.location = ParseAnim(t->child("location"));
-        if (l.endTime > l.startTime) LeadIn(&l.location, 1000.0f / fps / (l.endTime - l.startTime));
+        l.pathAutoOrient = StrAttr(*t, "trueAutoOrient") == "true";
+        if (!l.location.spatial && l.endTime > l.startTime) LeadIn(&l.location, 1000.0f / fps / (l.endTime - l.startTime));
         l.pivot = ParseAnim(t->child("pivot"));
         l.scale = ParseAnim(t->child("scale"));
         l.rotation = ParseAnim(t->child("rotation"));
@@ -331,6 +362,8 @@ bool ParseLayer(const XmlNode& node, int fps, Layer* out) {
         if (c->name == "effect") {
             LayerEffect effect;
             effect.id = StrAttr(*c, "id");
+            if (ParticleEffect(effect.id)) effect.particles = std::make_shared<ParticleState>();
+            if (effect.id == "lab.true.audioMotion") effect.audioSignalKey = StrAttr(*c, "signalKey");
             effect.hidden = StrAttr(*c, "hidden") == "true";
             effect.locallyApplied = StrAttr(*c, "locallyApplied") == "true";
             effect.toChildren = StrAttr(*c, "applyToChildren") == "true";
@@ -440,7 +473,7 @@ SkPath OutlineAt(const Layer& layer, float t) {
 
 SkMatrix LayerMatrix(const Layer& l, float t) {
     SkMatrix m = SkMatrix::Translate(l.location.get(0, t, 0), l.location.get(1, t, 0));
-    m.preRotate(l.rotation.get(0, t, 0));
+    m.preRotate(l.rotation.get(0, t, 0) + (l.pathAutoOrient ? l.location.pathAngle(t) : 0));
     m.preSkew(tanf(l.skew.get(0, t, 0)), tanf(l.skew.get(1, t, 0)));
     m.preScale(l.scale.get(0, t, 1), l.scale.get(1, t, 1));
     m.preTranslate(-l.pivot.get(0, t, 0), -l.pivot.get(1, t, 0));

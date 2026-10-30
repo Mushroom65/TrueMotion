@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_group_edit">Edit group</string>
+    <string name="true_group_back">Back to parent composition</string>
+    <string name="true_group_timing">Group timing</string>
+    <string name="true_group_continue">Continue</string>
+    <string name="true_group_linked_hint">Editing makes a local copy of this element. Its source project stays unchanged.</string>
+    <string name="true_group_timing_hint">Extending a group holds its last frame by default. Inner keyframe times stay unchanged. Choose a mode to loop or stretch the animation.</string>
+</resources>

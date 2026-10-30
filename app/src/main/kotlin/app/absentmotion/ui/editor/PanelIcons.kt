@@ -10,6 +10,8 @@ import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
 
 internal object PanelIcons {
+    val Particles = icon("Particles", width = 1.6f, stroke = "M10 4A2 2 0 1 0 14 4A2 2 0 1 0 10 4ZM3 13A2 2 0 1 0 7 13A2 2 0 1 0 3 13ZM16 16A3 3 0 1 0 22 16A3 3 0 1 0 16 16ZM9 20L10 20M19 5L20 5M7 5L5 7M11 10L12 13")
+    val TabPivot = icon("Anchor", width = 1.7f, stroke = "M8 12A4 4 0 1 0 16 12A4 4 0 1 0 8 12ZM12 2L12 6M12 18L12 22M2 12L6 12M18 12L22 12")
     val Speed = icon("Speed", width = 1.7f, stroke = "M12 14L16 10M3.34 19A10 10 0 1 1 20.66 19")
     val Animate = icon("Animate", width = 1.7f, stroke = "M9 12A6 6 0 1 0 21 12A6 6 0 1 0 9 12ZM2 8L6 8M3 12L6 12M2 16L6 16")
     val TrimLeft = icon("TrimLeft", width = 1.7f, stroke = "M12 2.5L12 21.5M13.5 7.5L19.5 7.5A1.5 1.5 0 0 1 21 9L21 15A1.5 1.5 0 0 1 19.5 16.5L13.5 16.5A1.5 1.5 0 0 1 12 15L12 9A1.5 1.5 0 0 1 13.5 7.5ZM3.5 7.5" +

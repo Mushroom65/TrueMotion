@@ -1,0 +1,16 @@
+<resources>
+    <string name="true_path_title">Траектория</string>
+    <string name="true_path_fit">Вписать</string>
+    <string name="true_path_need_keys">Добавь два ключа положения или создай начальную траекторию.</string>
+    <string name="true_path_create">Создать траекторию</string>
+    <string name="true_path_smooth">Сгладить всё</string>
+    <string name="true_path_smooth_key">Сгладить ключ</string>
+    <string name="true_path_corner">Угол</string>
+    <string name="true_path_point">Точка</string>
+    <string name="true_path_in">Входящая</string>
+    <string name="true_path_out">Исходящая</string>
+    <string name="true_path_enabled">Кривые</string>
+    <string name="true_path_link">Связать ручки</string>
+    <string name="true_path_orient">Автоповорот</string>
+    <string name="true_path_hint">Тяни точки и ручки; двумя пальцами двигай и масштабируй схему. Координаты относительно родителя. Скорость настраивается ключами на таймлайне.</string>
+</resources>

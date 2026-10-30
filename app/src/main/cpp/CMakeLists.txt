@@ -10,7 +10,7 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/skia)
+set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/skia CACHE PATH "Pinned Skia source directory")
 if(AM_COMPAT)
     set(SKIA_OUT ${SKIA_DIR}/out/android-arm64-compat)
     add_compile_definitions(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
@@ -36,10 +36,8 @@ add_library(motion_tracker OBJECT tracker/tracker.cpp tracker_jni.cpp)
 set_target_properties(motion_tracker PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_compile_options(motion_tracker PRIVATE -O3 -fvisibility=hidden)
 
-add_library(amengine SHARED preview.cpp camera.cpp drawing.cpp effects.cpp easing.cpp engine.cpp interpolation.cpp jni.cpp model.cpp motion.cpp scene.cpp shapes.cpp styles.cpp text.cpp textanim.cpp xml.cpp denoise_jni.cpp audio_dsp.cpp audio_fx_jni.cpp)
-if(AM_COMPAT)
-    target_sources(amengine PRIVATE encoder_copy.cpp)
-endif()
+add_library(amengine SHARED preview.cpp camera.cpp drawing.cpp effects.cpp easing.cpp engine.cpp interpolation.cpp jni.cpp model.cpp motion.cpp particles.cpp scene.cpp shapes.cpp styles.cpp text.cpp textanim.cpp xml.cpp denoise_jni.cpp audio_dsp.cpp audio_fx_jni.cpp)
+target_sources(amengine PRIVATE encoder_copy.cpp)
 target_include_directories(amengine PRIVATE ${SKIA_DIR} ${SKIA_DIR}/third_party/externals/expat/expat/lib ${SKIA_DIR}/third_party/externals/icu/source/common)
 target_compile_definitions(amengine PRIVATE
     NDEBUG SK_GANESH SK_GRAPHITE SK_VULKAN SK_GL SK_ENABLE_PRECOMPILE SK_DISABLE_TRACING
@@ -53,6 +51,10 @@ target_link_libraries(amengine PRIVATE
     -Wl,--start-group ${SKIA_LIBS} -Wl,--end-group
     -Wl,--gc-sections
     rnnoise absent_bg motion_tracker m vulkan android nativewindow jnigraphics EGL GLESv3 log)
+
+if(AM_ENGINE_ONLY)
+    return()
+endif()
 
 set(LAME_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/lame)
 set(LAME_SOURCES bitstream encoder fft gain_analysis id3tag lame mpglib_interface newmdct presets psymodel quantize

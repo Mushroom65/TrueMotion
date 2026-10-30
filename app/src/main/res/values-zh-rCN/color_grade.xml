@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_grade_enter_value">输入%1$s</string>
+    <string name="true_grade_title">调色</string>
+    <string name="true_grade_primary">基本</string>
+    <string name="true_grade_wheels">色轮</string>
+    <string name="true_grade_curves">曲线</string>
+    <string name="true_grade_hsl">HSL</string>
+    <string name="true_grade_output">混合</string>
+    <string name="true_grade_lift">阴影</string>
+    <string name="true_grade_gamma">中间调</string>
+    <string name="true_grade_gain">高光</string>
+    <string name="true_grade_brightness">范围亮度</string>
+    <string name="true_grade_wheel_control">%1$s色轮</string>
+    <string name="true_grade_wheel_hint">拖动调整色偏，中心为中性。</string>
+    <string name="true_grade_wheel_key">RGB 关键帧</string>
+    <string name="true_grade_neutral">中性色</string>
+    <string name="true_grade_master">主曲线</string>
+    <string name="true_grade_curve_control">颜色曲线：垂直拖动控制点</string>
+    <string name="true_grade_curve_hint">三个控制点位于 25%、50% 和 75%，线性连接与着色器一致。</string>
+    <string name="true_grade_curve_point">输入 %1$d%%</string>
+    <string name="true_grade_hue">色相</string>
+    <string name="true_grade_saturation">饱和度</string>
+    <string name="true_grade_lightness">明度</string>
+    <string name="true_grade_red">红色</string>
+    <string name="true_grade_yellow">黄色</string>
+    <string name="true_grade_green">绿色</string>
+    <string name="true_grade_cyan">青色</string>
+    <string name="true_grade_blue">蓝色</string>
+    <string name="true_grade_magenta">洋红</string>
+    <string name="true_grade_exposure">曝光（档）</string>
+    <string name="true_grade_contrast">对比度</string>
+    <string name="true_grade_vibrance">自然饱和度</string>
+    <string name="true_grade_temperature">色温</string>
+    <string name="true_grade_tint">色调</string>
+    <string name="true_grade_shadows">阴影细节</string>
+    <string name="true_grade_highlights">高光细节</string>
+    <string name="true_grade_black">黑场</string>
+    <string name="true_grade_white">白场</string>
+    <string name="true_grade_mix">调色强度</string>
+    <string name="true_grade_mix_hint">0 保留原图，1 应用全部调色。此属性也支持关键帧。</string>
+    <string name="true_grade_disable">关闭调色</string>
+    <string name="true_grade_enable">启用调色</string>
+    <string name="true_grade_reset_section">重置当前帧的本节参数</string>
+</resources>

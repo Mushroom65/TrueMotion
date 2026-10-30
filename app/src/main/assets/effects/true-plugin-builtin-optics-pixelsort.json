@@ -1,0 +1,65 @@
+{
+ "id": "true-plugin-builtin-optics-pixelsort",
+ "runtimeId": "plugin.builtin.optics.pixelsort",
+ "plugin": "builtin.optics",
+ "name": "True Pixel Sort",
+ "category": "true",
+ "description": "Independent True Motion effect inspired by NodeVideo feature concepts; original shader.",
+ "params": [
+  {
+   "id": "stepPixels",
+   "label": "Eight-sample spacing, px",
+   "type": "float",
+   "default": 4.0,
+   "min": 1.0,
+   "max": 32.0,
+   "step": 1.0
+  },
+  {
+   "id": "angle",
+   "label": "Direction",
+   "type": "float",
+   "default": 0.0,
+   "min": -360.0,
+   "max": 360.0,
+   "step": 0.01
+  },
+  {
+   "id": "low",
+   "label": "Lower luma threshold",
+   "type": "float",
+   "default": 0.0,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "high",
+   "label": "Upper luma threshold",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
+   "id": "reverse",
+   "label": "Descending order (0 / 1)",
+   "type": "float",
+   "default": 0.0,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 1.0
+  },
+  {
+   "id": "amount",
+   "label": "Mix",
+   "type": "float",
+   "default": 1.0,
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  }
+ ],
+ "sksl": "uniform shader image;\nuniform float2 size;\nuniform float2 layer;\nuniform float3x3 toLayer;\nuniform float3x3 fromLayer;\nuniform float time;\nuniform float stepPixels;\nuniform float angle;\nuniform float low;\nuniform float high;\nuniform float reverse;\nuniform float amount;\n\nfloat2 turn(float2 p,float a){float c=cos(a),s=sin(a);return float2(c*p.x-s*p.y,s*p.x+c*p.y);}\nfloat4 readLayer(float2 uv){if(uv.x<0.0||uv.y<0.0||uv.x>1.0||uv.y>1.0)return float4(0.0);float2 s=((fromLayer * float3(uv * layer,1.0)).xy / size);if(s.x<0.0||s.y<0.0||s.x>1.0||s.y>1.0)return float4(0.0);return float4(image.eval(s * size));}\nfloat2 borderUV(float2 uv,float mirrorEdges){return mirrorEdges>.5?1.0-abs(mod(uv,2.0)-1.0):uv;}\nfloat light(float4 c){return c.a>.00001?dot(c.rgb/c.a,float3(.2126,.7152,.0722)):0.0;}\nvoid order(inout float4 a,inout float4 b){if((light(a)-light(b))*(reverse>.5?-1.0:1.0)>0.0){float4 t=a;a=b;b=t;}}\nhalf4 main(float2 coord){float4 src=readLayer(((toLayer * float3(coord,1.0)).xy / layer));if(amount<=.00001){return src;}float2 tmLocalSize=max(layer,float2(1.0));float a=angle*.01745329252,s=max(1.0,stepPixels);float2 q=turn((((toLayer * float3(coord,1.0)).xy / layer)-.5)*tmLocalSize,-a);float index=mod(floor(q.x/s),8.0),base=floor(q.x/(s*8.0))*s*8.0;float row=(floor(q.y/s)+.5)*s;float4 c0=readLayer(turn(float2(base+(0.0+.5)*s,row),a)/tmLocalSize+.5);float4 c1=readLayer(turn(float2(base+(1.0+.5)*s,row),a)/tmLocalSize+.5);float4 c2=readLayer(turn(float2(base+(2.0+.5)*s,row),a)/tmLocalSize+.5);float4 c3=readLayer(turn(float2(base+(3.0+.5)*s,row),a)/tmLocalSize+.5);float4 c4=readLayer(turn(float2(base+(4.0+.5)*s,row),a)/tmLocalSize+.5);float4 c5=readLayer(turn(float2(base+(5.0+.5)*s,row),a)/tmLocalSize+.5);float4 c6=readLayer(turn(float2(base+(6.0+.5)*s,row),a)/tmLocalSize+.5);float4 c7=readLayer(turn(float2(base+(7.0+.5)*s,row),a)/tmLocalSize+.5);float valid=1.0;valid*=c0.a>.995&&light(c0)>=low&&light(c0)<=high?1.0:0.0;valid*=c1.a>.995&&light(c1)>=low&&light(c1)<=high?1.0:0.0;valid*=c2.a>.995&&light(c2)>=low&&light(c2)<=high?1.0:0.0;valid*=c3.a>.995&&light(c3)>=low&&light(c3)<=high?1.0:0.0;valid*=c4.a>.995&&light(c4)>=low&&light(c4)<=high?1.0:0.0;valid*=c5.a>.995&&light(c5)>=low&&light(c5)<=high?1.0:0.0;valid*=c6.a>.995&&light(c6)>=low&&light(c6)<=high?1.0:0.0;valid*=c7.a>.995&&light(c7)>=low&&light(c7)<=high?1.0:0.0;if(valid<.5){return src;}order(c0,c1);order(c2,c3);order(c4,c5);order(c6,c7);order(c0,c2);order(c1,c3);order(c4,c6);order(c5,c7);order(c1,c2);order(c5,c6);order(c0,c4);order(c3,c7);order(c1,c5);order(c2,c6);order(c1,c4);order(c3,c6);order(c2,c4);order(c3,c5);order(c3,c4);float4 sorted=c0;if(index>=1.0)sorted=c1;if(index>=2.0)sorted=c2;if(index>=3.0)sorted=c3;if(index>=4.0)sorted=c4;if(index>=5.0)sorted=c5;if(index>=6.0)sorted=c6;if(index>=7.0)sorted=c7;return mix(src,sorted,amount);}"
+}

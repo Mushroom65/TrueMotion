@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_photo_title">帧转照片图层</string>
+    <string name="true_photo_video_action">视频帧转照片</string>
+    <string name="true_photo_video">视频源</string>
+    <string name="true_photo_composition">合成</string>
+    <string name="true_photo_source_hint">按片段的裁剪和速度捕获源帧。保留当前几何形状和变换，不复制效果及声音。</string>
+    <string name="true_photo_composition_hint">捕获可见合成，保留效果和透明度。照片随项目保存，无需导出到相册。</string>
+    <string name="true_photo_duration_label">照片时长（秒）</string>
+    <string name="true_photo_duration">时长：%1$s 秒</string>
+    <string name="true_photo_create">创建照片图层</string>
+    <string name="true_photo_working">正在捕获帧…</string>
+    <string name="true_photo_choose_video">请选择视频图层，并将播放头放在片段内。</string>
+    <string name="true_photo_cannot_capture">无法捕获此帧。</string>
+    <string name="true_photo_changed">捕获期间项目已更改，请重试。</string>
+    <string name="true_photo_source_name">帧照片</string>
+    <string name="true_photo_composition_name">合成照片</string>
+    <string name="true_speed_number">播放速度（0.001–100×）</string>
+</resources>

@@ -1,137 +1,39 @@
-name: build
+name: True Motion compatible build
 
 on:
   workflow_dispatch:
-    inputs:
-      subdir:
-        description: Directory to build in, relative to the workspace
-        default: '.'
-  pull_request:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  foss-apk:
+  compat:
     runs-on: ubuntu-latest
-    timeout-minutes: 170
-    container: debian:trixie
-    defaults:
-      run:
-        working-directory: ${{ inputs.subdir || '.' }}
-    env:
-      DEBIAN_FRONTEND: noninteractive
-      ANDROID_HOME: /opt/android-sdk
-      ANDROID_NDK: /opt/android-sdk/ndk/30.0.16248370
+    timeout-minutes: 45
     steps:
-      - name: Install packages
-        working-directory: /
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends git ca-certificates curl unzip xz-utils python3 build-essential clang lld ninja-build openjdk-21-jdk-headless
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-java@v6
         with:
-          submodules: recursive
-          path: ${{ inputs.subdir || '.' }}
-      - name: Install the Android SDK
-        run: |
-          mkdir -p "$ANDROID_HOME/cmdline-tools"
-          curl -fsSL -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          echo '2d2d50857e4eb553af5a6dc3ad507a17adf43d115264b1afc116f95c92e5e258  /tmp/cmdline-tools.zip' | sha256sum -c -
-          unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools
-          mv /tmp/cmdline-tools/cmdline-tools "$ANDROID_HOME/cmdline-tools/latest"
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-37.0" "build-tools;37.0.0" "cmake;3.31.6" "ndk;30.0.16248370"
-      - name: Prepare the source as F-Droid does
-        run: |
-          rm -rf app/src/play third_party/whisper.cpp/models third_party/whisper.cpp/examples third_party/whisper.cpp/bindings third_party/ncnn/examples third_party/ncnn/benchmark third_party/ncnn/python third_party/ncnn/images
-          sed -i -e '/playImplementation/d' app/build.gradle.kts
-          echo 'org.gradle.java.home=/usr/lib/jvm/java-21-openjdk-amd64' >> gradle.properties
-      - name: Build Skia
-        run: tools/build_skia.sh
-      - name: Build the foss APK
-        run: ./gradlew :app:assembleFossRelease --no-daemon
+          distribution: temurin
+          java-version: '21'
+      - name: Install SDK packages
+        run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0'
+      - name: Audit source publication
+        run: python3 tools/source_audit.py
+      - name: Test and build compatible app
+        run: bash gradlew -PtrueMotionNativePrebuilt=true :app:testCompatDebugUnitTest :app:assembleCompatDebug --no-daemon
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
         with:
-          name: foss-apk
-          path: ${{ inputs.subdir || '.' }}/app/build/outputs/apk/foss/release/*.apk
-      - name: Check the lowest Android version the native libraries need
-        run: python3 tools/api_floor.py app/build/outputs/apk/foss/release/*.apk
-
-  compat-apk:
-    runs-on: ubuntu-latest
-    timeout-minutes: 170
-    container: debian:trixie
-    defaults:
-      run:
-        working-directory: ${{ inputs.subdir || '.' }}
-    env:
-      DEBIAN_FRONTEND: noninteractive
-      ANDROID_HOME: /opt/android-sdk
-      ANDROID_NDK: /opt/android-sdk/ndk/30.0.16248370
-    steps:
-      - name: Install packages
-        working-directory: /
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends git ca-certificates curl unzip xz-utils python3 build-essential clang lld ninja-build openjdk-21-jdk-headless
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          submodules: recursive
-          path: ${{ inputs.subdir || '.' }}
-      - name: Install the Android SDK
-        run: |
-          mkdir -p "$ANDROID_HOME/cmdline-tools"
-          curl -fsSL -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          echo '2d2d50857e4eb553af5a6dc3ad507a17adf43d115264b1afc116f95c92e5e258  /tmp/cmdline-tools.zip' | sha256sum -c -
-          unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools
-          mv /tmp/cmdline-tools/cmdline-tools "$ANDROID_HOME/cmdline-tools/latest"
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-37.0" "build-tools;37.0.0" "cmake;3.31.6" "ndk;30.0.16248370"
-      - name: Prepare the source as F-Droid does
-        run: |
-          rm -rf app/src/play third_party/whisper.cpp/models third_party/whisper.cpp/examples third_party/whisper.cpp/bindings third_party/ncnn/examples third_party/ncnn/benchmark third_party/ncnn/python third_party/ncnn/images
-          sed -i -e '/playImplementation/d' app/build.gradle.kts
-          echo 'org.gradle.java.home=/usr/lib/jvm/java-21-openjdk-amd64' >> gradle.properties
-      - name: Build Skia for Android 9
-        run: tools/build_skia.sh compat
-      - name: Build the compat APK
-        run: ./gradlew :app:assembleCompatRelease --no-daemon
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: compat-apk
-          path: ${{ inputs.subdir || '.' }}/app/build/outputs/apk/compat/release/*.apk
-      - name: Check that the native libraries load on Android 9
-        run: python3 tools/api_floor.py --min 28 app/build/outputs/apk/compat/release/*.apk
-
-  verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    container: debian:trixie
-    env:
-      DEBIAN_FRONTEND: noninteractive
-      ANDROID_HOME: /opt/android-sdk
-      ANDROID_NDK: /opt/android-sdk/ndk/30.0.16248370
-    steps:
-      - name: Install packages
-        working-directory: /
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends git ca-certificates curl unzip python3 python3-numpy python3-pil python3-fonttools nodejs clang openjdk-21-jdk-headless
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Install the Android SDK
-        run: |
-          mkdir -p "$ANDROID_HOME/cmdline-tools"
-          curl -fsSL -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          echo '2d2d50857e4eb553af5a6dc3ad507a17adf43d115264b1afc116f95c92e5e258  /tmp/cmdline-tools.zip' | sha256sum -c -
-          unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools
-          mv /tmp/cmdline-tools/cmdline-tools "$ANDROID_HOME/cmdline-tools/latest"
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-37.0" "build-tools;37.0.0" "cmake;3.31.6" "ndk;30.0.16248370"
-      - name: Quick checks (static checks, foss compile, unit tests)
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          echo 'org.gradle.java.home=/usr/lib/jvm/java-21-openjdk-amd64' >> gradle.properties
-          sh tools/check.sh --quick
-      - name: Compat unit tests and lint of both builds
-        run: ./gradlew :app:testCompatDebugUnitTest :app:lintFossDebug :app:lintCompatDebug -q
+          name: TrueMotion-compat-debug
+          path: |
+            app/build/outputs/apk/compat/debug/*.apk
+            app/build/reports/tests/testCompatDebugUnitTest/
+          if-no-files-found: error

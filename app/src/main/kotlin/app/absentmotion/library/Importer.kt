@@ -26,6 +26,8 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.Serializable
+import java.security.DigestInputStream
+import java.security.MessageDigest
 import java.util.zip.ZipInputStream
 
 class ImportFailed(val text: UiText) : Exception(text.toString())
@@ -81,6 +83,9 @@ class Importer(
         val fontFiles = ArrayList<File>()
         var projectEntry: String? = null
         var ours = false
+        var trueMotion = false
+        val hashes = HashMap<String, String>()
+        val expectedHashes = HashMap<String, String>()
         var sceneText = 0
         var written = limits.unpacked
         val ids = ArrayList<String>()
@@ -94,19 +99,41 @@ class Importer(
                     leaf(name) == "manifest.json" -> {
                         val manifest = JSONObject(readText(input, MaxXml))
                         projectEntry = manifest.optString("project").takeIf { it.isNotBlank() }
-                        ours = manifest.optString("format") == "absentmotion-package"
-                        val listed = manifest.optJSONArray("media")?.let { list -> (0 until list.length()).map { list.getJSONObject(it) }.filter { it.has("entry") } }.orEmpty()
-                        links = listed.associate { m -> m.getString("uri") to m.getString("entry") }
+                        trueMotion = manifest.optString("format") in setOf("toji-alight-project", "true-motion-project")
+                        ours = manifest.optString("format") == "absentmotion-package" || trueMotion
+                        if (trueMotion) {
+                            projectEntry = "scene.xml"
+                            manifest.optString("sceneSha256").takeIf { it.isNotEmpty() }?.let { expectedHashes["scene.xml"] = it }
+                        }
+                        val listed = manifest.optJSONArray("media")?.let { list -> (0 until list.length()).map { list.getJSONObject(it) }.filter { it.has("entry") || trueMotion && it.has("path") } }.orEmpty()
+                        links = listed.associate { m -> m.getString("uri") to m.optString("entry", m.optString("path")) }
+                        if (trueMotion) for (m in listed) {
+                            val path = m.getString("path")
+                            if (path.startsWith('/') || path.contains('\\') || path.split('/').any { it == ".." } || ':' in path) {
+                                throw ImportFailed(txt(R.string.true_import_integrity))
+                            }
+                            m.optString("sha256").takeIf { it.isNotEmpty() }?.let { expectedHashes[path] = it }
+                        }
                         companions = listed.filter { it.has("companions") }.associate { m ->
                             m.getString("uri") to m.getJSONArray("companions").let { c -> List(c.length()) { c.getString(it) } }
                         }
                         packedFonts = manifest.optJSONArray("fonts")?.let { list -> (0 until list.length()).map { list.getJSONObject(it) } }.orEmpty()
                             .filter { it.optString("font").startsWith("imported?") && it.has("entry") }.associate { it.getString("entry") to it.getString("font") }
                     }
+                    else -> {
+                        val digest = MessageDigest.getInstance("SHA-256")
+                        DigestInputStream(input, digest).drain()
+                        if (hashes.put(name, digest.digest().joinToString("") { "%02x".format(it) }) != null) {
+                            throw ImportFailed(txt(R.string.true_import_integrity))
+                        }
+                    }
                 }
             }
+            if (trueMotion && expectedHashes.any { (path, hash) -> !hash.equals(hashes[path], ignoreCase = true) }) {
+                throw ImportFailed(txt(R.string.true_import_integrity))
+            }
             if (sigs == null && links == null) throw ImportFailed(txt(R.string.library_err_missing_manifest))
-            val declaredProject = projectEntry?.let { find(it, files) ?: throw ImportFailed(txt(R.string.library_err_package_project_missing)) }
+            val declaredProject = projectEntry?.let { (if (trueMotion) it.takeIf(files::contains) else find(it, files)) ?: throw ImportFailed(txt(R.string.library_err_package_project_missing)) }
             val mediaEntries = (links.orEmpty().values + sigs.orEmpty().values).mapNotNull { find(it, files) }.toSet()
             eachEntry(open, limits) { name, input ->
                 if (name == declaredProject || declaredProject == null && name.endsWith(".xml", ignoreCase = true) && name !in mediaEntries) {

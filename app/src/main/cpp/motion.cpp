@@ -20,7 +20,7 @@ constexpr double kTau = 6.283185307179586;
 
 const char* const kMotionIds[] = {"absent.autoshake", "absent.randomdisplace", "absent.randomjitter", "absent.oscillate",
                                   "absent.swing", "absent.spin", "absent.pulsesize", "absent.pulseopacity",
-                                  "absent.echo", "absent.timequant", "absent.shutterblur", "absent.motionblur", "absent.movealongpath"};
+                                  "absent.echo", "absent.timequant", "absent.shutterblur", "absent.motionblur", "absent.movealongpath", "lab.true.audioMotion"};
 
 thread_local bool gFastShutter = false;
 
@@ -406,6 +406,17 @@ void ApplyMotion(const Layer& l, double timeMs, Placement* p) {
     const double s = Seconds(l, timeMs);
     bool repeated = false;
     for (const LayerEffect& e : l.effects) {
+        if (!e.hidden && e.id == "lab.true.audioMotion" && e.audioSignal) {
+            const int target = (int)std::lround(e.value("target", t, 0));
+            const float signal = e.audioSignal->at(l.steppedMs(timeMs) - e.value("offsetMs", t, 0));
+            const float amount = e.value("amount", t, .3f);
+            if (target == 0) {
+                const float k = std::max(0.0f, 1 + std::clamp(amount, -1.0f, 5.0f) * signal);
+                p->scale = {p->scale.fX * k, p->scale.fY * k};
+            } else if (target == 1) p->rotation += std::clamp(amount, -360.0f, 360.0f) * signal;
+            else if (target == 2) p->location.fY += std::clamp(amount, -5000.0f, 5000.0f) * signal;
+            continue;
+        }
         if (e.hidden || e.id.compare(0, 7, "absent.") != 0) continue;
         const std::string_view id = std::string_view(e.id).substr(7);
         if (RepeatEffect(e.id)) {
@@ -455,6 +466,14 @@ void ApplyMotion(const Layer& l, double timeMs, Placement* p) {
 float MotionOpacity(const Layer& l, double timeMs) {
     float opacity = 1;
     for (const LayerEffect& e : l.effects) {
+        if (!e.hidden && e.id == "lab.true.audioMotion" && e.audioSignal) {
+            const float t = l.localTime(timeMs);
+            if ((int)std::lround(e.value("target", t, 0)) == 3) {
+                const float signal = e.audioSignal->at(l.steppedMs(timeMs) - e.value("offsetMs", t, 0));
+                opacity *= 1 - std::clamp(e.value("amount", t, 1), 0.0f, 1.0f) * (1 - signal);
+            }
+            continue;
+        }
         if (e.hidden || e.id != "absent.pulseopacity") continue;
         const float t = l.localTime(timeMs);
         const double w = Wave(Integral(e, "frequency", l, Seconds(l, timeMs), 2) + Param(e, "phase", t, 0) / 2, Param(e, "wave", t, 0));

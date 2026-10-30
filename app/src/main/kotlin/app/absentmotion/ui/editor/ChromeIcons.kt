@@ -51,6 +51,7 @@ internal fun BarButton(
 }
 
 internal object ChromeIcons {
+    val Studio = icon("Studio", stroke = "M4 4L10 4L10 10L4 10ZM14 4L20 4L20 10L14 10ZM4 14L10 14L10 20L4 20ZM14 14L20 14L20 20L14 20Z")
     val Exit = icon("Exit", stroke = "M8 17L3 12L8 7M3 12L15 12M15 21L19 21A2 2 0 0 0 21 19L21 5A2 2 0 0 0 19 3L15 3")
     val Back = icon("Back", stroke = "M12 19L5 12L12 5M19 12L5 12")
     val Gear = icon("Gear", stroke = "M9.671 4.136A2.34 2.34 0 0 1 14.33 4.136A2.34 2.34 0 0 0 17.649 6.051A2.34 2.34 0 0 1 19.979 10.084A2.34 2.34 0 0 0 19.979 13.915" +

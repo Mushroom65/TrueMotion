@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_grade_enter_value">Ввести: %1$s</string>
+    <string name="true_grade_title">Цветокоррекция</string>
+    <string name="true_grade_primary">Основные</string>
+    <string name="true_grade_wheels">Колёса</string>
+    <string name="true_grade_curves">Кривые</string>
+    <string name="true_grade_hsl">HSL</string>
+    <string name="true_grade_output">Смешивание</string>
+    <string name="true_grade_lift">Тени</string>
+    <string name="true_grade_gamma">Полутона</string>
+    <string name="true_grade_gain">Света</string>
+    <string name="true_grade_brightness">Яркость диапазона</string>
+    <string name="true_grade_wheel_control">Цветовой круг: %1$s</string>
+    <string name="true_grade_wheel_hint">Потяни для оттенка. Центр — нейтральный.</string>
+    <string name="true_grade_wheel_key">Ключ RGB</string>
+    <string name="true_grade_neutral">Сброс цвета</string>
+    <string name="true_grade_master">Общая</string>
+    <string name="true_grade_curve_control">Цветовая кривая: перемещай точку по вертикали</string>
+    <string name="true_grade_curve_hint">Три точки: 25%, 50% и 75%. Линейные отрезки совпадают с результатом шейдера.</string>
+    <string name="true_grade_curve_point">Вход %1$d%%</string>
+    <string name="true_grade_hue">Оттенок</string>
+    <string name="true_grade_saturation">Насыщенность</string>
+    <string name="true_grade_lightness">Светлота</string>
+    <string name="true_grade_red">Красные</string>
+    <string name="true_grade_yellow">Жёлтые</string>
+    <string name="true_grade_green">Зелёные</string>
+    <string name="true_grade_cyan">Голубые</string>
+    <string name="true_grade_blue">Синие</string>
+    <string name="true_grade_magenta">Пурпурные</string>
+    <string name="true_grade_exposure">Экспозиция, ступени</string>
+    <string name="true_grade_contrast">Контраст</string>
+    <string name="true_grade_vibrance">Сочность</string>
+    <string name="true_grade_temperature">Температура</string>
+    <string name="true_grade_tint">Сдвиг оттенка</string>
+    <string name="true_grade_shadows">Детали в тенях</string>
+    <string name="true_grade_highlights">Детали в светах</string>
+    <string name="true_grade_black">Точка чёрного</string>
+    <string name="true_grade_white">Точка белого</string>
+    <string name="true_grade_mix">Сила коррекции</string>
+    <string name="true_grade_mix_hint">0 — исходное изображение, 1 — полная коррекция. Силу коррекции тоже можно анимировать.</string>
+    <string name="true_grade_disable">Выключить коррекцию</string>
+    <string name="true_grade_enable">Включить коррекцию</string>
+    <string name="true_grade_reset_section">Сброс раздела на текущем кадре</string>
+</resources>

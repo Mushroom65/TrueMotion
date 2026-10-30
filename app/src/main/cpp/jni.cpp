@@ -73,10 +73,57 @@ JNIEXPORT jstring JNICALL JNI_FN(nativeSetScene)(JNIEnv* env, jclass, jlong engi
     return engineOf(engine)->setScene(text, &error) ? nullptr : env->NewStringUTF(error.c_str());
 }
 
+JNIEXPORT void JNICALL JNI_FN(nativeSetAudioSignals)(JNIEnv* env, jclass, jlong engine, jobjectArray keys,
+    jdoubleArray starts, jdoubleArray steps, jobjectArray levels, jfloatArray silences, jfloatArray releases) {
+    const jsize count = env->GetArrayLength(keys);
+    auto bad = [&] { env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Invalid audio signal data"); };
+    if (count > 1024 || env->GetArrayLength(starts) != count || env->GetArrayLength(steps) != count ||
+        env->GetArrayLength(levels) != count || env->GetArrayLength(silences) != count || env->GetArrayLength(releases) != count) { bad(); return; }
+    std::vector<jdouble> a(count), b(count);
+    std::vector<jfloat> c(count), d(count);
+    env->GetDoubleArrayRegion(starts, 0, count, a.data()); env->GetDoubleArrayRegion(steps, 0, count, b.data());
+    env->GetFloatArrayRegion(silences, 0, count, c.data()); env->GetFloatArrayRegion(releases, 0, count, d.data());
+    std::map<std::string, std::shared_ptr<const am::AudioSignal>> signals;
+    size_t total = 0;
+    for (jsize i = 0; i < count; i++) {
+        auto key = (jstring)env->GetObjectArrayElement(keys, i);
+        auto samples = (jfloatArray)env->GetObjectArrayElement(levels, i);
+        if (!key || !samples || env->GetStringUTFLength(key) > 256 || !std::isfinite(a[i]) || !std::isfinite(b[i]) || b[i] <= 0 ||
+            !std::isfinite(c[i]) || !std::isfinite(d[i]) || d[i] < 0) { bad(); return; }
+        const jsize length = env->GetArrayLength(samples);
+        total += length;
+        if (total > 4'000'000) { bad(); return; }
+        auto signal = std::make_shared<am::AudioSignal>();
+        signal->startMs = a[i]; signal->stepMs = b[i]; signal->silence = std::clamp(c[i], 0.0f, 1.0f); signal->releaseMs = d[i];
+        signal->levels.resize(length);
+        env->GetFloatArrayRegion(samples, 0, length, signal->levels.data());
+        if (env->ExceptionCheck()) return;
+        for (float& value : signal->levels) value = std::isfinite(value) ? std::clamp(value, 0.0f, 1.0f) : 0;
+        const char* name = env->GetStringUTFChars(key, nullptr);
+        if (!name) return;
+        signals[name] = std::move(signal);
+        env->ReleaseStringUTFChars(key, name);
+        env->DeleteLocalRef(key); env->DeleteLocalRef(samples);
+    }
+    engineOf(engine)->setAudioSignals(signals);
+}
+
 JNIEXPORT jstring JNICALL JNI_FN(nativeLoadEffect)(JNIEnv* env, jclass, jlong engine, jbyteArray xml) {
     std::string text((size_t)env->GetArrayLength(xml), '\0');
     env->GetByteArrayRegion(xml, 0, (jsize)text.size(), reinterpret_cast<jbyte*>(text.data()));
     return env->NewStringUTF(engineOf(engine)->loadEffect(text).c_str());
+}
+
+JNIEXPORT jfloatArray JNICALL JNI_FN(nativeLocalBounds)(JNIEnv* env, jclass, jlong engine, jlong layer, jdouble time) {
+    float bounds[4];
+    if (!engineOf(engine)->localBounds(layer, time, bounds)) return nullptr;
+    auto out = env->NewFloatArray(4); env->SetFloatArrayRegion(out, 0, 4, bounds); return out;
+}
+
+JNIEXPORT jfloatArray JNICALL JNI_FN(nativeReanchor)(JNIEnv* env, jclass, jlong engine, jlong layer, jdouble time, jfloat x, jfloat y) {
+    float location[3];
+    if (!engineOf(engine)->reanchor(layer, time, x, y, location)) return nullptr;
+    auto out = env->NewFloatArray(3); env->SetFloatArrayRegion(out, 0, 3, location); return out;
 }
 
 JNIEXPORT jint JNICALL JNI_FN(nativeMaxPictureSize)(JNIEnv*, jclass, jlong engine) {

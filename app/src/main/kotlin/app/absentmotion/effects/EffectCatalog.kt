@@ -45,10 +45,14 @@ data class EffectCatalog(
 
     companion object {
         val Categories = linkedMapOf("color" to "Color", "blur" to "Blur", "distort" to "Distort", "stylize" to "Stylize",
-            "noise" to "Noise", "repeat" to "Repeat", "key" to "Key", "move" to "Move", "3d" to "3D", "text" to "Text")
+            "noise" to "Noise", "repeat" to "Repeat", "key" to "Key", "move" to "Move", "3d" to "3D", "text" to "Text", "true" to "True Motion")
 
         fun read(context: Context): EffectCatalog = parse(currentLanguage(context).tag) { context.assets.open("effects/$it") }
-            .let { if (it.message != null) it.copy(message = context.getString(R.string.effects_not_loaded)) else it }
+            .let { catalog ->
+                val prefs = context.getSharedPreferences("true-plugins", 0)
+                if (catalog.message != null) catalog.copy(message = context.getString(R.string.effects_not_loaded))
+                else catalog.copy(definitions = catalog.definitions.filter { it.pluginId == null || prefs.getBoolean(it.pluginId, false) })
+            }
 
         fun parse(language: String = "en", open: (String) -> InputStream): EffectCatalog = runCatching {
             fun text(path: String) = open(path).bufferedReader().use { it.readText() }

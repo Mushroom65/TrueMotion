@@ -1,0 +1,72 @@
+[
+  {
+    "id": "plugin.builtin.distort.swirl",
+    "plugin": "builtin.distort",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.distort.wave",
+    "plugin": "builtin.distort",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.distort.glitch",
+    "plugin": "builtin.distort",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.distort.kaleido",
+    "plugin": "builtin.distort",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.distort.diffuse",
+    "plugin": "builtin.distort",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.energy.beam",
+    "plugin": "builtin.energy",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.energy.edges",
+    "plugin": "builtin.energy",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.glow.bloom",
+    "plugin": "builtin.glow",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.glow.streaks",
+    "plugin": "builtin.glow",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.optics.split",
+    "plugin": "builtin.optics",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.optics.squeeze",
+    "plugin": "builtin.optics",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.optics.scan",
+    "plugin": "builtin.optics",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.optics.pixelsort",
+    "plugin": "builtin.optics",
+    "status": "shader-compiled"
+  },
+  {
+    "id": "plugin.builtin.unmult.unmult",
+    "plugin": "builtin.unmult",
+    "status": "shader-compiled"
+  }
+]

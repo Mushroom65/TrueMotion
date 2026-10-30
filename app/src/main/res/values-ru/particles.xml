@@ -1,0 +1,18 @@
+<resources>
+    <string name="true_particles_title">Частицы</string>
+    <string name="true_particles_emitter">Эмиттер</string>
+    <string name="true_particles_motion">Движение</string>
+    <string name="true_particles_forces">Силы</string>
+    <string name="true_particles_look">Вид</string>
+    <string name="true_particles_camera">Камера</string>
+    <string name="true_particles_source">Текстура: %1$s</string>
+    <string name="true_particles_dot">Круг / медиа этого слоя</string>
+    <string name="true_particles_source_missing">Слой текстуры не найден. Выбери другой источник.</string>
+    <string name="true_particles_hint">Нативный предпросмотр во вьюпорте. Двойное нажатие на значение открывает ввод числа. Кнопка ключа анимирует выбранный параметр.</string>
+    <string name="true_particles_camera_hint">Это собственная камера эмиттера. Камера проекта преобразует получившийся слой.</string>
+    <string name="true_particles_seed_hint">Seed — целое число от 0 до 9223372036854775807; ключи для него не создаются.</string>
+    <string name="true_particles_reset">Сбросить раздел</string>
+    <string name="true_particles_enable">Включить частицы</string>
+    <string name="true_particles_disable">Выключить частицы</string>
+    <string name="true_particles_source_hint">Текущее содержимое другого слоя с его эффектами, без положения и трансформации. Циклические зависимости недоступны.</string>
+</resources>

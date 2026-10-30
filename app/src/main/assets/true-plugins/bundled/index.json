@@ -1,0 +1,11 @@
+[
+  "builtin.layer_tools.tmplugin",
+  "builtin.wiggle.tmplugin",
+  "builtin.text_motion.tmplugin",
+  "builtin.curves.tmplugin",
+  "builtin.unmult.tmplugin",
+  "builtin.glow.tmplugin",
+  "builtin.distort.tmplugin",
+  "builtin.energy.tmplugin",
+  "builtin.optics.tmplugin"
+]

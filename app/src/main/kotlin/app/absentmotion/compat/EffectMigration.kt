@@ -76,7 +76,10 @@ class EffectMigration(private val rules: Map<String, Rule>, private val catalog:
                 val param = c?.to?.let { to -> own.params.firstOrNull { it.id == to } }
                 if (param != null) {
                     val shift = c.plus?.let { other -> effect.children.firstOrNull { it.name == "property" && it["name"] == other }?.valueAt(0f)?.finiteFloat() } ?: 0f
-                    made[param.id] = property(child, param.id, param.type) { text -> convertValue(text, c, if (c.component >= 0) c.component else if (split && c.take == 0) i else -1, shift, dims) }
+                    made[param.id] = property(child, param.id, param.type) { text ->
+                        if (param.kind == "text" && c.component < 0 && !split) text
+                        else convertValue(text, c, if (c.component >= 0) c.component else if (split && c.take == 0) i else -1, shift, dims)
+                    }
                 } else if (c?.neutral == null || values(child).any { !same(if (split) it.split(',').getOrElse(i) { "" } else it, c.neutral) }) {
                     drop(if (split) "$name (${i + 1})" else name)
                 }

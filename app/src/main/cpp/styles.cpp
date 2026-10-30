@@ -20,6 +20,7 @@
 #include "include/effects/SkRuntimeEffect.h"
 #include "include/pathops/SkPathOps.h"
 #include "drawing.h"
+#include "particles.h"
 #include "scene.h"
 #include "text.h"
 
@@ -195,7 +196,7 @@ Placement OwnAt(const Layer& l, double timeMs) {
     Placement p{{l.location.get(0, t, 0), l.location.get(1, t, 0)},
                 {l.pivot.get(0, t, 0), l.pivot.get(1, t, 0)},
                 {l.scale.get(0, t, 1), l.scale.get(1, t, 1)},
-                l.rotation.get(0, t, 0),
+                l.rotation.get(0, t, 0) + (l.pathAutoOrient ? l.location.pathAngle(t) : 0),
                 l.location.get(2, t, 0)};
     const float tx = l.tilt.get(0, t, 0), ty = l.tilt.get(1, t, 0);
     if (tx != 0 || ty != 0) p.tilt = SkM44::Rotate({0, 1, 0}, -ty * kRadians) * SkM44::Rotate({1, 0, 0}, -tx * kRadians);
@@ -513,6 +514,7 @@ thread_local bool gWorld = false;
 int Fps() { return gScene ? gScene->fps : 30; }
 
 thread_local const std::vector<Layer>* gEffectList = nullptr;
+thread_local const std::vector<Layer>* gParticleSources = nullptr;
 
 bool EffectsApply(const std::vector<Layer>& siblings, const Layer& l) {
     return gEffects && gScene && &siblings == gEffectList && gEffects->active(l);
@@ -640,9 +642,53 @@ struct Drawn {
     SkPath stroked;
 };
 
+// A source layer is rendered once into a bounded local sprite, then shared by all
+// particles. Its scene placement is deliberately excluded. Guard arbitrary cycles.
+sk_sp<SkImage> ParticleImage(SkCanvas* canvas, const Layer& emitter, const LayerEffect& effect,
+                           double timeMs, const MediaPictures& pictures) {
+    const Property* source = effect.prop("sourceLayer");
+    const int64_t id = source ? strtoll(source->text.c_str(), nullptr, 10) : 0;
+    if (!id) return emitter.mediaUri.empty() ? nullptr : pictures(emitter.mediaUri, emitter.id);
+    const auto sources=gParticleSources?gParticleSources:gEffectList;
+    if (!sources || id == emitter.id) return nullptr;
+    thread_local std::vector<int64_t> stack;
+    if (stack.size() >= 8 || std::find(stack.begin(), stack.end(), id) != stack.end()) return nullptr;
+    auto found = std::find_if(sources->begin(), sources->end(), [&](const Layer& l) { return l.id == id; });
+    if (found == sources->end() || timeMs < found->startTime || timeMs > found->endTime) return nullptr;
+    Layer sourceLayer = found->sight.layer ? *found->sight.layer : *found;
+    if (sourceLayer.kind == "audio" || sourceLayer.kind == "camera" || sourceLayer.kind == "nullobj") return nullptr;
+    sourceLayer.parent=0; sourceLayer.hidden=false; sourceLayer.placed=false; sourceLayer.projected=false; sourceLayer.sight={};
+    sourceLayer.location={}; sourceLayer.pivot={}; sourceLayer.scale={}; sourceLayer.rotation={}; sourceLayer.tilt={}; sourceLayer.skew={};
+    std::erase_if(sourceLayer.effects, [](const LayerEffect& e) { return MotionEffect(e.id) || RepeatEffect(e.id); });
+    const float t=sourceLayer.localTime(timeMs);
+    SkRect bounds=ShapePath(sourceLayer,t).getBounds();
+    if (bounds.isEmpty()) return nullptr;
+    const float room=2+(sourceLayer.stroke.present?std::max(0.0f,sourceLayer.stroke.size.get(0,t,0))*3:0);
+    bounds.outset(room,room);
+    const int side=(int)std::clamp(effect.value("textureResolution",emitter.localTime(timeMs),512),64.0f,1024.0f);
+    const double scale=side/std::max(bounds.width(),bounds.height());
+    const int width=std::max(1,(int)std::ceil(bounds.width()*scale)), height=std::max(1,(int)std::ceil(bounds.height()*scale));
+    auto surface=canvas->makeSurface(SkImageInfo::MakeN32Premul(width,height));
+    if (!surface) return nullptr;
+    SkCanvas* target=surface->getCanvas();
+    target->clear(SK_ColorTRANSPARENT); target->scale(scale,scale); target->translate(-bounds.left(),-bounds.top());
+    std::vector<Layer> local{std::move(sourceLayer)};
+    const auto previous=gEffectList;
+    gEffectList=&local; stack.push_back(id);
+    DrawOne(target,local,local.front(),timeMs,pictures,Override());
+    stack.pop_back(); gEffectList=previous;
+    return surface->makeImageSnapshot();
+}
+
 Drawn DrawBody(SkCanvas* canvas, const Layer& l, double timeMs, float t, const SkMatrix& m, const SkPath& path, float alpha,
                const MediaPictures& pictures, bool outline) {
     Drawn drawn;
+    if (HasParticles(l)) {
+        canvas->save(); canvas->concat(m);
+        DrawParticles(canvas,l,timeMs,alpha,[&](const LayerEffect& effect) { return ParticleImage(canvas,l,effect,timeMs,pictures); });
+        canvas->restore(); drawn.fill=true;
+        return drawn;
+    }
     if (l.kind == "model") {
         DrawModel(canvas, l, timeMs, alpha, pictures);
         return drawn;
@@ -705,7 +751,7 @@ Drawn DrawBody(SkCanvas* canvas, const Layer& l, double timeMs, float t, const S
 }
 
 bool SelfOverlaps(const Layer& l) {
-    return l.kind == "drawing" || l.kind == "embedScene" || l.kind == "model" || (l.stroke.present && l.stroke.enabled);
+    return HasParticles(l) || l.kind == "drawing" || l.kind == "embedScene" || l.kind == "model" || (l.stroke.present && l.stroke.enabled);
 }
 
 sk_sp<SkColorFilter> CopyTint(const RepeatCopy& look) {
@@ -1024,7 +1070,7 @@ void DrawOne(SkCanvas* canvas, const std::vector<Layer>& siblings, const Layer& 
     const bool centred = ShapeKind(l) && !pixelEdged && std::any_of(l.borders.begin(), l.borders.end(), [](const Edge& e) { return e.enabled && e.direction == "centered"; });
     const bool repeated = HasRepeat(l);
     const std::vector<LayerCopy> copies = repeated ? CopiesOf(siblings, l, timeMs, gScene ? gScene->width : 0, gScene ? gScene->height : 0) : std::vector<LayerCopy>();
-    const bool overlaps = l.kind == "drawing" || l.kind == "model" || (l.stroke.present && l.stroke.enabled) || centred || repeated;
+    const bool overlaps = HasParticles(l) || l.kind == "drawing" || l.kind == "model" || (l.stroke.present && l.stroke.enabled) || centred || repeated;
     auto centredBorders = [&](float alpha) {
         if (!centred) return;
         const std::vector<std::pair<SkPath, float>> outlines = repeated
@@ -1253,7 +1299,7 @@ Placement EffectivePlacement(const std::vector<Layer>& siblings, const Layer& la
 
 namespace {
 
-bool Shared(const LayerEffect& e) { return e.toChildren && !e.hidden && !MotionEffect(e.id) && !RepeatEffect(e.id); }
+bool Shared(const LayerEffect& e) { return e.toChildren && !e.hidden && !MotionEffect(e.id) && !RepeatEffect(e.id) && !ParticleEffect(e.id); }
 
 bool InheritEffects(const std::vector<Layer>& layers, std::vector<Layer>* out) {
     if (std::none_of(layers.begin(), layers.end(), [](const Layer& l) { return std::any_of(l.effects.begin(), l.effects.end(), Shared); }))
@@ -1280,7 +1326,9 @@ void DrawList(SkCanvas* canvas, const std::vector<Layer>& listed, int width, int
     const std::vector<Layer>& layers =
         SeeLayers(source, width, height, top, gScene ? gScene->fps : 30, timeMs, &storage) ? storage : source;
     const std::vector<Layer>* const outer = gEffectList;
+    const std::vector<Layer>* const particleSources = gParticleSources;
     gEffectList = &layers;
+    gParticleSources = &source;
     for (size_t i = 0; i < layers.size(); i++) {
         const Layer& base = layers[i];
         if (base.clippingMask && i > 0) continue;
@@ -1318,6 +1366,7 @@ void DrawList(SkCanvas* canvas, const std::vector<Layer>& listed, int width, int
         canvas->restore();
     }
     gEffectList = outer;
+    gParticleSources = particleSources;
 }
 
 }

@@ -111,6 +111,7 @@ fun Preview(state: EditorState, modifier: Modifier = Modifier, reserveEnd: Dp = 
         state.drawing != null -> state.drawing!!.handlesCode
         gesture != IDLE -> gesture
         state.panel == EditorPanel.MoveTransform && state.keyTarget?.ref == PropRef.Location -> -2
+        state.panel == EditorPanel.MoveTransform && state.keyTarget?.ref == PropRef.Pivot -> -3
         state.panel == EditorPanel.Effects -> 8
         state.panel != EditorPanel.Tools -> -1
         else -> 8

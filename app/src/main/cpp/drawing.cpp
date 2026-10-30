@@ -1,4 +1,5 @@
 #include "drawing.h"
+#include "particles.h"
 
 #include <algorithm>
 #include <cmath>
@@ -80,7 +81,7 @@ void BuildGeometry(FreehandStroke* s, const std::vector<SkPoint>& pts, const std
 
 }
 
-bool DrawingEffect(const std::string& id) { return id == "absent.drawingprogress" || id == "absent.stroketaper"; }
+bool DrawingEffect(const std::string& id) { return id == "absent.drawingprogress" || id == "absent.stroketaper" || ParticleEffect(id); }
 
 void ParseStrokes(const XmlNode& drawing, Layer* layer) {
     for (const auto& n : drawing.children) {

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_group_edit">编辑组</string>
+    <string name="true_group_back">返回上一级合成</string>
+    <string name="true_group_timing">组时间</string>
+    <string name="true_group_continue">继续</string>
+    <string name="true_group_linked_hint">修改后此元素会成为本地副本，源项目保持不变。</string>
+    <string name="true_group_timing_hint">延长组时默认保持最后一帧，内部关键帧时间不变。也可选择循环或拉伸动画。</string>
+</resources>

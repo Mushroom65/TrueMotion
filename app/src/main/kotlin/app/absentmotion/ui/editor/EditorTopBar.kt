@@ -45,6 +45,7 @@ import app.absentmotion.editor.deleteSelected
 import app.absentmotion.editor.rename
 import app.absentmotion.editor.renameLayer
 import app.absentmotion.editor.stepBack
+import app.absentmotion.editor.openFramePhoto
 import app.absentmotion.ui.theme.Am
 import app.absentmotion.ui.theme.Presence
 import app.absentmotion.ui.theme.animatedBackground
@@ -59,6 +60,7 @@ fun EditorTopBar(state: EditorState, onExit: () -> Unit, modifier: Modifier = Mo
         return
     }
     val layer = state.selected
+    val path = state.groupPath
     val inPanel = layer != null && state.panel != EditorPanel.Tools
     val focus = LocalFocusManager.current
     var settingsOpen by remember { mutableStateOf(false) }
@@ -76,22 +78,24 @@ fun EditorTopBar(state: EditorState, onExit: () -> Unit, modifier: Modifier = Mo
     val cell = Modifier.width(40.dp).fillMaxHeight()
     Row(modifier.animatedBackground(color), verticalAlignment = Alignment.CenterVertically) {
         BarButton(
-            if (layer == null) ChromeIcons.Exit else ChromeIcons.Back,
-            stringResource(if (layer == null) R.string.topbar_exit_to_project_list else R.string.topbar_back), cell.tutorialTarget(if (layer == null) null else "back"),
+            if (layer == null && !state.editingGroup) ChromeIcons.Exit else ChromeIcons.Back,
+            stringResource(if (layer == null && state.editingGroup) R.string.true_group_back else if (layer == null) R.string.topbar_exit_to_project_list else R.string.topbar_back), cell.tutorialTarget(if (layer == null) null else "back"),
         ) {
-            act { if (layer == null) onExit() else state.stepBack() }
+            act { if (!state.stepBack()) onExit() }
         }
         if (inPanel) {
             Text(stringResource(state.panel.title), Modifier.weight(1f).enterFade(), color = Am.OnDark, fontSize = 15.sp, maxLines = 1)
         } else {
-            key(layer?.id) {
+            key(path, layer?.id) {
                 val id = layer?.id
-                NameField(layer?.label ?: state.scene.title, Modifier.weight(1f).fillMaxHeight().enterFade()) { name ->
-                    if (id == null) state.rename(name) else state.renameLayer(id, name)
+                NameField(layer?.label ?: state.sceneTitle, Modifier.weight(1f).fillMaxHeight().enterFade()) { name ->
+                    if (state.groupPath == path) { if (id == null) state.rename(name) else state.renameLayer(id, name) }
                 }
             }
         }
+        BarButton(ChromeIcons.Studio, stringResource(R.string.true_studio), cell) { act { state.playing = false; state.trueStudioOpen = true } }
         if (layer == null) {
+            BarButton(app.absentmotion.ui.camera.CameraIcons.Camera, stringResource(R.string.true_photo_title), cell.enterFade()) { act { state.openFramePhoto() } }
             BarButton(ChromeIcons.Gear, stringResource(R.string.topbar_project_settings), cell.enterFade().tutorialTarget("gear")) { act { settingsOpen = true } }
             BarButton(ChromeIcons.Share, stringResource(R.string.topbar_export_share), cell.enterFade().tutorialTarget("export")) { act { state.playing = false; state.exportOpen = true } }
         } else if (!inPanel) {

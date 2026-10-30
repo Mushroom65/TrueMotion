@@ -1,133 +1,46 @@
-<p align="center">
-  <img src="fastlane/metadata/android/en-US/images/icon.png" alt="AbsentMotion" width="128" height="128">
-</p>
+<p align="center"><img src="branding/icon.png" alt="True Motion" width="128"></p>
 
-# AbsentMotion
+# True Motion Next
 
-<p align="center">
-  <a href="https://comett1225.github.io/AbsentMotion/"><b>Download for your phone</b></a>
-  &nbsp;·&nbsp;
-  <a href="https://comett1225.github.io/AbsentMotion/guide.html"><b>Guide and docs</b></a>
-  &nbsp;·&nbsp;
-  <a href="https://comett1225.github.io/AbsentMotion/phone-checker.html">Will it run on my phone?</a>
-  &nbsp;·&nbsp;
-  <a href="https://comett1225.github.io/AbsentMotion/effects/index.html">All effects</a>
-  &nbsp;·&nbsp;
-  <a href="https://github.com/Comett1225/AbsentMotion/releases">All versions</a>
-</p>
+An experimental Android motion graphics editor based on [AbsentMotion 4.0.0](https://github.com/Comett1225/AbsentMotion/tree/v4.0.0), with tools being ported from the earlier True Motion mod.
 
-AbsentMotion is a free, open-source alternative to CapCut and Alight Motion: a motion graphics, animation and video
-editor for Android phones. Everything runs on your phone and it works without an internet connection. There is no
-subscription, no account and no advertising, and your projects never leave your device.
+[Русская инструкция](README_TRUE_MOTION_RU.md) · [Port status](docs/TRUE_MOTION_MIGRATION_RU.md) · [Telegram](https://t.me/TrueMoti0n)
 
-<p align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="The editor: a photo with a title on the timeline, keyframes shown as diamonds" width="280">
-  &nbsp;&nbsp;
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="Effect parameters on a layer" width="280">
-</p>
-<p align="center"><sub>Photo: Ruby Mountain reflected in Diablo Lake, public domain (CC0), Wikimedia Commons.</sub></p>
+## Included in 0.10.0
 
-## What it does
+- Native color grading with wheels, curves and HSL controls.
+- Live audio-driven animation referencing an audio layer, beat markers and Bop.
+- Native particle simulation, lifetime controls and layer textures.
+- Editable nested groups, anchor controls and spatial Bézier motion paths.
+- Video frame/composition to image layer, playback up to 100× with audio.
+- JavaScript plugin commands, hooks and bundled effects; separate vector animation editor.
+- Manual viewport prerender, green timeline cache indicators and a 2 GiB disk cache.
+- Animated GIF import and the supplied True Motion launcher/in-app logo.
 
-- **Layers and a timeline.** Shapes, text, images, video, audio, freehand drawings, groups, reusable elements, 3D models
-  and null objects, with trimming, splitting, moving clips by holding them, parenting, clipping masks, label colours,
-  bookmarks, slide-to-select and frame-accurate snapping.
-- **Keyframes with easing.** Any value (position, size, rotation, 3D tilt, skew, opacity, colour, shape and effect
-  parameters) can be keyframed. Easing is a cubic Bezier, bounce, elastic, cyclic, random or stepped curve, edited
-  with handles on a graph.
-- **181 effects.** Colour, blur, distort, stylize, noise, keying, Move (Auto-Shake, Oscillate, Swing, Spin, Random
-  Displacement, Random Jitter, Pulse, Echo, Offset, Move Along Path, true motion blur), Repeat (linear, radial, grid,
-  along a path, scatter), 3D objects (cube, sphere, torus, prisms, raster extrude and more), Text (typewriter reveal,
-  per-letter transforms, scramble, count up, timecode), VHS, Datamosh, Glass, Displacement Map and many more, with
-  animated previews and a "New" category.
-- **Transitions and animations.** One-tap transitions between clips and In / Out / Loop animations for any layer,
-  written as ordinary keyframes you can edit.
-- **Shapes and drawing.** Parametric shapes, vector paths with point editing and animated (rotoscoping) masks, SVG
-  import, freehand pen, brush, fill and eraser, borders, shadows, gradients and blend modes.
-- **Text.** Text layers with spacing and alignment, 50 fonts built in and 100 more to download from Google Fonts.
-- **Video tools.** Speed ramps with presets and freeze frames, motion tracking, background removal for photos and
-  videos, frame blending and optical-flow slow motion, preview copies for heavy 4K videos, and an in-app camera.
-- **Camera layers.** A 3D camera that works like Alight Motion's, showing the world around the frame, with perspective or
-  orthographic projection, depth ordering, focus blur, fog, motion blur and one-tap Camera Moves (push in, pull out,
-  orbit, pan, dolly zoom, handheld). 3D objects turn with your fingers.
-- **Audio.** Audio layers and the sound of video clips, a waveform view, volume, audio effects (EQ, filters, reverb,
-  echo, compressor, noise gate, limiter, with presets), beat detection (Mark Beats) and noise reduction.
-- **Offline text to speech** with the voices already on the device, and **auto captions** with on-device speech
-  recognition (whisper.cpp; the speech model is downloaded once, after the app tells you its size).
-- **Export.** MP4, MOV, MKV or WebM video (H.264, HEVC, AV1, VP9 or APV, as the phone supports), audio settings, audio only
-  (WAV, FLAC, M4A, OGG or MP3), animated GIF, image sequences and single frames, with a time estimate, a storage check,
-  protection when the phone is hot and a check of every finished video and audio file.
-- **Safe projects.** Automatic version history, crash recovery, crash logs that say in one sentence what happened,
-  imported media copied into the project and one-tap backup of every project to a folder that survives reinstalling.
-- **14 languages.** English, Indonesian, Hindi, Portuguese (Brazil), Spanish, Filipino, Vietnamese, Thai, Malay,
-  Arabic, Persian, Turkish, Russian and Bengali, chosen on first start.
+The port is **not complete**. The legacy effect library, full 3D/rigging tools, automatic caching of every viewed frame and the new Windows renderer remain incomplete. Consult the [feature status](docs/TRUE_MOTION_MIGRATION.json) before relying on a feature. Unknown legacy effects are preserved on import, but exact rendering compatibility is not guaranteed.
 
-## Speed
+## Build the compatible Android app
 
-AbsentMotion 4.0 and Alight Motion 5.0.273 on the same phone, a Samsung Galaxy S26 Ultra (Android 17), with the same
-heavy project: an edit made in Alight Motion and opened in AbsentMotion from Alight's XML export. It is 13.6 s long,
-1080 x 1080 at 60 fps, with two videos cut into 12 clips and 54 effects, among them Motion Blur, Soft Glow, Tiles and
-Auto-Shake on every clip. Both apps exported it as H.264 at about 20 Mbps. Median of three runs, timed from screen
-recordings; the export runs from tapping Export to the finished file.
+Requirements: JDK 21, Android SDK platform `android-37.0`, build-tools `37.0.0` and the checked-in Gradle wrapper. The compatible app supports Android 9+ on ARM64. Set `ANDROID_HOME` or create your own untracked `local.properties`.
 
-| | Alight Motion 5.0.273 | AbsentMotion 4.0 |
-|---|---|---|
-| Start the app, until the home screen is drawn | 2.20 s | 0.44 s |
-| Open the project, until the preview is drawn | 0.86 s | 0.25 s |
-| Export the project (816 frames) | 18.3 s | 13.4 s |
+```sh
+git clone https://github.com/Mushroom65/TrueMotion.git
+cd TrueMotion
+./gradlew -PtrueMotionNativePrebuilt=true :app:assembleCompatDebug
+```
 
-### AbsentMotion 3.0 and 4.0
+On Windows use `gradlew.bat`. The result is `app/build/outputs/apk/compat/debug/app-compat-debug.apk`. The package is `app.truemotion`, separate from the earlier APK mod. Locally generated debug signatures differ between machines; they cannot update an APK signed on another machine without its original key. No signing keys are included here.
 
-The same phone and project without its effects (3.0 cannot run most of them), both exported at 21 Mbps:
+The fast build uses the included native libraries. The renderer core was rebuilt from the combined C++ source; the other libraries match the official compatible upstream APK. Exact hashes and source provenance are recorded in [TRUE_MOTION_PROVENANCE.json](docs/TRUE_MOTION_PROVENANCE.json). Native changes require rebuilding the core: see [native build notes](docs/NATIVE_AUDIO_BUILD_RU.md) and [upstream build documentation](docs/BUILD.md). For a full native build: `git submodule update --init --recursive`.
 
-| | AbsentMotion 3.0.0 | AbsentMotion 4.0 |
-|---|---|---|
-| Start the app, until the home screen is drawn | 0.40 s | 0.39 s |
-| Open the project, until the preview is drawn | 0.19 s | 0.17 s |
-| Export the project (816 frames) | 3.63 s | 3.53 s |
+GitHub Actions builds the compatible debug APK and runs JVM tests. It does not publish releases or deploy the upstream website. CI-produced debug APKs are development artifacts.
 
-## Requirements
+## Artwork and validation
 
-Android 13 (API level 33) or newer (tested on Android 16 and 17 and on emulators from Android 13), a 64-bit ARM device (`arm64-v8a`), Vulkan 1.1.
+The exact user-provided logo is retained in `branding/true-motion-source.png`. With Pillow installed, run `python tools/icon/package_true_motion.py` to reproduce the app and adaptive/themed launcher assets.
 
-For Android 9 to 12 there is the **Compatible** build (`-compatible.apk`, tested on Android 11). It is the same app
-without Optical flow High, AI Smooth, AI Enhance and AI background removal 2.0.
+The 0.10.0 branding update is checked separately from the 0.9.0 feature validation. The previous feature pass ran 1,252 JVM tests (0 failures, 12 assumptions/skips) and native instrumentation in MuMu, including export pixel comparisons. A physical phone was not tested by the build author; release validation notes describe each build's scope.
 
-There are three builds: `play`, which has background removal through Google Play services, `foss` (for F-Droid),
-which contains no Google libraries at all, and `compat`, the Compatible build of `foss`.
+## Credits and licences
 
-## Limits
-
-AbsentMotion is a young project. Please know these before you rely on it:
-
-- **Some Alight Motion effects are still missing.** AbsentMotion has 181 effects and converts most of Alight Motion's
-  when it opens a project, but some cannot be converted yet (mostly older versions of effects, the 3D solids and a few
-  rare ones). A project that uses one still opens, and the effect stays in the file, but it is not drawn.
-- **Only 64-bit ARM Android devices with Vulkan 1.1.** Android 13 or newer, or Android 9 to 12 with the Compatible
-  build. Tested on Android 11, 16 and 17 and on emulators from Android 13.
-- **Background removal.** The `foss` build removes backgrounds with its own offline model. The `play` build uses
-  Google Play services instead, a proprietary Google library (listed in `THIRD_PARTY_NOTICES.md`) that downloads its
-  model when it is first needed and may send diagnostics to Google under Google's own policy, as it does for any app.
-- **Network use.** Nothing is needed online. The internet is only used when you choose one of the downloadable fonts, for
-  the speech model the first time you generate captions, and, only if you allow it when asked, to ask GitHub for the
-  newest version number when the app opens (the `play` build's Play services library aside, see above).
-
-## File compatibility
-
-AbsentMotion can open scene XML files and `.amproj` packages exported from Alight Motion, and it exports scene XML in the same format. Effects that AbsentMotion does not include are kept in the file and are not drawn. AbsentMotion saves its own packages as `.absproj`. AbsentMotion is an independent project. It is not affiliated with, endorsed by or sponsored by Alight Creative, Alight Motion, ByteDance or CapCut. Alight Motion and CapCut are trademarks of their owners.
-
-## Building
-
-The app is built with Gradle (`app/`) and has a C++ engine on top of Skia, which is built from source. See
-[`docs/BUILD.md`](docs/BUILD.md).
-
-## Contributing and security
-
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. To report a security problem, see
-[`SECURITY.md`](SECURITY.md).
-
-## Licence
-
-AbsentMotion is released under the [Apache License 2.0](LICENSE). See [`NOTICE`](NOTICE) and
-[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for the third-party software it uses (Skia, whisper.cpp, RNNoise,
-AndroidX Compose and others) and their licences.
+AbsentMotion authors: source base and renderer, Apache-2.0. Original [LICENSE](LICENSE), [NOTICE](NOTICE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) are retained. Rhino uses MPL-2.0; its notices are in `app/src/main/assets/true-licenses`. Earlier mod credits remain **Toji Motion / Alight Motion**. The archived upstream README is in [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md).
