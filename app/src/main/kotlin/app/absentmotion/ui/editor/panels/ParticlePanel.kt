@@ -35,7 +35,7 @@ internal fun ParticlePanel(state: EditorState, index: Int, definition: EffectDef
     val layer = state.selected ?: return
     val instance = layer.effects.getOrNull(index) ?: return
     var tab by rememberSaveable(layer.id, index) { mutableIntStateOf(0) }
-    var active by rememberSaveable(layer.id, index) { mutableStateOf("amount") }
+    var active by rememberSaveable(layer.id, index) { mutableStateOf("dimension") }
     var menu by remember { mutableStateOf(false) }
     var sources by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -46,7 +46,7 @@ internal fun ParticlePanel(state: EditorState, index: Int, definition: EffectDef
     if (state.easingOpen) { EasingPanel(state, modifier); return }
     val section = Particles.sections[tab]
     val world = (instance.effectProperty("dimension")?.valueAt(layer.t)?.toFloatOrNull() ?: -1f) > .5f
-    val shown = definition.copy(category = "move", params = definition.params.filter { it.id in section && it.id != "seed" && (tab != 4 || !world || it.id == "worldScale") })
+    val shown = definition.copy(category = "move", params = definition.params.filter { it.id in section && it.id !in setOf("seed","dimension") && (tab != 4 || !world || it.id == "worldScale") })
     val source = Particles.source(instance)
     val sourceLayer = state.scene.layer(source)
     fun end() { state.playing = false; state.endGesture() }
@@ -102,6 +102,9 @@ internal fun ParticlePanel(state: EditorState, index: Int, definition: EffectDef
         key(tab) {
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(vertical=8.dp)) {
                 if (tab == 0) {
+                    EffectSettings(state,layer,instance,definition.copy(params=definition.params.filter { it.id=="dimension" }),param) { selected ->
+                        active=selected.id;state.playing=false
+                    }
                     Text(stringResource(R.string.true_particles_hint), Modifier.padding(horizontal=12.dp, vertical=4.dp), color=Am.OnDarkDim, fontSize=11.sp)
                     val raw = instance.effectProperty("seed")?.get("value") ?: "1"
                     OutlinedTextField(raw, { text ->
