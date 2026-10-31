@@ -24,4 +24,11 @@ class MediaRelinkTest {
         assertNull(MediaRelink.pick(media("filename" to "IMG_0001.jpg"), sequenceOf(7L)))
         assertNull(MediaRelink.pick(media("size" to "2048"), sequenceOf(7L)))
     }
+    @Test fun onlyPublicMediaItemsCanRestoreTheirOriginalAddress() {
+        assertEquals("content://media/external/images/media/42",restorableMediaStoreUri("blocked-content://media/external/images/media/42"))
+        assertEquals("content://media/external/file/12",restorableMediaStoreUri("blocked-content://media/external/file/12"))
+        for(uri in listOf("file:///data/user/0/app.truemotion/files/preferences.xml","content://private.provider/secret/42","content://media@evil/external/file/1","content://media/external/file/-1","content://media/external/file/1?evil=1","content://media/external/file/../../secret")) assertNull(uri,restorableMediaStoreUri("blocked-$uri"))
+        assertEquals("clip.mp4",importedMediaFilename("blocked-file:///storage/emulated/0/Movies/clip.mp4"))
+        assertEquals("",importedMediaFilename("blocked-content://media/external/video/media/42"))
+    }
 }

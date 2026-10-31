@@ -196,6 +196,14 @@ struct Frozen {
 
 thread_local const Frozen* gFrozen = nullptr;
 
+SkM44 ModelOf(const Placement& p,const Layer& l,double timeMs) {
+    const float t=l.localTime(timeMs);
+    const float x=tanf(l.skew.get(0,t,0)),y=tanf(l.skew.get(1,t,0));
+    const SkM44 shear(1,x,0,0,y,1,0,0,0,0,1,0,0,0,0,1);
+    return SkM44::Translate(p.location.fX,p.location.fY,p.z)*SkM44::Rotate({0,0,1},p.rotation*kRadians)*p.tilt*
+        (l.pivotOffset?SkM44::Scale(p.scale.fX,p.scale.fY,1)*shear:shear*SkM44::Scale(p.scale.fX,p.scale.fY,1))*SkM44::Translate(-p.pivot.fX,-p.pivot.fY);
+}
+
 Placement OwnAt(const Layer& l, double timeMs) {
     if (Placement seen; SeenPlacement(l, timeMs, &seen)) return seen;
     const float t = l.localTime(timeMs);
@@ -207,6 +215,7 @@ Placement OwnAt(const Layer& l, double timeMs) {
     const float tx = l.tilt.get(0, t, 0), ty = l.tilt.get(1, t, 0);
     if (tx != 0 || ty != 0) p.tilt = SkM44::Rotate({0, 1, 0}, -ty * kRadians) * SkM44::Rotate({1, 0, 0}, -tx * kRadians);
     ApplyMotion(l, timeMs, &p);
+    if(l.pivotOffset) { p.location+=p.pivot; p.fullTransform=true; }
     return p;
 }
 
@@ -221,6 +230,7 @@ Placement Own(const Layer& l, double timeMs) {
         if (!gFrozen->scale) p.scale = still.scale;
         if (!gFrozen->rotation) p.rotation = still.rotation;
     }
+    if(p.fullTransform&&!l.placed) p.model=ModelOf(p,l,timeMs);
     return p;
 }
 
@@ -251,6 +261,8 @@ Placement Effective(const std::vector<Layer>& siblings, const Layer& l, double t
     Placement p{};
     if (parent) {
         p = Effective(siblings, *parent, timeMs, depth + 1);
+        const bool full=own.fullTransform||p.fullTransform;
+        const SkM44 composed=full ? (p.fullTransform?p.model:ModelOf(p,*parent,timeMs))*(own.fullTransform?own.model:ModelOf(own,l,timeMs)) : SkM44();
         const SkV4 offset = Turn(p.rotation) * p.tilt * SkV4{(own.location.fX + own.pivot.fX - p.pivot.fX) * p.scale.fX,
                                                              (own.location.fY + own.pivot.fY - p.pivot.fY) * p.scale.fY, own.z, 0};
         own.location = p.location + SkVector{offset.x, offset.y} - own.pivot + p.pivot;
@@ -258,6 +270,11 @@ Placement Effective(const std::vector<Layer>& siblings, const Layer& l, double t
         if (p.tilt != SkM44()) own.tilt = Turn(-own.rotation) * p.tilt * Turn(own.rotation) * own.tilt;
         own.rotation += p.rotation;
         own.z = p.z + offset.z;
+        if(full) {
+            own.fullTransform=true;own.model=composed;
+            const SkV4 anchor=composed.map(own.pivot.fX,own.pivot.fY,0,1);
+            own.location={anchor.x/anchor.w,anchor.y/anchor.w};own.z=anchor.z/anchor.w;
+        }
     }
     if (!FollowsPath(l)) return own;
     const Layer* source = PathSource(siblings, l);
@@ -265,11 +282,17 @@ Placement Effective(const std::vector<Layer>& siblings, const Layer& l, double t
     const Layer& below = *source;
     const float t = below.localTime(timeMs);
     const SkPath path = below.text ? TextGlyphPath(below, t, Fps()) : Cropped(below, t, ShapePath(below, t));
+    const Placement before=own;
     FollowPath(l, timeMs, path.makeTransform(MatrixOf(parent == &below ? p : Effective(siblings, below, timeMs, depth + 1), below, t)), &own);
+    if(own.fullTransform) {
+        own.model=SkM44::Translate(own.location.fX,own.location.fY,own.z)*Turn(own.rotation-before.rotation)*
+            SkM44::Translate(-before.location.fX,-before.location.fY,-before.z)*before.model;
+    }
     return own;
 }
 
 SkMatrix MatrixOf(const Placement& p, const Layer& l, float t) {
+    if(p.fullTransform) return l.projected?p.space.asM33():p.model.asM33();
     SkMatrix m = l.projected ? p.space.asM33() : SkMatrix::Translate(p.location.fX, p.location.fY);
     if (!l.projected) m.preRotate(p.rotation);
     m.preSkew(tanf(l.skew.get(0, t, 0)), tanf(l.skew.get(1, t, 0)));
@@ -692,9 +715,8 @@ Drawn DrawBody(SkCanvas* canvas, const Layer& l, double timeMs, float t, const S
                const MediaPictures& pictures, bool outline) {
     Drawn drawn;
     if (HasParticles(l)) {
-        canvas->save(); canvas->concat(m);
-        DrawParticles(canvas,l,timeMs,alpha,[&](const LayerEffect& effect) { return ParticleImage(canvas,l,effect,timeMs,pictures); });
-        canvas->restore(); drawn.fill=true;
+        DrawParticles(canvas,l,timeMs,alpha,m,[&](const LayerEffect& effect) { return ParticleImage(canvas,l,effect,timeMs,pictures); });
+        drawn.fill=true;
         return drawn;
     }
     if (l.kind == "model") {
@@ -818,7 +840,7 @@ void DrawContent(SkCanvas* canvas, const std::vector<Layer>& siblings, const Lay
     const SkMatrix m = SiblingMatrix(siblings, l, timeMs);
     const SkPath path = BodyPath(l, t);
     Drawn drawn;
-    const SkPath scenePath = path.makeTransform(m);
+    const SkPath scenePath = HasWorldParticles(l,timeMs) ? SkPath::Rect(ParticleSceneBounds(l,timeMs,m)) : path.makeTransform(m);
     const bool effects = EffectsApply(siblings, l);
     const bool pixelEdged = decorate && PixelEdged(l, pictures);
     const bool bordered = decorate && std::any_of(l.borders.begin(), l.borders.end(), [&](const Edge& e) { return ShaderBorder(l, e, t, pixelEdged); });
@@ -1400,6 +1422,7 @@ static bool CutoutContains(const Layer& l, float t, const SkPath& path, const Sk
 
 static bool ContainsOne(const std::vector<Layer>& siblings, const Layer& l, double timeMs, SkPoint p, const MediaPictures& masks) {
     const SkMatrix matrix = SiblingMatrix(siblings, l, timeMs);
+    if (HasWorldParticles(l,timeMs)) return ParticleSceneBounds(l,timeMs,matrix).contains(p.fX,p.fY);
     SkMatrix inverse;
     if (!matrix.invert(&inverse)) return false;
     const SkPoint local = inverse.mapPoint(p);
@@ -1424,6 +1447,7 @@ static bool ContainsOne(const std::vector<Layer>& siblings, const Layer& l, doub
 }
 
 static bool ContentRect(const Layer& l, double timeMs, const SkMatrix& matrix, SkRect* out) {
+    if (HasWorldParticles(l,timeMs)) { *out=ParticleSceneBounds(l,timeMs,matrix); return !out->isEmpty(); }
     const SkPath shape = ShapePath(l, l.localTime(timeMs));
     if (shape.isEmpty()) return false;
     *out = matrix.mapRect(shape.getBounds());
@@ -1447,6 +1471,7 @@ static bool ContentRect(const Layer& l, double timeMs, const SkMatrix& matrix, S
 }
 
 SkRect SelectionBounds(const Layer& layer, double timeMs, const SkMatrix& matrix) {
+    if (HasWorldParticles(layer,timeMs)) return ParticleSceneBounds(layer,timeMs,matrix);
     if (layer.kind != "embedScene") return ShapePath(layer, layer.localTime(timeMs)).makeTransform(matrix).getBounds();
     SkRect bounds = SkRect::MakeEmpty();
     ContentRect(layer, timeMs, matrix, &bounds);

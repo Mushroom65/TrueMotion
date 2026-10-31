@@ -43,8 +43,8 @@ void DrawModel(SkCanvas* canvas, const Layer& l, double timeMs, float alpha, con
     const float seconds = (float)((l.steppedMs(timeMs) - l.startTime) / 1000);
     const SkM44 spin = SkM44::Rotate({0, 1, 0}, -l.value("spin", 0, t, 0) * seconds * kRadians);
     const float sx = p.scale.fX, sy = p.scale.fY;
-    const SkM44 full = canvas->getLocalToDevice() * p.space * SkM44::Scale(sx, sy, std::sqrt(std::fabs(sx * sy))) *
-                       SkM44::Translate(-p.pivot.fX, -p.pivot.fY) * spin * SkM44::Scale(size, size, size);
+    const SkM44 shape=p.fullTransform?SkM44():SkM44::Scale(sx,sy,std::sqrt(std::fabs(sx*sy)))*SkM44::Translate(-p.pivot.fX,-p.pivot.fY);
+    const SkM44 full = canvas->getLocalToDevice() * p.space * shape * spin * SkM44::Scale(size, size, size);
     const SkM44 turn = p.turn * spin;
     const float mirror = sx * sy < 0 ? -1.0f : 1.0f;
     const float angle = l.value("lightAngle", 0, t, 135) * kRadians;

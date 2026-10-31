@@ -2,6 +2,7 @@
 #include "engine.h"
 #include "preview.h"
 #include "effects.h"
+#include "particles.h"
 #include "drawing.h"
 #include "interpolation.h"
 #include "gl_yuv.h"
@@ -1267,6 +1268,11 @@ bool EngineImpl::layerQuad(int64_t layerId, double timeMs, float xy[8]) {
     const Layer* layer = fScene.layer(layerId);
     if (!layer || !layer->activeAt(timeMs)) return false;
     SkPoint corners[4];
+    if (HasWorldParticles(*layer,timeMs)) {
+        ParticleViewBounds(fScene,*layer,timeMs).toQuad(corners);
+        for(int i=0;i<4;i++) { xy[2*i]=corners[i].fX;xy[2*i+1]=corners[i].fY; }
+        return true;
+    }
     SelectionBounds(*layer, timeMs, SkMatrix::I()).toQuad(corners);
     WorldMatrix(fScene, *layer, timeMs).mapPoints(corners);
     for (int i = 0; i < 4; i++) {
@@ -1290,7 +1296,10 @@ bool EngineImpl::layerBounds(int64_t layerId, double timeMs, float ltrb[4]) {
     SetCameraView(fCameraView);
     const Layer* layer = fScene.layer(layerId);
     if (!layer) return false;
-    const SkRect bounds = SelectionBounds(*layer, timeMs, WorldMatrix(fScene, *layer, timeMs));
+    SkRect bounds;
+    if(HasWorldParticles(*layer,timeMs)) {
+        bounds=ParticleViewBounds(fScene,*layer,timeMs);
+    } else bounds=SelectionBounds(*layer, timeMs, WorldMatrix(fScene, *layer, timeMs));
     ltrb[0] = bounds.left(); ltrb[1] = bounds.top();
     ltrb[2] = bounds.right(); ltrb[3] = bounds.bottom();
     return !bounds.isEmpty();
@@ -1315,6 +1324,7 @@ bool EngineImpl::reanchor(int64_t layerId, double timeMs, float x, float y, floa
     const float raw[3] = {layer.location.get(0, t, 0), layer.location.get(1, t, 0), layer.location.get(2, t, 0)};
     auto origin = [&]() {
         const Placement p = EffectivePlacement(siblings, layer, timeMs);
+        if(p.fullTransform) return p.model.map(0,0,0,1);
         SkMatrix local = SkMatrix::I();
         local.preSkew(tanf(layer.skew.get(0, t, 0)), tanf(layer.skew.get(1, t, 0)));
         local.preScale(p.scale.fX, p.scale.fY).preTranslate(-p.pivot.fX, -p.pivot.fY);

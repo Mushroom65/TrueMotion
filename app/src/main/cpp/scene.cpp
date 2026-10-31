@@ -357,6 +357,7 @@ bool ParseLayer(const XmlNode& node, int fps, Layer* out) {
     l.endTime = std::max(l.startTime, IntAttr(*n, "endTime", 0));
     l.hidden = StrAttr(*n, "hidden") == "true";
     if (const XmlNode* t = n->child("transform")) {
+        l.pivotOffset = StrAttr(*t,"originMode") == "alight";
         l.location = ParseAnim(t->child("location"));
         l.pathAutoOrient = StrAttr(*t, "trueAutoOrient") == "true";
         if (!l.location.spatial && l.endTime > l.startTime) LeadIn(&l.location, 1000.0f / fps / (l.endTime - l.startTime));

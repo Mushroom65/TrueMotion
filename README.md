@@ -6,7 +6,7 @@ An experimental Android motion graphics editor based on [AbsentMotion 4.3.0](htt
 
 [Русская инструкция](README_TRUE_MOTION_RU.md) · [Port status](docs/TRUE_MOTION_MIGRATION_RU.md) · [Telegram](https://t.me/TrueMoti0n)
 
-## Included in 0.12.0
+## Included in 0.13.0
 
 - Upstream stable v4.3.0 merged, including its OpenGL backend and new editor tools.
 - `.alight` / XML import directly from Projects and `.alight` / `.absproj` package export.
@@ -15,8 +15,8 @@ An experimental Android motion graphics editor based on [AbsentMotion 4.3.0](htt
 - 575 freshly adapted AfterMotionZ+ effects in 11 separate categories, including Deep Glow AE and Saber AE; 575 donor definitions preserved across the update; 210 core/tool definitions. [Scope and validation](docs/AFTERZ_EFFECTS_RU.md).
 - Native color grading with wheels, curves and HSL controls.
 - Live audio-driven animation referencing an audio layer, beat markers and Bop.
-- Native particle simulation, lifetime controls and layer textures.
-- Editable nested groups, anchor controls and spatial Bézier motion paths.
+- Native particle simulation with 2D/3D generation, scene-camera projection, lifetime controls and layer textures.
+- Editable nested groups, anchor controls and spatial Bézier motion paths; imported Alight pivots and parent transforms retain their original convention.
 - Video frame/composition to image layer, playback up to 100× with audio.
 - JavaScript plugin commands, hooks and bundled effects; separate vector animation editor.
 - Manual viewport prerender, green timeline cache indicators and a 2 GiB disk cache.

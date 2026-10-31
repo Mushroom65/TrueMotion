@@ -11190,7 +11190,7 @@
     "true-plugin-builtin-optics-scan": "0dbf9b3b94142ab3d377a9ba52d1943266779caae3e769345c69be1d49c6dfd2",
     "true-plugin-builtin-optics-pixelsort": "831d375797205782bcc1356ec4781ddfc2f55b0c56f638114f8a50b546f6481a",
     "true-audio-reactive": "49b51751bdd4713b6523cef7197f3f18d55e0de7b73ff47e0e87bd6f14c37879",
-    "true-particles": "d05ccc530dc8f225dd0c6818b3c9aaf117b58e62273c86309c572209a6ce161f"
+    "true-particles": "40207d1997e35938da0525fc5bfe3bded258734afd60e69489571e7a5cc3df8b"
   },
   "originalHashNote": "Raw hashes record the original Windows reference bytes; normalized hashes verify unchanged content after CRLF-to-LF checkout conversion.",
   "previousOriginalDefinitions": {
@@ -11598,5 +11598,14 @@
   },
   "originalBaseline": "AbsentMotion v4.3.0 plus the existing 17 True Motion tools",
   "originalDefinitionsCount": 210,
-  "catalogTotal": 785
+  "catalogTotal": 785,
+  "ownedEffectBaselineUpdates": [
+    {
+      "version": "0.13.0",
+      "key": "true-particles",
+      "previousSHA256": "d05ccc530dc8f225dd0c6818b3c9aaf117b58e62273c86309c572209a6ce161f",
+      "sha256": "40207d1997e35938da0525fc5bfe3bded258734afd60e69489571e7a5cc3df8b",
+      "reason": "Add explicit 2D/3D generation choice while retaining the previous missing-parameter behavior for saved particles"
+    }
+  ]
 }

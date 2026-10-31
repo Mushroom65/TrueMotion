@@ -15,4 +15,5 @@
     <string name="true_particles_enable">Enable particles</string>
     <string name="true_particles_disable">Disable particles</string>
     <string name="true_particles_source_hint">Use another layer’s current content, including its effects. Its placement is excluded. Circular dependencies are unavailable.</string>
+    <string name="true_particles_world_hint">3D particles are projected individually through the project camera. Rotate the emitter or camera to see their depth. World Scale sets simulation units in project pixels.</string>
 </resources>

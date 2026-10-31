@@ -21,17 +21,27 @@ class PortInstrumentation : Instrumentation() {
     private var afterzOnly = false
     private var afterzFull = true
     private var nextOnly = false
+    private var next013 = false
     override fun onCreate(arguments: Bundle?) {
         super.onCreate(arguments)
         afterzOnly = arguments?.getString("afterz") in setOf("true", "focused")
         afterzFull = arguments?.getString("afterz") != "focused"
         nextOnly = arguments?.getString("next012") == "true"
+        next013 = arguments?.getString("next013") == "true"
         start()
     }
     override fun onStart() {
         val report = JSONObject()
         try {
             val context = targetContext
+            if(next013) {
+                val directory=File(context.filesDir,"next013-validation").apply { mkdirs() }
+                NativeEngine(NativeEngine.Backend.GRAPHITE).use { engine ->
+                    check(!engine.failed) { engine.info };report.put("next013",Next013Probe.run(context,engine,directory))
+                }
+                report.put("ok",true);File(directory,"report.json").writeText(report.toString(2))
+                finish(0,Bundle().apply { putString("report",report.toString()) });return
+            }
             if (nextOnly) {
                 val directory = File(context.filesDir,"next012-validation").apply { mkdirs() }
                 NativeEngine(NativeEngine.Backend.GRAPHITE).use { engine ->
@@ -164,7 +174,7 @@ class PortInstrumentation : Instrumentation() {
             finish(0, Bundle().apply { putString("report", report.toString()) })
         } catch (error: Throwable) {
             report.put("ok", false).put("error", error.stackTraceToString())
-            val directory = File(targetContext.filesDir, if (afterzOnly) "afterz-validation" else if(nextOnly) "next012-validation" else "port-validation").apply { mkdirs() }
+            val directory = File(targetContext.filesDir, if(next013) "next013-validation" else if (afterzOnly) "afterz-validation" else if(nextOnly) "next012-validation" else "port-validation").apply { mkdirs() }
             File(directory, "report.json").writeText(report.toString(2))
             finish(1, Bundle().apply { putString("error", error.stackTraceToString()) })
         }

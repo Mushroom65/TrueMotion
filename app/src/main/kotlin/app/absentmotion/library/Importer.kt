@@ -9,6 +9,7 @@ import app.absentmotion.i18n.txt
 import app.absentmotion.platform.Context
 import app.absentmotion.platform.Uri
 import app.absentmotion.compat.EffectMigration
+import app.absentmotion.compat.withImportedGeometry
 import app.absentmotion.effects.EffectCatalog
 import app.absentmotion.fonts.FontImportError
 import app.absentmotion.fonts.FontLibrary
@@ -88,6 +89,7 @@ class Importer(
         var projectEntry: String? = null
         var ours = false
         var trueMotion = false
+        var legacyGeometry = false
         val hashes = HashMap<String, String>()
         val expectedHashes = HashMap<String, String>()
         var sceneText = 0
@@ -104,13 +106,20 @@ class Importer(
                         val manifest = JSONObject(readText(input, MaxXml))
                         projectEntry = manifest.optString("project").takeIf { it.isNotBlank() }
                         trueMotion = manifest.optString("format") in setOf("toji-alight-project", "true-motion-project")
+                        legacyGeometry = manifest.optString("format") == "toji-alight-project"
                         ours = manifest.optString("format") == "absentmotion-package" || trueMotion
                         if (trueMotion) {
                             projectEntry = "scene.xml"
                             manifest.optString("sceneSha256").takeIf { it.isNotEmpty() }?.let { expectedHashes["scene.xml"] = it }
                         }
                         val listed = manifest.optJSONArray("media")?.let { list -> (0 until list.length()).map { list.getJSONObject(it) }.filter { it.has("entry") || trueMotion && it.has("path") } }.orEmpty()
-                        links = listed.associate { m -> m.getString("uri") to m.optString("entry", m.optString("path")) }
+                        links = buildMap {
+                            for(m in listed) {
+                                val path=m.optString("entry",m.optString("path"))
+                                put(m.getString("uri"),path)
+                                if(trueMotion) m.optString("originalUri").takeIf { it.isNotBlank() }?.let { put(it,path) }
+                            }
+                        }
                         if (trueMotion) for (m in listed) {
                             val path = m.getString("path")
                             if (path.startsWith('/') || path.contains('\\') || path.split('/').any { it == ".." } || ':' in path) {
@@ -193,7 +202,7 @@ class Importer(
                 }
             }
             val renamedFonts = localFonts.filter { (old, new) -> old != new }
-            scenes.indices.mapTo(saved) { add(ids[it], check(scenes[it]).let { root -> if (renamedFonts.isEmpty()) root else root.mapFonts(renamedFonts) }, moved[it]) }
+            scenes.indices.mapTo(saved) { add(ids[it], check(scenes[it]).let { root -> if (renamedFonts.isEmpty()) root else root.mapFonts(renamedFonts) }, moved[it],legacyGeometry) }
             ids.forEach { File(store.mediaDir(it), ImportMarker).delete(); store.mediaDir(it).delete() }
             return if (ours) saved else saved.map { if (it.element) it else it.copy(template = true) }
         } catch (t: Throwable) {
@@ -211,9 +220,9 @@ class Importer(
         return root
     }
 
-    private fun add(id: String, root: XmlNode, moved: Map<String, String>): ImportReport {
+    private fun add(id: String, root: XmlNode, moved: Map<String, String>, legacyGeometry: Boolean = false): ImportReport {
         try {
-            var scene = relink(Scene(uniqueLayerIds(root.mapMediaUris { moved[it] ?: access.imported(it) })))
+            var scene = relink(Scene(uniqueLayerIds(root.withImportedGeometry(legacyGeometry).mapMediaUris { moved[it] ?: access.imported(it) })))
             val migrated = migration?.migrate(scene)
             if (migrated != null) scene = migrated.scene
             if (scene.title.isBlank()) scene = scene.withTitle(AppText.get(R.string.library_imported_project))

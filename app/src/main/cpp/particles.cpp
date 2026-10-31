@@ -55,9 +55,11 @@ Config Settings(const LayerEffect& e, float t) {
     c.rotation=Number(e,"rotation",t,0,-36000,36000); c.rotationRandom=Number(e,"rotationRandom",t,0,0,360);
     c.rotationSpeed=Number(e,"rotationSpeed",t,0,-36000,36000); c.spinRandom=Number(e,"spinRandom",t,0,0,1);
     c.alignVelocity=Number(e,"alignVelocity",t,0,0,1)>.5;
+    c.twoD=Number(e,"dimension",t,-1,-1,1)==0;
     return c;
 }
-struct Sprite { double x,y,r,angle; const particles::Particle* particle; };
+bool World(const LayerEffect& effect, float t) { return Number(effect,"dimension",t,-1,-1,1)>.5; }
+struct Sprite { double x,y,r,angle; const particles::Particle* particle; double depth=0; };
 std::vector<Sprite> Sprites(const Layer& layer, const LayerEffect& effect, double timeMs) {
     std::vector<Sprite> out;
     if (!effect.particles || effect.hidden) return out;
@@ -81,11 +83,69 @@ std::vector<Sprite> Sprites(const Layer& layer, const LayerEffect& effect, doubl
     }
     return out;
 }
+
+std::vector<Sprite> WorldSprites(const Layer& layer, const LayerEffect& effect, double timeMs) {
+    if (!effect.particles || effect.hidden) return {};
+    Placement p;
+    if (!layer.projected || !SeenPlacement(layer,timeMs,&p)) return Sprites(layer,effect,timeMs);
+    const float t=layer.localTime(timeMs);
+    const Config c=Settings(effect,t);
+    const double units=Number(effect,"worldScale",t,300,1,100000);
+    const double scaleZ=std::sqrt(std::fabs(p.scale.fX*p.scale.fY));
+    const SkM44 model=p.space*(p.fullTransform?SkM44():SkM44::Scale(p.scale.fX,p.scale.fY,scaleZ)*SkM44::Translate(-p.pivot.fX,-p.pivot.fY));
+    const Layer* camera=layer.sight.camera;
+    const float fov=camera?camera->camera.fov.get(0,camera->localTime(timeMs),60):60;
+    const double focal=std::max(layer.sight.width,layer.sight.height)/(2*std::tan(std::clamp(fov,.1f,179.9f)*3.14159265358979323846/360));
+    double roll=p.rotation;
+    if(layer.sight.camera&&layer.sight.layers) roll-=EffectivePlacement(*layer.sight.layers,*layer.sight.camera,timeMs).rotation;
+    const auto& samples=effect.particles->system.sample(c,(layer.steppedMs(timeMs)-layer.startTime)/1000.0);
+    std::vector<Sprite> out;out.reserve(samples.size());
+    for(const auto& particle:samples) {
+        const Vec v=particle.position*units;
+        const SkV4 q=model.map(v.x,v.y,v.z,1);
+        if(!(q.w>=1) || !(q.z>=1) || particle.radius<=0 || particle.color[3]<=0) continue;
+        double angle=particle.rotation+roll;
+        if(c.alignVelocity) {
+            const Vec next=v+particle.velocity*units;
+            const SkV4 b=model.map(next.x,next.y,next.z,1);
+            if(b.w>=1) {
+                const double dx=b.x/b.w-q.x/q.w,dy=b.y/b.w-q.y/q.w;
+                if(std::hypot(dx,dy)>1e-9) angle=particle.rotation+std::atan2(dy,dx)*180/3.14159265358979323846;
+            }
+        }
+        Sprite sprite{q.x/q.w,q.y/q.w,particle.radius*units*scaleZ*focal/q.w,angle,&particle,q.z};
+        if(std::isfinite(sprite.x)&&std::isfinite(sprite.y)&&std::isfinite(sprite.r)&&sprite.r<1e7) out.push_back(sprite);
+    }
+    std::stable_sort(out.begin(),out.end(),[](const Sprite& a,const Sprite& b){return a.depth>b.depth;});
+    return out;
+}
 }
 
 bool ParticleEffect(const std::string& id) { return id=="lab.true.particles" || id=="lab.toji.particles3d"; }
 bool HasParticles(const Layer& layer) {
     return std::any_of(layer.effects.begin(),layer.effects.end(),[](const LayerEffect& e){return !e.hidden&&ParticleEffect(e.id);});
+}
+bool HasWorldParticles(const Layer& layer,double timeMs) {
+    return std::any_of(layer.effects.begin(),layer.effects.end(),[&](const LayerEffect& e){return !e.hidden&&ParticleEffect(e.id)&&World(e,layer.localTime(timeMs));});
+}
+SkRect ParticleSceneBounds(const Layer& layer,double timeMs,const SkMatrix& localToScene) {
+    SkRect bounds=SkRect::MakeEmpty();
+    for(const LayerEffect& e:layer.effects) if(ParticleEffect(e.id)&&!e.hidden) {
+        const bool world=World(e,layer.localTime(timeMs));
+        const double aspect=Number(e,"spriteAspect",layer.localTime(timeMs),1,.01,100);
+        for(const Sprite& s:world?WorldSprites(layer,e,timeMs):Sprites(layer,e,timeMs)) {
+            const float r=s.r*std::sqrt(1+aspect*aspect);
+            SkRect box=SkRect::MakeLTRB(s.x-r,s.y-r,s.x+r,s.y+r);
+            bounds.join(world?box:localToScene.mapRect(box));
+        }
+    }
+    return bounds;
+}
+SkRect ParticleViewBounds(const Scene& scene,const Layer& layer,double timeMs) {
+    Layer seen=layer;
+    seen.placed=seen.projected=true;
+    seen.sight={&scene.layers,&layer,CameraViewOn()?ActiveCamera(scene.layers,timeMs):nullptr,scene.width,scene.height};
+    return ParticleSceneBounds(seen,timeMs,SkMatrix::I());
 }
 SkRect ParticleBounds(const Layer& layer,double timeMs) {
     SkRect bounds=SkRect::MakeEmpty();
@@ -100,7 +160,7 @@ SkRect ParticleBounds(const Layer& layer,double timeMs) {
     // Keep an empty emitter selectable without cropping the actual generated geometry.
     return bounds.isEmpty()?SkRect::MakeLTRB(-12,-12,12,12):bounds;
 }
-void DrawParticles(SkCanvas* canvas,const Layer& layer,double timeMs,float alpha,const ParticleTexture& texture) {
+void DrawParticles(SkCanvas* canvas,const Layer& layer,double timeMs,float alpha,const SkMatrix& localToScene,const ParticleTexture& texture) {
     thread_local sk_sp<SkShader> dot=[] {
         const SkColor4f colors[]={{1,1,1,1},{1,1,1,0}};
         const SkScalar stops[]={.2f,1};
@@ -113,7 +173,10 @@ void DrawParticles(SkCanvas* canvas,const Layer& layer,double timeMs,float alpha
         if(textured&&!image) continue;
         const double aspect=Number(e,"spriteAspect",t,1,.01,100);
         const bool additive=Number(e,"additive",t,1,0,1)>.5;
-        for(const Sprite& s:Sprites(layer,e,timeMs)) {
+        const bool world=World(e,t);
+        canvas->save();
+        if(!world) canvas->concat(localToScene);
+        for(const Sprite& s:world?WorldSprites(layer,e,timeMs):Sprites(layer,e,timeMs)) {
             const auto& c=s.particle->color;
             SkPaint paint;
             paint.setAntiAlias(true);
@@ -125,6 +188,7 @@ void DrawParticles(SkCanvas* canvas,const Layer& layer,double timeMs,float alpha
             else { paint.setShader(dot); canvas->drawCircle(0,0,1,paint); }
             canvas->restore();
         }
+        canvas->restore();
     }
 }
 }

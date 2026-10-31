@@ -15,4 +15,5 @@
     <string name="true_particles_enable">启用粒子</string>
     <string name="true_particles_disable">禁用粒子</string>
     <string name="true_particles_source_hint">使用其他图层当前的内容和效果，不包含位置和变换。不允许循环依赖。</string>
+    <string name="true_particles_world_hint">3D 模式下，每个粒子都由项目相机单独投影。旋转发射器或相机即可看到深度。世界缩放以项目像素设置模拟单位的大小。</string>
 </resources>

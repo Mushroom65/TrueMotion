@@ -31,12 +31,12 @@ struct Config {
     double radius = .055, sizeStart = 1, sizeEnd = 0, lifeCurve = 1, variation = .35;
     std::array<double,4> tint{1, .72, .36, 1}, colorStart{1,1,1,1}, colorEnd{1,1,1,1}; // RGBA
     double colorRandom = 0, opacityStart = 1, opacityEnd = 0, opacityRandom = 0;
-    bool softFade = true, alignVelocity = false;
+    bool softFade = true, alignVelocity = false, twoD = false;
     double rotation = 0, rotationRandom = 0, rotationSpeed = 0, spinRandom = 0;
     bool operator==(const Config&) const = default;
     bool physicsEqual(const Config& b) const {
-        return std::tie(count,emitter,seed,life,lifeRandom,origin,spawn,velocity,gravity,wind,attractor,spread,directionSpread,velocityRandom,speedStart,speedEnd,forceRandom,drag,turbulence,noiseFrequency,attractStrength,attractRadius) ==
-               std::tie(b.count,b.emitter,b.seed,b.life,b.lifeRandom,b.origin,b.spawn,b.velocity,b.gravity,b.wind,b.attractor,b.spread,b.directionSpread,b.velocityRandom,b.speedStart,b.speedEnd,b.forceRandom,b.drag,b.turbulence,b.noiseFrequency,b.attractStrength,b.attractRadius);
+        return std::tie(twoD,count,emitter,seed,life,lifeRandom,origin,spawn,velocity,gravity,wind,attractor,spread,directionSpread,velocityRandom,speedStart,speedEnd,forceRandom,drag,turbulence,noiseFrequency,attractStrength,attractRadius) ==
+               std::tie(b.twoD,b.count,b.emitter,b.seed,b.life,b.lifeRandom,b.origin,b.spawn,b.velocity,b.gravity,b.wind,b.attractor,b.spread,b.directionSpread,b.velocityRandom,b.speedStart,b.speedEnd,b.forceRandom,b.drag,b.turbulence,b.noiseFrequency,b.attractStrength,b.attractRadius);
     }
 };
 
@@ -98,8 +98,15 @@ class System {
             const double ca = 1 + (std::cos(config.directionSpread*pi/180)-1)*random(7);
             direction = axis*ca + (tangent*std::cos(angle) + axis.cross(tangent)*std::sin(angle))*std::sqrt(std::max(0.0, 1-ca*ca));
         }
+        if (config.twoD) {
+            const double heading = std::atan2(config.velocity.y, config.velocity.x);
+            const double a = config.directionSpread >= 179.999 ? angle : heading + (random(7)*2-1)*config.directionSpread*pi/180;
+            direction = {std::cos(a), std::sin(a), 0};
+            spawn.z = 0;
+        }
         s.initial = (config.velocity + direction*config.spread) * (1 + config.velocityRandom*(random(8)*2-1));
         s.start = s.p = config.origin + spawn;
+        if (config.twoD) { s.initial.z = 0; s.start.z = s.p.z = 0; }
         s.v = s.initial * config.speedStart;
         s.force = 1 + config.forceRandom*(random(9)*2-1);
         s.phase = {random(10)*2*pi, random(11)*2*pi, random(12)*2*pi};
@@ -112,13 +119,15 @@ class System {
             a = a + Vec{std::sin(s.phase.x+s.p.y*f+at*f), std::sin(s.phase.y+s.p.z*f+at*f), std::sin(s.phase.z+s.p.x*f+at*f)}*config.turbulence;
         }
         if (config.attractStrength != 0) {
-            const Vec delta = config.attractor-s.p;
+            Vec delta = config.attractor-s.p;
+            if (config.twoD) delta.z = 0;
             const double distance = std::max(config.attractRadius, delta.length());
             Vec pull = delta * (config.attractStrength/(distance*distance*distance));
             const double magnitude = pull.length();
             if (magnitude > 50) pull = pull * (50/magnitude);
             a = a + pull;
         }
+        if (config.twoD) a.z = 0;
         const double k = config.drag;
         const double travel = k > 1e-6 ? -std::expm1(-k*step)/k : step;
         const double forceTime = k > 1e-6 ? (step-travel)/k : step*step/2;

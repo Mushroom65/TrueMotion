@@ -7,6 +7,17 @@
   "description": "Native deterministic particle physics. Four emitters, lifetime controls, XYZ forces, drag, turbulence, attraction and a layer texture. Opens a dedicated panel.",
   "params": [
     {
+      "id": "dimension",
+      "label": "Generation space",
+      "type": "choice",
+      "default": 0,
+      "legacyDefault": -1,
+      "options": [
+        "2D",
+        "3D"
+      ]
+    },
+    {
       "id": "amount",
       "label": "Particle count",
       "type": "float",

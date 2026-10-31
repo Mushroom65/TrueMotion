@@ -5864,6 +5864,13 @@
         },
         "sourceLayer": {
           "label": "纹理源图层"
+        },
+        "dimension": {
+          "label": "生成空间",
+          "options": [
+            "2D",
+            "3D"
+          ]
         }
       }
     },

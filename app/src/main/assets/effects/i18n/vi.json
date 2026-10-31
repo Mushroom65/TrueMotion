@@ -6295,6 +6295,13 @@
         },
         "sourceLayer": {
           "label": "Texture source layer"
+        },
+        "dimension": {
+          "label": "2D / 3D",
+          "options": [
+            "2D",
+            "3D"
+          ]
         }
       }
     },

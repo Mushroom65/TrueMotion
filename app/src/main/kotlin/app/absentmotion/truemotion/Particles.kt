@@ -8,7 +8,7 @@ object Particles {
     const val LEGACY = "lab.toji.particles3d"
     fun isEffect(node: XmlNode) = node["id"] in setOf(ID, LEGACY)
     val sections = listOf(
-        "amount life lifeRandom timeScale timeOffset seed emitter originX originY originZ spawnX spawnY spawnZ",
+        "dimension amount life lifeRandom timeScale timeOffset seed emitter originX originY originZ spawnX spawnY spawnZ",
         "velocityX velocityY velocityZ spread directionSpread velocityRandom speedStart speedEnd",
         "gravityX gravity gravityZ windX windY windZ forceRandom drag turbulence noiseFrequency attractorX attractorY attractorZ attractStrength attractRadius",
         "radius sizeStart sizeEnd lifeCurve variation tint colorStart colorEnd colorRandom opacityStart opacityEnd opacityRandom softFade rotation rotationRandom rotationSpeed spinRandom alignVelocity useTexture additive spriteAspect textureResolution",

@@ -15,4 +15,5 @@
     <string name="true_particles_enable">Включить частицы</string>
     <string name="true_particles_disable">Выключить частицы</string>
     <string name="true_particles_source_hint">Текущее содержимое другого слоя с его эффектами, без положения и трансформации. Циклические зависимости недоступны.</string>
+    <string name="true_particles_world_hint">В 3D каждая частица отдельно проецируется камерой проекта. Поверните эмиттер или камеру, чтобы увидеть глубину. Масштаб мира задаёт размер единиц симуляции в пикселях проекта.</string>
 </resources>

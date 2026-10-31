@@ -4,6 +4,7 @@
 
 #include "include/core/SkMatrix.h"
 #include "scene.h"
+#include "particles.h"
 
 namespace am {
 namespace {
@@ -83,7 +84,7 @@ Seen Look(const View& v, const Placement& p) {
 
 SkM44 Space(const View& v, const Placement& p) {
     const float r = 3.14159265f / 180, mx = v.middle.fX, my = v.middle.fY, f = v.focal;
-    const SkM44 world = SkM44::Translate(p.location.fX, p.location.fY, p.z) * SkM44::Rotate({0, 0, 1}, p.rotation * r) * p.tilt;
+    const SkM44 world = p.fullTransform ? p.model : SkM44::Translate(p.location.fX, p.location.fY, p.z) * SkM44::Rotate({0, 0, 1}, p.rotation * r) * p.tilt;
     const SkM44 eye = v.turn * SkM44::Translate(-v.eye.fX, -v.eye.fY, -v.eyeZ);
     const float c = std::max(-v.eyeZ, kNearest);
     const SkM44 lens = v.orthographic ? SkM44(f, 0, 0, mx * c, 0, f, 0, my * c, 0, 0, 1, 0, 0, 0, 0, c)
@@ -91,7 +92,7 @@ SkM44 Space(const View& v, const Placement& p) {
     return lens * eye * world;
 }
 
-bool Solid(const Layer& l, const Placement& p) { return p.tilt != SkM44() || l.kind == "model"; }
+bool Solid(const Layer& l, const Placement& p, double timeMs) { return p.tilt != SkM44() || l.kind == "model" || HasWorldParticles(l,timeMs); }
 
 LayerEffect Effect(const char* id, std::vector<std::pair<const char*, std::vector<float>>> values) {
     LayerEffect e;
@@ -150,7 +151,7 @@ SkMatrix PlaneMatrix(const std::vector<Layer>& layers, const Layer& layer, int w
     const Layer* camera = gCameraView ? ActiveCamera(layers, timeMs) : nullptr;
     const View v = camera ? LayerView(layers, *camera, width, height, timeMs) : DefaultView(width, height);
     if (v.tilted) {
-        Placement plane;
+        Placement plane{};
         plane.z = EffectivePlacement(layers, layer, timeMs).z;
         const SkM44 matrix = Space(v, plane);
         SkMatrix result;
@@ -212,6 +213,7 @@ bool SeenPlacement(const Layer& l, double timeMs, Placement* out) {
                               : SkM44::Rotate({0, 0, 1}, (p.rotation - v.rotation) * 3.14159265f / 180) * p.tilt;
         } else {
             const Seen seen = Look(v, p);
+            if(p.fullTransform) p.model=SkM44(PlaneMatrix(*s.layers,*s.layer,s.width,s.height,timeMs))*p.model;
             p.location = seen.location;
             p.scale = seen.scale;
             p.rotation = seen.rotation;
@@ -228,7 +230,7 @@ bool SeeLayers(const std::vector<Layer>& layers, int width, int height, bool top
         bool flat = true;
         for (const Layer& l : layers) {
             const Placement p = EffectivePlacement(layers, l, timeMs);
-            flat = flat && p.z == 0 && !Solid(l, p);
+            flat = flat && p.z == 0 && !Solid(l, p, timeMs);
         }
         if (flat) return false;
     }
@@ -251,8 +253,8 @@ bool SeeLayers(const std::vector<Layer>& layers, int width, int height, bool top
         if (l.kind != "camera") {
             const Seen s = Look(now, p);
             d = s.depth;
-            drop = !s.visible;
-            copy.projected = Solid(l, p) || now.tilted;
+            drop = !s.visible && !HasWorldParticles(l,timeMs);
+            copy.projected = Solid(l, p, timeMs) || now.tilted;
             if (camera) AddCameraEffects(*camera, timeMs, d, Look(before, EffectivePlacement(layers, l, beforeMs)).location, s.location, &copy);
         }
         copies.push_back(std::move(copy));

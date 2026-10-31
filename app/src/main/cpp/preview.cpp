@@ -1,5 +1,6 @@
 #include "preview.h"
 #include "drawing.h"
+#include "particles.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkSurface.h"
@@ -11,8 +12,12 @@ static bool PreviewQuad(const Scene& scene, int64_t id, double time, float xy[8]
     const SceneScope scope(scene);
     const Layer* layer=scene.layer(id);
     if(!layer || !layer->activeAt(time))return false;
-    SkPoint q[4];SelectionBounds(*layer,time,SkMatrix::I()).toQuad(q);
-    WorldMatrix(scene,*layer,time).mapPoints(q);
+    SkPoint q[4];
+    if(HasWorldParticles(*layer,time)) ParticleViewBounds(scene,*layer,time).toQuad(q);
+    else {
+        SelectionBounds(*layer,time,SkMatrix::I()).toQuad(q);
+        WorldMatrix(scene,*layer,time).mapPoints(q);
+    }
     for(int i=0;i<4;i++){xy[2*i]=q[i].fX;xy[2*i+1]=q[i].fY;}
     return true;
 }

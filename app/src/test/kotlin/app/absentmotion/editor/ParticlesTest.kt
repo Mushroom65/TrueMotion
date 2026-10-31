@@ -22,8 +22,17 @@ class ParticlesTest {
         assertEquals(320f,result.location[0],.001f)
         assertEquals(180f,result.location[1],.001f)
         assertTrue(result.keyframeTimes().isEmpty())
-        assertEquals(67,definition.params.size)
+        assertEquals(68,definition.params.size)
         assertEquals(definition.params.map { it.id }.toSet()-"sourceLayer",Particles.sections.flatten().toSet())
+    }
+    @Test fun generationModeCanChangeWithoutDeletingPhysicsOrKeys() {
+        val mode=definition.params.single { it.id=="dimension" }
+        assertEquals(listOf("2D","3D"),mode.options)
+        assertEquals("-1.000000",mode.missingDefault)
+        val old=emitter(2,0).withTilt(15f,60f)
+        val changed=old.withEffect(0) { it.withEffectProperty("dimension","float","1",0f,0f..0f) }
+        assertEquals(old.node.child("transform"),changed.node.child("transform"))
+        assertEquals("1",Scene.parse(scene().update(2) { changed }.toXml()).layer(2)!!.effects[0].effectProperty("dimension")!!["value"])
     }
     @Test fun selectedHiddenVideoIsDecodedWithoutChangingSavedVisibilityOrAudio() {
         val original=scene().update(2) { it.addEffect(definition.instance()) }.update(2) { Particles.withSource(it,0,1) }

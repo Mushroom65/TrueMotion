@@ -57,6 +57,14 @@ int main() {
     Config cone; cone.count=128; cone.emitter=0; cone.velocity={0,-1,0}; cone.spread=1; cone.directionSpread=0; cone.gravity={};
     System axis;
     for(const auto& a:axis.sample(cone,2)) assert(near(a.velocity.x,0)&&near(a.velocity.z,0)&&a.velocity.y<0);
+    Config plane=c; plane.twoD=true; plane.origin.z=7; plane.spawn.z=4;
+    plane.velocity.z=9; plane.gravity.z=10; plane.wind.z=-7; plane.attractor.z=20;
+    System planar, planarReference;
+    const auto flat=planar.sample(plane,183.123);
+    plane.attractor.z=0;
+    const auto flatReference=planarReference.sample(plane,183.123);
+    assert(equal(flat,flatReference));
+    for(const auto& a:flat) assert(a.position.z==0&&a.velocity.z==0);
     Vec v{.2,-.7,1.3}, angles{21,42,67};
     Vec undo=InverseRotate(Rotate(v,angles),angles);
     assert((undo-v).length()<1e-12);
@@ -65,5 +73,5 @@ int main() {
     auto start=std::chrono::steady_clock::now();
     for(int f=0;f<300;++f) fast.sample(perf,f/60.0);
     const double ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
-    std::printf("{\"ok\":true,\"checks\":11,\"largeSeedAnd183Seconds\":true,\"frameOrderIndependent\":true,\"simulation300FramesMs\":%.3f,\"steps\":%llu}\n",ms,(unsigned long long)fast.integrationSteps);
+    std::printf("{\"ok\":true,\"checks\":12,\"largeSeedAnd183Seconds\":true,\"frameOrderIndependent\":true,\"simulation300FramesMs\":%.3f,\"steps\":%llu}\n",ms,(unsigned long long)fast.integrationSteps);
 }

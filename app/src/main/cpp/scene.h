@@ -168,6 +168,7 @@ struct Layer {
     Anim steps;
     bool placed = false;
     bool projected = false;
+    bool pivotOffset = false;
     Sight sight;
 
     float value(const char* name, int i, float t, float fallback) const;
@@ -190,6 +191,8 @@ struct Placement {
     SkPoint location, pivot, scale;
     float rotation, z;
     SkM44 tilt, space, turn;
+    bool fullTransform = false;
+    SkM44 model;
 };
 
 struct Echo {

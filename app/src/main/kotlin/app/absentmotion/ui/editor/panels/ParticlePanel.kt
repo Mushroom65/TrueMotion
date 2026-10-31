@@ -45,7 +45,8 @@ internal fun ParticlePanel(state: EditorState, index: Int, definition: EffectDef
     DisposableEffect(layer.id, index) { onDispose { state.endGesture() } }
     if (state.easingOpen) { EasingPanel(state, modifier); return }
     val section = Particles.sections[tab]
-    val shown = definition.copy(category = "move", params = definition.params.filter { it.id in section && it.id != "seed" })
+    val world = (instance.effectProperty("dimension")?.valueAt(layer.t)?.toFloatOrNull() ?: -1f) > .5f
+    val shown = definition.copy(category = "move", params = definition.params.filter { it.id in section && it.id != "seed" && (tab != 4 || !world || it.id == "worldScale") })
     val source = Particles.source(instance)
     val sourceLayer = state.scene.layer(source)
     fun end() { state.playing = false; state.endGesture() }
@@ -131,7 +132,7 @@ internal fun ParticlePanel(state: EditorState, index: Int, definition: EffectDef
                     Text(stringResource(if(source!=0L && sourceLayer==null) R.string.true_particles_source_missing else R.string.true_particles_source_hint),
                         Modifier.padding(horizontal=12.dp,vertical=4.dp),color=if(source!=0L && sourceLayer==null) Am.Warning else Am.OnDarkDim,fontSize=11.sp)
                 }
-                if(tab==4) Text(stringResource(R.string.true_particles_camera_hint),Modifier.padding(12.dp),color=Am.OnDarkDim,fontSize=11.sp)
+                if(tab==4 || tab==0 && world) Text(stringResource(if(world) R.string.true_particles_world_hint else R.string.true_particles_camera_hint),Modifier.padding(12.dp),color=Am.OnDarkDim,fontSize=11.sp)
                 EffectSettings(state,layer,instance,shown,param) { selected -> active=selected.id; state.playing=false }
             }
         }
