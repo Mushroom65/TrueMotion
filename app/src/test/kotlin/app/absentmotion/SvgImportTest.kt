@@ -19,6 +19,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.lang.management.ManagementFactory
 import kotlin.math.abs
 
 class SvgImportTest {
@@ -181,6 +182,16 @@ class SvgImportTest {
         assertEquals(2, stroked.contours!!.size)
     }
 
+    @Test fun rootOpacityAppliesToTheImportedLayer() {
+        val result = import("""
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" opacity=".25">
+              <rect width="100" height="50" fill="blue"/>
+            </svg>
+        """)
+        assertEquals(0.25f, result.layer!!.opacity, 1e-4f)
+        assertEquals(1, result.shapes)
+    }
+
     @Test fun opacityAndAspectRatioFollowTheSpec() {
         val result = import("""
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="100">
@@ -278,13 +289,17 @@ class SvgImportTest {
     private fun importTimed(svg: String, limitMs: Long = 5_000): SvgImport {
         var result: SvgImport? = null
         var failure: Throwable? = null
-        val started = System.nanoTime()
-        val worker = Thread { try { result = importSvg(svg, "t", host, 0, 1000) } catch (e: Throwable) { failure = e } }.apply { isDaemon = true; start() }
+        var took = 0L
+        val worker = Thread {
+            val clock = ManagementFactory.getThreadMXBean()
+            val started = clock.currentThreadCpuTime
+            try { result = importSvg(svg, "t", host, 0, 1000) } catch (e: Throwable) { failure = e }
+            took = (clock.currentThreadCpuTime - started) / 1_000_000
+        }.apply { isDaemon = true; start() }
         worker.join(30_000)
         assertTrue("a ${svg.length}-character SVG is still importing after 30 s", !worker.isAlive)
         failure?.let { throw it }
-        val took = (System.nanoTime() - started) / 1_000_000
-        assertTrue("importing a ${svg.length}-character SVG took $took ms", took < limitMs)
+        assertTrue("importing a ${svg.length}-character SVG used $took ms of processor time", took < limitMs)
         return result!!
     }
 

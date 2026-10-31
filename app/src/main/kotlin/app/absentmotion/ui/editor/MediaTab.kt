@@ -17,10 +17,10 @@ import app.absentmotion.model.Layer
 import app.absentmotion.platform.readAtMost
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
@@ -115,7 +115,7 @@ private suspend fun EditorState.addGif(context: Context, uri: Uri): Boolean {
     val matte = gif.matte?.let { keepCopy(context, it) }
     if (media.uri != gif.media.uri) gif.files.firstOrNull()?.delete()
     if (matte != null && matte.uri != gif.matte.uri) gif.files.getOrNull(1)?.delete()
-    val placed = scene.videoLayer(media, frame) ?: return true
+    val placed = scene.videoLayer(media, frame) ?: return fail(R.string.import_gif_failed)
     val length = maxOf(media.duration / 1000, settings.defaultLayerDuration * 1000L).toInt()
     val layer = placed.copy(node = placed.node.with("loop", "true").with("endTime", "${scene.endTimeFor(frame, length)}"))
     val groupId = Layer.newId()
@@ -137,6 +137,10 @@ internal fun MediaTab(state: EditorState, modifier: Modifier, library: AddLibrar
     var albumsOpen by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     var searching by remember { mutableStateOf(false) }
+    var selecting by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var picked by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
+    fun toggle(uri: Uri) { val value = uri.toString(); picked = if (value in picked) picked - value else picked + value }
+    BackHandler(selecting) { picked = emptyList(); selecting = false }
     val focus = LocalFocusManager.current
     BackHandler(searching) { focus.clearFocus(); searching = false }
     val query = debounced(search)
@@ -170,23 +174,6 @@ internal fun MediaTab(state: EditorState, modifier: Modifier, library: AddLibrar
         if (blocked) context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)))
         else permission.launch(request)
     }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            runCatching { context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-            scope.launch {
-                state.addingMedia = true
-                try { state.addPicked(context, uri) } finally { state.addingMedia = false }
-            }
-        }
-    }
-    val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        if (uris.isEmpty()) return@rememberLauncherForActivityResult
-        uris.forEach { runCatching { context.contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } }
-        scope.launch {
-            state.addingMedia = true
-            try { uris.forEach { state.addPicked(context, it) } } finally { state.addingMedia = false }
-        }
-    }
     LaunchedEffect(Unit) {
         if (!prefs.getBoolean("asked", false) && !full && !some) {
             prefs.edit().putBoolean("asked", true).apply()
@@ -197,12 +184,12 @@ internal fun MediaTab(state: EditorState, modifier: Modifier, library: AddLibrar
     val allLabel = stringResource(R.string.mediatab_all)
     val shown = remember(media, album, query) { media.filter { (album == null || it.albumId == album) && matchesSearch(query, it.name, it.album) } }
     Box(modifier.clipToBounds()) {
-        LazyHorizontalGrid(AtLeastTwo(96.dp), Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+        LazyHorizontalGrid(AtLeastTwo(96.dp), Modifier.fillMaxSize().padding(bottom = if (selecting) 42.dp else 0.dp), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
             item(key = "albums") {
                 Column(Modifier.width(97.dp).padding(6.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     val press = remember { MutableInteractionSource() }
                     Box(Modifier.fillMaxWidth().weight(1f).pressScale(press, TilePress).background(Am.Well).semantics { contentDescription = viewAll }.clickable(press, LocalIndication.current) {
-                        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+                        MediaPicks.openVisual()
                     }, Alignment.Center) { MediaGridIcon(Modifier.size(24.dp)) }
                     Box(Modifier.fillMaxWidth().weight(1f).background(Am.Well).clickable { albumsOpen = true }, Alignment.Center) {
                         Text(media.firstOrNull { it.albumId == album }?.album ?: allLabel, color = Am.OnDark, fontSize = 16.sp, maxLines = 1)
@@ -231,7 +218,9 @@ internal fun MediaTab(state: EditorState, modifier: Modifier, library: AddLibrar
             }
             item(key = "files") {
                 Column(Modifier.width(97.dp).padding(6.dp)) {
-                    MediaSquare(TextIcons.Import, stringResource(R.string.sounds_from_files), false) { files.launch(arrayOf("image/*", "video/*", "audio/*")) }
+                    MediaSquare(TextIcons.Import, stringResource(R.string.sounds_from_files), false) { MediaPicks.openFiles() }
+                    Spacer(Modifier.height(5.dp))
+                    MediaSquare(PanelIcons.Check, stringResource(R.string.true_media_select_many), selecting) { selecting = !selecting; picked = emptyList() }
                 }
             }
             if (!full) item(key = "access", span = { GridItemSpan(maxLineSpan) }) {
@@ -245,8 +234,11 @@ internal fun MediaTab(state: EditorState, modifier: Modifier, library: AddLibrar
             items(shown, key = { it.uri.toString() }) { file ->
                 val bitmap by produceState<android.graphics.Bitmap?>(cachedMediaThumbnail(file.uri), file.uri, file.modified, library.mediaRevision) { value = mediaThumbnail(context, file.uri) }
                 val press = remember { MutableInteractionSource() }
-                Box(Modifier.fillMaxHeight().aspectRatio(1f).pressScale(press, TilePress).background(Color.Black).semantics { contentDescription = file.name }.clickable(press, LocalIndication.current, enabled = !state.addingMedia) {
-                    scope.launch {
+                val chosen = file.uri.toString() in picked
+                Box(Modifier.fillMaxHeight().aspectRatio(1f).pressScale(press, TilePress).background(Color.Black)
+                    .border(if (chosen) 3.dp else 0.dp, if (chosen) Am.Accent else Color.Transparent)
+                    .semantics { contentDescription = file.name }.clickable(press, LocalIndication.current, enabled = !state.addingMedia) {
+                    if (selecting) toggle(file.uri) else scope.launch {
                         state.addingMedia = true
                         try {
                             state.addPicked(context, file.uri, video = file.video, svg = file.svg)
@@ -254,6 +246,9 @@ internal fun MediaTab(state: EditorState, modifier: Modifier, library: AddLibrar
                     }
                 }) {
                     bitmap?.let { Image(it.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
+                    if (selecting) Box(Modifier.align(Alignment.TopEnd).padding(4.dp).size(24.dp).background(if (chosen) Am.Accent else Color(0x99000000)), Alignment.Center) {
+                        Text(if (chosen) (picked.indexOf(file.uri.toString()) + 1).toString() else "", color = if (chosen) Am.OnAccent else Am.OnDark, fontSize = 12.sp)
+                    }
                     if (file.svg && bitmap == null) Text(file.name, Modifier.align(Alignment.Center).padding(6.dp), color = Am.OnDarkDim, fontSize = 11.sp, maxLines = 3,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     if (file.video) {
@@ -264,6 +259,15 @@ internal fun MediaTab(state: EditorState, modifier: Modifier, library: AddLibrar
                     }
                 }
             }
+        }
+        if (selecting) Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(42.dp).background(Am.Panel), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.cancel), Modifier.padding(horizontal = 12.dp).clickable { picked = emptyList(); selecting = false }, color = Am.OnDark)
+            Spacer(Modifier.weight(1f))
+            Text(stringResource(R.string.true_media_add_selected, picked.size), Modifier.padding(horizontal = 12.dp)
+                .clickable(enabled = picked.isNotEmpty() && !state.addingMedia) {
+                    val values = picked.map(Uri::parse)
+                    scope.launch { state.addPictures(context, values); picked = emptyList(); selecting = false }
+                }.padding(6.dp), color = if (picked.isEmpty()) Am.OnDarkDim else Am.Accent)
         }
         Presence(searching) {
             Box(Modifier.align(Alignment.TopCenter).presence(slide = -1f).fillMaxWidth().background(Am.Panel).padding(6.dp)) {

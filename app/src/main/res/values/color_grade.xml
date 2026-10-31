@@ -17,7 +17,7 @@
     <string name="true_grade_neutral">Neutral color</string>
     <string name="true_grade_master">Master</string>
     <string name="true_grade_curve_control">Color curve: drag a point vertically</string>
-    <string name="true_grade_curve_hint">Three editable points at 25%, 50% and 75%. Linear segments match the shader.</string>
+    <string name="true_grade_curve_hint" formatted="false">Three editable points at 25%, 50% and 75%. Linear segments match the shader.</string>
     <string name="true_grade_curve_point">Input %1$d%%</string>
     <string name="true_grade_hue">Hue</string>
     <string name="true_grade_saturation">Saturation</string>

@@ -27,6 +27,8 @@ import app.absentmotion.media.dropThumbnails
 import app.absentmotion.ui.editor.LocalWide
 import app.absentmotion.ui.editor.dropShapeIcons
 import app.absentmotion.ui.editor.dropVideoThumbnails
+import app.absentmotion.ui.editor.distrustVideoThumbnails
+import app.absentmotion.ui.editor.recheckVideoThumbnails
 import app.absentmotion.ui.editor.isTablet
 import app.absentmotion.ui.editor.wideEditor
 import androidx.compose.ui.unit.Density
@@ -89,6 +91,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.absentmotion.ui.home.UnsupportedPhone
+import app.absentmotion.ui.home.PlayEndingDialog
 import app.absentmotion.ui.home.UpdateAskDialog
 import app.absentmotion.ui.home.UpdateDialog
 import app.absentmotion.ui.home.Updates
@@ -97,16 +100,23 @@ import app.absentmotion.ui.home.VersionHistory
 import app.absentmotion.ui.theme.PressIndication
 import app.absentmotion.ui.theme.enterFade
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import app.absentmotion.ui.editor.MediaPicks
 import app.absentmotion.ui.theme.Am
 
 class MainActivity : ComponentActivity() {
+    private val visualPicker = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia()) { MediaPicks.addPictures(it) }
+    private val filePicker = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments()) { MediaPicks.addPictures(it) }
+    private val soundPicker = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments()) { MediaPicks.addSounds(it) }
     internal lateinit var store: ProjectStore
     internal lateinit var settings: AppSettings
     private lateinit var templates: TemplateStore
-    internal val engine by lazy { EngineThread(background = Am.PreviewBg.toArgb(), context = applicationContext) }
+    internal val engine by lazy { EngineThread(background = Am.PreviewBg.toArgb(), context = applicationContext) { settings.openGl } }
     internal var editor by mutableStateOf<EditorState?>(null)
         private set
     private var closingEditor = false
@@ -115,7 +125,9 @@ class MainActivity : ComponentActivity() {
     private var imported by mutableStateOf<List<ImportReport>>(emptyList())
     private var editingTemplate by mutableStateOf<String?>(null)
     private var firstRun by mutableStateOf<FirstRun?>(null)
+    private var playNotice by mutableStateOf(false)
     private var opening by mutableStateOf(false)
+    private var openingProject by mutableStateOf(false)
     private var openFailed by mutableStateOf<String?>(null)
     private var openJob: kotlinx.coroutines.Job? = null
     private var closeAnyway = false
@@ -131,6 +143,7 @@ class MainActivity : ComponentActivity() {
     private var engineProblem by mutableStateOf<String?>(null)
     private var problemShown by mutableStateOf(false)
     private var elementNav: ((String) -> Unit)? = null
+    private var effectLanguage = ""
 
     override fun attachBaseContext(newBase: Context) = super.attachBaseContext(newBase.inAppLanguage())
 
@@ -140,6 +153,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         app.absentmotion.i18n.keepLegacyLanguage(this)
         app.absentmotion.i18n.AppText.install(this)
+        effectLanguage = app.absentmotion.i18n.currentLanguage(this).tag
         followScreenSize(resources.configuration)
         store = ProjectStore(this)
         settings = AppSettings(this)
@@ -179,9 +193,27 @@ class MainActivity : ComponentActivity() {
         }
         elementNav = openElement
         app.absentmotion.editor.ElementNav.open = openElement
+        MediaPicks.install(
+            this,
+            { visualPicker.launch(androidx.activity.result.PickVisualMediaRequest(androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageAndVideo)) },
+            { filePicker.launch(arrayOf("image/*", "video/*", "audio/*")) },
+            { soundPicker.launch(arrayOf("audio/*", "application/ogg", "application/x-flac")) },
+        ) { editor?.projectId }
+        lifecycleScope.launch {
+            androidx.compose.runtime.snapshotFlow { editor }.collectLatest { state ->
+                if (state == null) return@collectLatest
+                while (true) {
+                    androidx.compose.runtime.snapshotFlow { MediaPicks.waiting }.first { it > 0 }
+                    MediaPicks.deliver(state, applicationContext)
+                }
+            }
+        }
         TestHooks.start(this)
+        lifecycleScope.launch { androidx.compose.runtime.snapshotFlow { settings.openGl }.drop(1).collect { engine.restart() } }
+        app.absentmotion.ui.home.Updater.atLaunch(applicationContext)
         lifecycleScope.launch { engineWorks() }
         firstRun = FirstRun.of(settings, TestHooks.onboarding(intent).takeIf { savedInstanceState == null })
+        if (savedInstanceState == null) playNotice = settings.playNoticeDue(BuildConfig.FLAVOR)
         importShared()
         setContent {
             val open = editor
@@ -216,7 +248,7 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(
                                 store, settings, onOpen = ::open, onExport = ::exportFromList,
                                 imported = imported, onImportShown = { imported = emptyList() }, onImportFile = { importUris(listOf(it)) },
-                                onTemplate = { id -> lifecycleScope.launch { if (engineWorks()) editingTemplate = id } }, onTemplateProject = ::projectFromTemplate,
+                                onTemplate = { id -> if (!opening && !openingProject) { openingProject = true; openJob = lifecycleScope.launch { try { if (engineWorks()) editingTemplate = id } finally { openingProject = false } } } }, onTemplateProject = ::projectFromTemplate,
                                 onHistory = { historyFor = Triple(it.id, it.title, it.damaged) }, onCollect = ::collectMedia, changes = projectsChanged,
                             )
                         }
@@ -239,7 +271,7 @@ class MainActivity : ComponentActivity() {
                         if (open.exportOpen) ExportScreen(open.scene, open.frame, engine, fromProjectList = false, outdated) { open.exportOpen = false }
                     }
                 }
-                if (opening) OpeningOverlay { openJob?.cancel() }
+                if (opening || openingProject) OpeningOverlay { openJob?.cancel() }
                 engineProblem?.takeIf { problemShown }?.let { UnsupportedPhone(it) { problemShown = false } }
                 openFailed?.let { id -> OpenFailedDialog({ openFailed = null; historyFor = Triple(id, "", false) }, outdated) { openFailed = null } }
                 importFailed?.let { reason ->
@@ -272,7 +304,7 @@ class MainActivity : ComponentActivity() {
                     dismissButton = { TextButton({ saveFailed = false; closeAnyway = true; closeEditor() }) { Text(stringResource(R.string.home_save_failed_leave), color = Am.Accent) } },
                     containerColor = Am.Field, textContentColor = Am.OnDark,
                 )
-                if (open?.historyOpen == true) VersionHistory(store, open.projectId, open.document.title, engine, onRestore = { restoreVersion(open.projectId, it) }) { open.historyOpen = false }
+                if (open?.historyOpen == true) VersionHistory(store, open.projectId, open.document.title, engine, onRestore = { restoreVersion(open.projectId, it) }, editor = true) { open.historyOpen = false }
                 historyFor?.let { (id, title, damaged) ->
                     VersionHistory(store, id, title, engine, onRestore = { restoreVersion(id, it) }, onDelete = if (damaged) { { deleteDamaged(id) } } else null) { historyFor = null }
                 }
@@ -284,7 +316,8 @@ class MainActivity : ComponentActivity() {
                     onDiscard = { seenCrash(outdated != null); offer?.let { answerRecovery(it, false) } },
                     onClose = { seenCrash(outdated != null) },
                 ) else if (open == null && first == null && !opening && editingTemplate == null && exportingFromList == null) {
-                    if (settings.updatesAsked) UpdateDialog() else UpdateAskDialog(settings)
+                    if (playNotice) PlayEndingDialog { playNotice = false; settings.playNoticeSeen() }
+                    else if (settings.updatesAsked) UpdateDialog() else UpdateAskDialog(settings)
                 }
                 app.absentmotion.ui.tutorial.TutorialHost(
                     open, store, settings,
@@ -445,13 +478,15 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun exportFromList(id: String) {
-        if (opening) return
-        openJob = lifecycleScope.launch { if (engineWorks()) exportingFromList = loadInBackground(id) }
+        if (opening || openingProject) return
+        openingProject = true
+        openJob = lifecycleScope.launch { try { if (engineWorks()) exportingFromList = loadInBackground(id) } finally { openingProject = false } }
     }
 
     private fun open(id: String) {
-        if (opening) return
-        openJob = lifecycleScope.launch { openNow(id) }
+        if (opening || openingProject) return
+        openingProject = true
+        openJob = lifecycleScope.launch { try { openNow(id) } finally { openingProject = false } }
     }
 
     private suspend fun engineWorks(): Boolean {
@@ -579,6 +614,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        app.absentmotion.i18n.AppText.install(this)
+        val language = app.absentmotion.i18n.currentLanguage(this).tag
+        if (effectLanguage.isNotEmpty() && language != effectLanguage) engine.relabelEffects(this)
+        effectLanguage = language
         followScreenSize(newConfig)
     }
 
@@ -611,6 +650,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
+        distrustVideoThumbnails()
         editor?.saver?.flush()
     }
 
@@ -623,6 +663,7 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         if (app.absentmotion.editor.ElementNav.open === elementNav) app.absentmotion.editor.ElementNav.open = null
         elementNav = null
+        MediaPicks.release(this)
         RecoveryHandler.install(recovery) { null }
         engine.close()
     }
@@ -639,7 +680,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        app.absentmotion.ui.home.Updater.resumed(this)
         engine.refreshMedia()
+        lifecycleScope.launch { recheckVideoThumbnails(applicationContext) }
     }
 
     private companion object {

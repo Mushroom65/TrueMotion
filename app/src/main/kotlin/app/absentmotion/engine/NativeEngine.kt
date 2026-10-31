@@ -6,7 +6,7 @@ import android.graphics.Bitmap
 import android.view.Surface
 
 class NativeEngine(backend: Backend) : AutoCloseable {
-    enum class Backend { GRAPHITE, GANESH }
+    enum class Backend { GRAPHITE, GANESH, GL }
 
     private var handle = nativeCreate(backend.ordinal)
     val failed: Boolean get() = nativeFailed(handle)
@@ -85,6 +85,7 @@ class NativeEngine(backend: Backend) : AutoCloseable {
     fun trim() = nativeTrim(handle)
 
     val displayTiming: Boolean get() = org.json.JSONObject(info).optBoolean("displayTiming")
+    val openGl: Boolean get() = org.json.JSONObject(info).optString("backend") == "gl"
 
     fun layerQuad(layerId: Long, timeMs: Double): FloatArray? = nativeLayerQuad(handle, layerId, timeMs)
 
@@ -99,6 +100,8 @@ class NativeEngine(backend: Backend) : AutoCloseable {
     fun hitTest(x: Float, y: Float, timeMs: Double): Long = nativeHitTest(handle, x, y, timeMs)
 
     fun still(timeMs: Double, width: Int, height: Int): ByteArray? = nativeStill(handle, timeMs, width, height)
+
+    fun previewStill(timeMs: Double, width: Int, height: Int, accurateBlur: Boolean): ByteArray? = nativePreviewStill(handle, timeMs, width, height, accurateBlur)
 
     fun shapeIcon(xml: String, size: Int, color: Int): ByteArray? = nativeShapeIcon(handle, xml.toByteArray(), size, color)
 
@@ -163,6 +166,7 @@ class NativeEngine(backend: Backend) : AutoCloseable {
         @JvmStatic private external fun nativeLayerOutline(engine: Long, layerId: Long, timeMs: Double): String?
         @JvmStatic private external fun nativeHitTest(engine: Long, x: Float, y: Float, timeMs: Double): Long
         @JvmStatic private external fun nativeStill(engine: Long, timeMs: Double, width: Int, height: Int): ByteArray?
+        @JvmStatic private external fun nativePreviewStill(engine: Long, timeMs: Double, width: Int, height: Int, accurateBlur: Boolean): ByteArray?
         @JvmStatic private external fun nativeShapeIcon(engine: Long, xml: ByteArray, size: Int, color: Int): ByteArray?
         @JvmStatic private external fun nativeSetModel(uri: ByteArray, positions: FloatArray?, normals: FloatArray?, uvs: FloatArray?,
                                                       colors: IntArray?, triangles: IntArray?, slots: IntArray?, twoSided: Boolean): Boolean

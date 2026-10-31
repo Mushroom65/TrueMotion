@@ -43,6 +43,7 @@ struct Anim {
     bool empty() const { return value.empty() && keys.empty(); }
     float get(int i, float t, float fallback) const;
     float pathAngle(float t) const;
+    bool steady(float from, float to) const;
 };
 
 struct Property {
@@ -88,6 +89,7 @@ struct ParticleState;
 struct LayerEffect {
     std::string id;
     bool hidden = false, locallyApplied = false, toChildren = false;
+    int64_t owner = 0;
     std::vector<Property> props;
     std::string audioSignalKey;
     std::shared_ptr<const AudioSignal> audioSignal;
@@ -214,6 +216,7 @@ void ApplyMotion(const Layer& layer, double timeMs, Placement* placement);
 float MotionOpacity(const Layer& layer, double timeMs);
 bool EchoOf(const Layer& layer, double timeMs, Echo* echo);
 bool FollowsPath(const Layer& layer);
+bool TextGuideBelow(const Layer& layer, float t, SkPath* path);
 void FollowPath(const Layer& layer, double timeMs, const SkPath& path, Placement* placement);
 void ParseSteps(Layer* layer);
 
@@ -265,6 +268,8 @@ SkRect SelectionBounds(const Layer& layer, double timeMs, const SkMatrix& matrix
 void DrawLayerList(SkCanvas* canvas, const Scene& scene, const std::vector<Layer>& layers, double timeMs, const MediaPictures& pictures);
 
 SkPath ShapePath(const Layer& layer, float t);
+SkRect CroppedBox(const Layer& layer, float t, size_t before);
+SkPath Cropped(const Layer& layer, float t, const SkPath& path, size_t before = SIZE_MAX);
 SkPath StrokePath(const Layer& layer, const SkPath& path, float t);
 SkPath OutlineAt(const Layer& layer, float t);
 SkMatrix LayerMatrix(const Layer& layer, float t);
@@ -284,14 +289,26 @@ void DrawModel(SkCanvas* canvas, const Layer& layer, double timeMs, float alpha,
 struct LayerEffects {
     std::function<bool(const Layer&)> active;
     std::function<bool(const Layer&)> lifted;
+    std::function<bool(const Layer&)> spills;
     std::function<bool(const Layer&)> behind;
     std::function<bool(SkCanvas*, const Scene&, const Layer&, double, const SkRect&, const SkMatrix&, const std::function<void(SkCanvas*)>&,
                        const std::function<void(SkCanvas*)>&)> draw;
+    std::function<bool(const Layer&, float, float)> steady;
 };
 void DrawScene(SkCanvas* canvas, const Scene& scene, double timeMs, const MediaPictures& pictures,
                const LayerEffects* effects = nullptr);
 void SetLayerEffects(const LayerEffects* effects, const Scene* scene, bool world = false);
+int ProjectFps();
+class SceneScope {
+public:
+    explicit SceneScope(const Scene& scene);
+    ~SceneScope();
+private:
+    const Scene* fPrevious;
+};
 void SetLayerBreak(const std::function<void()>* each);
+void NoteOrientedEffect(const std::string& id);
 bool WorldView();
+bool EffectOwnerMatrix(int64_t owner, double timeMs, SkMatrix* matrix);
 
 }

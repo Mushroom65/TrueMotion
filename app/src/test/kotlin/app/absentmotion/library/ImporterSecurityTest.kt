@@ -1,5 +1,6 @@
 package app.absentmotion.library
 
+import app.absentmotion.i18n.AppText
 import app.absentmotion.i18n.txt
 import app.absentmotion.i18n.UiText
 import app.absentmotion.R
@@ -114,6 +115,15 @@ class ImporterSecurityTest {
         assertEquals(1, importer(files, ImportLimits(entries = 6)).import { ByteArrayInputStream(zip(entries)) }.size)
     }
 
+    @Test fun aBrokenManifestIsReportedAsADamagedPackage() {
+        val files = tmp.newFolder("files")
+        for (manifest in listOf("{", "{\"media\":[{\"entry\":\"a.jpg\"}]}")) {
+            val bytes = zip(listOf("project.xml" to scene().toByteArray(), "manifest.json" to manifest.toByteArray()))
+            assertEquals(R.string.library_err_malformed_package, failure(importer(files), bytes).id)
+        }
+        assertEquals(emptyList<ProjectInfo>(), ProjectStore(files).list())
+    }
+
     @Test fun aPackageWithTooManyScenesIsRefused() {
         val files = tmp.newFolder("files")
         val bytes = zip((1..3).map { "s$it.xml" to scene().toByteArray() } + ("manifest.json" to "{}".toByteArray()))
@@ -199,7 +209,7 @@ class ImporterSecurityTest {
     @Test fun aSceneWithMoreElementsThanTheBudgetIsRefused() {
         val files = tmp.newFolder("files")
         val xml = scene("<bookmark/>".repeat(XmlNode.IMPORT_NODES))
-        assertEquals(txt(R.string.library_err_malformed_xml, "Too many elements"), failure(importer(files), xml.toByteArray()))
+        assertEquals(txt(R.string.library_err_malformed_xml, AppText.get(R.string.xml_err_too_many)), failure(importer(files), xml.toByteArray()))
     }
 
     @Test fun aSceneLastingLongerThanADayIsRefused() {

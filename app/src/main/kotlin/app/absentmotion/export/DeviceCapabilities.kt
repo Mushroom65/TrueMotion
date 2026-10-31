@@ -1,5 +1,6 @@
 package app.absentmotion.export
 
+import app.absentmotion.platform.versionCodeLong
 import app.absentmotion.platform.hardware
 import app.absentmotion.platform.alias
 import android.content.Context
@@ -225,7 +226,7 @@ class DeviceCapabilities private constructor(context: Context) {
     val report: StateFlow<DeviceReport?> = state.asStateFlow()
 
     val key: String by lazy {
-        val version = runCatching { app.packageManager.getPackageInfo(app.packageName, 0).longVersionCode }.getOrDefault(0L)
+        val version = runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionCodeLong }.getOrDefault(0L)
         "${Build.FINGERPRINT}|$version"
     }
 
@@ -280,7 +281,7 @@ class DeviceCapabilities private constructor(context: Context) {
                 exportVideo(engine, scene, ProbeScene, s, file.fd, null, progress = { if (first == 0L && it > 0f) first = SystemClock.elapsedRealtime(); progress(it) })
             }
             val ms = SystemClock.elapsedRealtime() - start
-            return ProbeResult(s.codec, w, h, frameCount(scene, s.fps), ms, (first - start).coerceIn(0, ms - 1))
+            return ProbeResult(s.codec, w, h, frameCount(scene, s.fps), ms, (first - start).coerceIn(0, maxOf(ms - 1, 0)))
         } finally {
             out.delete()
         }

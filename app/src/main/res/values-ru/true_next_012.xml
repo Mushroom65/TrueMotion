@@ -1,0 +1,10 @@
+<resources>
+    <string name="true_alight_import">Импорт .alight / XML</string>
+    <string name="true_alight_package">Проект True Motion (.alight)</string>
+    <string name="true_alight_package_hint">С медиафайлами и редактируемой векторной анимацией. Для True Motion и совместимых инструментов.</string>
+    <string name="true_package_format">Формат проекта</string>
+    <string name="true_media_select_many">Выбрать несколько</string>
+    <string name="true_media_add_selected">Добавить (%1$d)</string>
+    <string name="true_camera_frame">Рамка камеры</string>
+    <string name="true_vector_open_failed">Не удалось открыть векторный документ. Сохранённый рисунок оставлен без изменений.</string>
+</resources>

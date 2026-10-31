@@ -31,6 +31,7 @@ Tap an effect in the list to open it. Its header has the effect name, a three-do
 - Each number has a ruler and a value box. Tap the name of a setting to make it the target of the keyframe button. Settings that are positions can be moved by dragging on the preview.
 - A color setting opens a row of quick swatches and a field for the exact color.
 - A switch turns an option on or off. A choice opens a list.
+- A palette setting (in Palette Map and Retro Dither) shows all of its colors. **Presets** lists old console and computer palettes such as PICO-8, Game Boy and Commodore 64. **Import** reads a palette file: a picture with up to 256 colors (bigger ones are reduced to 256), Photoshop .ase or .act, GIMP .gpl, .pal, .hex or Paint.NET .txt, like the palettes you can download from Lospec.
 - The three-dot menu has **Effect Info**, **Reset to Defaults**, **Duplicate**, **Copy Effect** and **Paste Effect Values** (when you copied one effect of the same kind).
 - The trash can removes the effect. Tap the header to close it.
 
@@ -44,7 +45,7 @@ If the layer is a parent of other layers, a switch **Apply to Children** appears
 
 ### Effects on many layers at once
 
-Copy the effects in one layer. Then select several layers (see [Layer menus and multi-select](@layer-menus)), tap **Effects** in the top bar and choose **Paste All Effects**. Sound, camera and null layers are skipped.
+Copy the effects in one layer. Then select several layers (see [Layer menus and multi-select](@layer-menus)), tap **Effects** in the bottom bar and choose **Paste All Effects**. Sound, camera and null layers are skipped.
 
 ## Animate an effect
 
@@ -65,6 +66,8 @@ These are different from the **Presets** tool of a layer, which keeps your own l
 - **Text** effects (Text Progress, Text Transform, Text Randomizer, Count Up/Down, Timecode) animate text letter by letter. See [Text and fonts](@text).
 - **Audio** effects work on sound: see [Audio](@audio).
 - **AI** tools (Remove Background, Reduce Noise) run on the phone: see [AI tools](@ai-tools).
+
+**Crop**, a Key effect, cuts the edges off a layer. Photos and videos also have a **Crop** button that shows the crop on the canvas: see [Layer tools](@layer-tools).
 
 ## Tips
 

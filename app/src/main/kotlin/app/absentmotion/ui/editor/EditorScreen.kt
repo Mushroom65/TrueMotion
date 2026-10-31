@@ -26,6 +26,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
@@ -53,6 +54,7 @@ import app.absentmotion.editor.FullColor
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import app.absentmotion.R
+import app.absentmotion.ui.tutorial.tutorialGuard
 import app.absentmotion.ui.tutorial.tutorialTarget
 
 internal val LocalEditorScope = staticCompositionLocalOf<CoroutineScope> { error("outside the editor") }
@@ -62,7 +64,14 @@ fun EditorScreen(state: EditorState, onExit: () -> Unit) {
     TruePluginHooks(state)
     val scope = rememberCoroutineScope()
     CompositionLocalProvider(LocalEditorScope provides scope) {
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    awaitPointerEvent(PointerEventPass.Initial)
+                    app.absentmotion.editor.PreviewCache.interaction()
+                }
+            }
+        }) {
             key(state.groupPath) { EditorBody(state, onExit) }
             val color = remember { arrayOfNulls<FullColor>(1) }.also { if (state.fullColor != null) it[0] = state.fullColor }[0]
             Presence(state.fullColor != null) { color?.let { PhoneScreen { Box(Modifier.fillMaxSize().presence(rise = 16.dp)) { FullColorPicker(state, it) } } } }
@@ -119,16 +128,17 @@ private fun EditorBody(state: EditorState, onExit: () -> Unit) {
     androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().background(Am.TopBar).systemBarsPadding().imePadding()) {
         val available = maxHeight
         Column(Modifier.fillMaxSize()) {
-            EditorTopBar(state, onExit, Modifier.fillMaxWidth().height(42.dp).enterFade())
+            EditorTopBar(state, onExit, Modifier.fillMaxWidth().height(42.dp).enterFade().tutorialGuard(any = true))
             GroupBreadcrumb(state)
             Box(Modifier.fillMaxWidth().weight(1f).tutorialTarget("preview")) {
                 Preview(state, Modifier.fillMaxSize())
-                Presence(state.previewPanelOpen) { PreviewModePanel(state, Modifier.align(Alignment.CenterEnd).presence(slideX = 0.4f)) }
+                Presence(state.previewPanelOpen) { PreviewModePanel(state, Modifier.align(Alignment.CenterEnd).presence(slideX = 0.4f).tutorialGuard(any = true)) }
                 AnimateButton(state, Modifier.align(Alignment.BottomEnd))
+                if (state.settings.transitionInPreview) TransitionButton(state, Modifier.align(Alignment.BottomStart).padding(12.dp).tutorialTarget("transition"))
                 HistoryNotes(state, Modifier.align(Alignment.BottomCenter))
             }
             Box(Modifier.fillMaxWidth().height(46.dp).enterFade().tutorialTarget("playbar")) {
-                PlayBar(state, Modifier.fillMaxSize())
+                PlayBar(state, Modifier.fillMaxSize().tutorialGuard(any = true))
                 LevelMeter(state, Modifier.align(Alignment.BottomStart).fillMaxWidth().height(2.1.dp))
             }
             val screen = LocalConfiguration.current
@@ -168,15 +178,15 @@ internal fun LowerPanels(state: EditorState, addLibrary: AddLibrary, top: Boolea
         },
         Modifier.fillMaxSize(),
     ) {
-        val lower = Modifier.align(if (top) Alignment.TopCenter else Alignment.BottomCenter).fillMaxWidth().pointerInput(Unit) {}
+        val lower = Modifier.align(if (top) Alignment.TopCenter else Alignment.BottomCenter).fillMaxWidth().pointerInput(Unit) {}.tutorialGuard(any = true)
         val tall = top && !state.easingOpen && (state.panel == EditorPanel.Blending || state.panel == EditorPanel.Effects || state.panel == EditorPanel.AudioMotion)
         when {
             state.motionPathOpen && state.selectedId != null -> MotionPathPanel(state, if (top) lower.fillMaxHeight() else lower.height(420.dp))
             state.framePhotoOpen -> FramePhotoPanel(state, if (top) lower.fillMaxHeight() else lower.height(260.dp))
-            state.addOpen -> AddPopup(state, lower.height(244.dp).tutorialTarget("add_panel"), addLibrary)
+            state.addOpen -> AddPopup(state, lower.height(AddPopupHeight).tutorialTarget("add_panel"), addLibrary)
             MultiSelect.active -> MultiBar(state, lower.height(48.dp))
             state.selectedId == null -> {
-                if (transitionHere) TransitionButton(state, Modifier.align(Alignment.BottomStart).padding(start = HeaderWidth).tutorialTarget("transition"))
+                if (transitionHere && !state.settings.transitionInPreview) TransitionButton(state, Modifier.align(Alignment.BottomStart).padding(start = HeaderWidth).tutorialTarget("transition"))
                 AddButton(state, Modifier.align(Alignment.BottomEnd).tutorialTarget("add"))
             }
             state.volumeOpen && state.panel == EditorPanel.Tools -> key(state.selectedId) { VolumePanel(state, lower.height(PanelHeight).tutorialTarget("panel")) }

@@ -1,5 +1,7 @@
 package app.absentmotion.media
 
+import app.absentmotion.R
+import app.absentmotion.i18n.AppText
 import app.absentmotion.model.Scene
 import app.absentmotion.model.imageUris
 import app.absentmotion.model.mediaUris
@@ -114,6 +116,26 @@ class ModelReaderTest {
                       {"bufferView":2,"componentType":5123,"count":3,"type":"SCALAR"}]}
     """.trimIndent()
 
+    private fun gltfPrimitive(mode: Int): ByteArray {
+        val positions = floats(0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f, 1f, 1f, 0f)
+        val indices = shorts(0, 1, 2, 3)
+        val data = positions + indices
+        val uri = "data:application/octet-stream;base64," + Base64.getEncoder().encodeToString(data)
+        return """
+            {"asset":{"version":"2.0"},"scene":0,"scenes":[{"nodes":[0]}],"nodes":[{"mesh":0}],
+             "meshes":[{"primitives":[{"attributes":{"POSITION":0},"indices":1,"mode":$mode}]}],
+             "buffers":[{"byteLength":${data.size},"uri":"$uri"}],
+             "bufferViews":[{"buffer":0,"byteOffset":0,"byteLength":48},{"buffer":0,"byteOffset":48,"byteLength":8}],
+             "accessors":[{"bufferView":0,"componentType":5126,"count":4,"type":"VEC3"},
+                          {"bufferView":1,"componentType":5123,"count":4,"type":"SCALAR"}]}
+        """.trimIndent().toByteArray()
+    }
+
+    @Test fun gltfTriangleStripsAndFansBecomeTriangles() {
+        assertEquals(2, readModel("strip.gltf", gltfPrimitive(5)) { null }.triangleCount)
+        assertEquals(2, readModel("fan.gltf", gltfPrimitive(6)) { null }.triangleCount)
+    }
+
     @Test fun aGltfWithAnEmbeddedBufferReadsGeometryMaterialAndUvs() {
         val uri = "data:application/octet-stream;base64," + Base64.getEncoder().encodeToString(triangle)
         val mesh = readModel("tri.gltf", gltf("""{"byteLength":${triangle.size},"uri":"$uri"}""").toByteArray()) { null }
@@ -179,14 +201,14 @@ class ModelReaderTest {
             GltfReader.read(gltf(buffer, nodes).toByteArray(), { null }, limit = 299)
             fail("read")
         } catch (e: IllegalArgumentException) {
-            assertEquals("The model is too complex", e.message)
+            assertEquals(AppText.get(R.string.model_err_too_complex), e.message)
         }
         val huge = gltf(buffer).replace(""""count":3,"type":"VEC3"""", """"count":2000000000,"type":"VEC3"""")
         try {
             GltfReader.read(huge.toByteArray(), { null })
             fail("read")
         } catch (e: IllegalArgumentException) {
-            assertEquals("The model is too complex", e.message)
+            assertEquals(AppText.get(R.string.model_err_too_complex), e.message)
         }
     }
 
@@ -240,6 +262,46 @@ class ModelReaderTest {
         assertTrue(big.triangleCount <= MODEL_TRIANGLE_BUDGET)
     }
 
+    @Test fun reducingAModelKeepsEachTexturePieceOnItsOwnPartOfThePicture() {
+        val rows = 160
+        val positions = ArrayList<Float>()
+        val uvs = ArrayList<Float>()
+        val triangles = ArrayList<Int>()
+        fun island(left: Boolean) {
+            val start = positions.size / 3
+            for (i in 0..rows) for (j in 0..rows) {
+                val x = (if (left) -0.7f else 0f) + 0.7f * i / rows
+                val y = -0.7f + 1.4f * j / rows
+                positions.add(x); positions.add(y); positions.add(0f)
+                uvs += if (left) (x + 0.7f) / 0.7f * 0.25f else 0.75f + x / 0.7f * 0.25f
+                uvs += (y + 0.7f) / 1.4f
+            }
+            for (i in 0 until rows) for (j in 0 until rows) {
+                val a = start + i * (rows + 1) + j
+                triangles += listOf(a, a + rows + 1, a + rows + 2, a, a + rows + 2, a + 1)
+            }
+        }
+        island(true)
+        island(false)
+        val count = positions.size / 3
+        val full = Mesh(positions.toFloatArray(), FloatArray(count * 3) { if (it % 3 == 2) 1f else 0f }, uvs.toFloatArray(), IntArray(count) { -1 },
+            triangles.toIntArray(), IntArray(triangles.size / 3), emptyList(), false)
+        val small = decimated(full, 2000)
+        assertTrue(small.triangleCount in 1..2000)
+        for (k in 0 until small.triangleCount) {
+            val corners = (0..2).map { small.triangles[k * 3 + it] }
+            val left = small.uvs[corners[0] * 2] < 0.5f
+            for (v in corners) {
+                val x = small.positions[v * 3]
+                val u = small.uvs[v * 2]
+                assertEquals("triangle $k mixes texture pieces", left, u < 0.5f)
+                val expected = if (left) (x + 0.7f) / 0.7f * 0.25f else 0.75f + x / 0.7f * 0.25f
+                assertEquals("triangle $k picture position", expected, u, 0.02f)
+                assertEquals((small.positions[v * 3 + 1] + 0.7f) / 1.4f, small.uvs[v * 2 + 1], 0.02f)
+            }
+        }
+    }
+
     @Test fun accessorsWithoutDataCannotMakeATinyFileAllocateHugeArrays() {
         val uri = "data:application/octet-stream;base64," + Base64.getEncoder().encodeToString(triangle)
         val buffer = """{"byteLength":${triangle.size},"uri":"$uri"}"""
@@ -252,13 +314,23 @@ class ModelReaderTest {
         timed(5) { assertEquals(41, GltfReader.read(hugeNormals.toByteArray(), { null }).triangleCount) }
     }
 
+    @Test fun anObjTextureNameKeepsItsSpaces() {
+        val obj = "mtllib stone.mtl\nv 0 0 0\nv 1 0 0\nv 0 1 0\nusemtl stone\nf 1 2 3\n"
+        val mtl = "newmtl stone\nmap_Kd marble stone.png\n"
+        fun spaced(name: String) = when (name) { "stone.mtl" -> mtl.toByteArray(); "marble stone.png" -> png; else -> null }
+        val mesh = readModel("stone.obj", obj.toByteArray(), ::spaced)
+        assertEquals(1, mesh.textures.size)
+        assertArrayEquals(png, mesh.textures[0])
+        assertEquals(listOf(0), mesh.slots.toList())
+    }
+
     @Test fun anObjWithTooMuchWorkIsRefused() {
         assertEquals(12, ObjReader.read(cube, ::files, limit = 36).triangleCount)
         try {
             ObjReader.read(cube, ::files, limit = 35)
             fail("read")
         } catch (e: IllegalArgumentException) {
-            assertEquals("The model is too complex", e.message)
+            assertEquals(AppText.get(R.string.model_err_too_complex), e.message)
         }
     }
 }

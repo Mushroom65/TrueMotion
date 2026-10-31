@@ -57,6 +57,27 @@ float Anim::pathAngle(float t) const {
         spatial ? b.pathIn[0] : 0, spatial ? b.pathIn[1] : 0, u);
 }
 
+bool Anim::steady(float from, float to) const {
+    if (keys.empty()) return true;
+    if (!std::isfinite(from) || !std::isfinite(to) || from > to) return false;
+    const auto same = [](const std::vector<float>& a, const std::vector<float>& b) {
+        return a.size() == b.size() && (a.empty() || std::memcmp(a.data(), b.data(), a.size() * sizeof(float)) == 0);
+    };
+    for (size_t k = 1; k < keys.size(); k++) {
+        if (!(keys[k - 1].t <= keys[k].t)) return false;
+    }
+    size_t first = 0, last = keys.size() - 1;
+    if (from > keys.front().t) {
+        while (first + 1 < keys.size() && keys[first + 1].t <= from) first++;
+    }
+    if (to <= keys.front().t) last = 0;
+    while (last > first && keys[last - 1].t > to) last--;
+    for (size_t k = first + 1; k <= last; k++) {
+        if (!same(keys[k].v, keys[first].v)) return false;
+    }
+    return !hasLead || from >= keys.front().t || same(lead.v, keys.front().v);
+}
+
 const Property* Layer::prop(const char* propName) const {
     for (const auto& p : props) {
         if (p.name == propName) return &p;
@@ -333,7 +354,7 @@ bool ParseLayer(const XmlNode& node, int fps, Layer* out) {
     l.video = l.fillType == "media" && StrAttr(*n, "fillImage").empty() && !l.mediaUri.empty();
     l.mediaFillMode = StrAttr(*n, "mediaFillMode");
     l.startTime = IntAttr(*n, "startTime", 0);
-    l.endTime = IntAttr(*n, "endTime", 0);
+    l.endTime = std::max(l.startTime, IntAttr(*n, "endTime", 0));
     l.hidden = StrAttr(*n, "hidden") == "true";
     if (const XmlNode* t = n->child("transform")) {
         l.location = ParseAnim(t->child("location"));
@@ -500,7 +521,9 @@ void DrawMedia(SkCanvas* canvas, const Layer& layer, const SkPath& path, float o
     paint.setAlphaf(std::clamp(opacity, 0.0f, 1.0f));
     canvas->save();
     canvas->clipPath(path, true);
-    canvas->drawImageRect(image, dst, SkSamplingOptions(SkFilterMode::kLinear), &paint);
+    const float density = canvas->getTotalMatrix().getMinScale() * dst.width() / std::max(image->width(), 1);
+    const bool minified = density > 0 && density < 0.5f && (image->hasMipmaps() || !image->isTextureBacked());
+    canvas->drawImageRect(image, dst, minified ? SkSamplingOptions(SkFilterMode::kLinear, SkMipmapMode::kLinear) : SkSamplingOptions(SkFilterMode::kLinear), &paint);
     canvas->restore();
 }
 

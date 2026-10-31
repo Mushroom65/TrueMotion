@@ -212,7 +212,7 @@ private suspend fun encode(
                 fun perFrame(ns: Long) = "%.1f".format(java.util.Locale.ROOT, ns / 1e6 / frames.coerceAtLeast(1))
                 Log.i("AMExport", "$frames frames in ${spent[2] / 1_000_000} ms; per frame: ${perFrame(spent[2])} ms, drawing ${perFrame(spent[0] - spent[1])} ms, waiting for copies ${perFrame(spent[1])} ms")
             }
-            val buffers = turn || ExportDebug.forceBuffers || Build.VERSION.SDK_INT < 33 || !stampsPresentTime()
+            val buffers = turn || ExportDebug.forceBuffers || (Build.VERSION.SDK_INT < 33 && !openGl()) || !stampsPresentTime()
             // ARM translation on x86 Android can successfully import an AHB yet
             // expose unrelated storage to MediaCodec. Use the verified readback
             // path there; native ARM devices keep their usual GPU pipeline.

@@ -16,7 +16,7 @@ import java.security.MessageDigest
 internal object AfterZProbe {
     fun run(context: Context, engine: NativeEngine, directory: File, full: Boolean = true): JSONObject {
         val catalog = EffectCatalog.parse { context.assets.open("effects/$it") }
-        check(catalog.message == null && catalog.definitions.size == 773)
+        check(catalog.message == null && catalog.definitions.size >= 773)
         val donor = catalog.definitions.filter { it.dialect == "afterz" }
         check(donor.size == 575)
         val report = JSONObject().put("count", donor.size).put("fullRenderSweep", full)

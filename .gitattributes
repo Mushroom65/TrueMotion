@@ -1,3 +1,5 @@
 # Shell entry points must also work after a Windows checkout.
 gradlew text eol=lf
 *.sh text eol=lf
+app/src/main/assets/help/** linguist-generated
+site/** linguist-documentation

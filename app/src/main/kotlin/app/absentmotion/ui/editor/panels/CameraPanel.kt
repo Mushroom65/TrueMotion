@@ -22,6 +22,8 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -118,7 +120,7 @@ internal fun CameraPanel(state: EditorState, layer: Layer, modifier: Modifier = 
             }
         }
         Swap(tab, Modifier.fillMaxSize(), rise = 0.dp) {
-            Column(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 when (tab) {
                     0 -> {
                         val angle = layer.number(Angle)
@@ -137,6 +139,7 @@ internal fun CameraPanel(state: EditorState, layer: Layer, modifier: Modifier = 
                         val zoom = cameraZoomOf(angle, size)
                         NumberRow(zoomLabel, "${zoom.toInt()}", active == 1, perspective, { d -> active = 1; writeZoom(true) { it + d * size / 200f } }, { state.endGesture() },
                             { active = 1; state.askNumber(zoomLabel, zoom.toInt().toFloat(), "", cameraZoomOf(Angle.max, size), cameraZoomOf(Angle.min, size)) { v -> writeZoom(false) { v } } })
+                        SwitchRow(stringResource(R.string.true_camera_frame), state.cameraFrameGuide) { state.cameraFrameGuide = it }
                     }
                     1 -> {
                         SwitchRow(stringResource(R.string.camerapanel_focus_blur), layer.blockOn("focus-blur")) { on -> state.editSelected { it.withBlock("focus-blur", on) } }

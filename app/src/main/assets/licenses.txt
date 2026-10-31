@@ -436,7 +436,7 @@ LAME
 OpenAI Whisper model weights (ggml conversion)
 ----------------------------------------------
 
-- Version: ggml-base-q5_1.bin (about 60 MB).
+- Versions: ggml-base-q5_1.bin (about 60 MB) and optional higher-precision ggml-base-q8_0.bin (about 82 MB).
 - Licence: MIT (the OpenAI Whisper release), converted to the ggml format by the whisper.cpp project.
 - Copyright: see upstream (https://github.com/openai/whisper).
 - URL: https://huggingface.co/ggerganov/whisper.cpp
@@ -2750,7 +2750,7 @@ COUNTS
 
 - Lucide only - 167
 - Lucide shapes plus own parts - 8
-- Own drawing only - 41
+- Own drawing only - 42
 - Material Symbols - 0
 
 (An icon is one named member of an *Icons object, or one icon-drawing composable.)
@@ -2758,9 +2758,8 @@ COUNTS
 LAUNCHER ICON
 -------------
 
-- Active True Motion icon: user-provided artwork, 2026-10-30; original in branding/true-motion-source.png; packaging script tools/icon/package_true_motion.py.
-- Retained upstream mark source (not the active launcher icon): own drawing (tools/icon/make_icon.py), Apache-2.0, drawable/ic_launcher_foreground.xml
-- flat colour #000000 (True Motion launcher background) - Apache-2.0 (own) - app/src/main/res/drawable/ic_launcher_background.xml
+- adaptive icon mark (own drawing (tools/icon/make_icon.py)) - Apache-2.0 (own) - app/src/main/res/drawable/ic_launcher_foreground.xml
+- flat colour #FF5A36 (own) - Apache-2.0 (own) - app/src/main/res/drawable/ic_launcher_background.xml
 - the mark on its background (own drawing) - Apache-2.0 (own) - tools/icon/mark.svg
 
 ICONS
@@ -2821,6 +2820,7 @@ ICONS
 - PaintBucket (Lucide paint-bucket) - ISC - ui/editor/PanelIcons.kt
 - BorderShadow (own drawing) - Apache-2.0 (own) - ui/editor/PanelIcons.kt
 - Blending (Lucide blend) - ISC - ui/editor/PanelIcons.kt
+- Crop (own drawing) - Apache-2.0 (own) - ui/editor/PanelIcons.kt
 - MoveTransform (Lucide move-3d) - ISC - ui/editor/PanelIcons.kt
 - EditShape (Lucide spline) - ISC - ui/editor/PanelIcons.kt
 - Star (Lucide star) - ISC - ui/editor/PanelIcons.kt
@@ -3031,3 +3031,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+TRUE MOTION ADDITIONAL NOTICES
+, updated 2026-10-25. Based on AbsentMotion v4.0.0.
+True Motion editor and plugin sources adapted from the user-owned local mod.
+Earlier True Motion credits: Toji Motion / Alight Motion. https://t.me/TrueMoti0n
+Non-engine bootstrap native libraries are unchanged binaries from the matching official AbsentMotion compatible release.
+libamengine.so is rebuilt from the combined project sources. Hashes and build provenance are in docs/TRUE_MOTION_PROVENANCE.json.
+
+AfterMotionZ+ effect data port, 2026-10-30: converted shaders and available thumbnails derive from the user-supplied AfterMotionZ+ Clone.apk. Source references include Alight Motion, NextMotion and SATRIYAID. Donor binary fingerprint and per-definition provenance: docs/AFTERZ_EFFECT_PORT.json. This attribution does not relicense third-party data under the project source licence.

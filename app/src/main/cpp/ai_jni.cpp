@@ -11,6 +11,7 @@
 #include <mutex>
 #include <new>
 #include <string>
+#include <pthread.h>
 #include <vector>
 
 #include "cpu.h"
@@ -309,6 +310,11 @@ Java_app_absentmotion_ai_AiNative_nativeCancel(JNIEnv *, jobject, jlong handle) 
 }
 
 extern "C" JNIEXPORT void JNICALL
+Java_app_absentmotion_ai_AiNative_nativeClearCancel(JNIEnv *, jobject, jlong handle) {
+    model(handle)->cancel = false;
+}
+
+extern "C" JNIEXPORT void JNICALL
 Java_app_absentmotion_ai_AiNative_nativeClose(JNIEnv *, jobject, jlong handle) {
     delete model(handle);
 }
@@ -317,7 +323,6 @@ extern "C" JNIEXPORT jint JNICALL
 Java_app_absentmotion_ai_AiNative_nativeUpscale(JNIEnv *env, jobject, jlong handle, jintArray input, jint width, jint height, jint netScale,
                                                 jint outScale, jint tile, jint overlap, jintArray output) {
     Model *m = model(handle);
-    m->cancel = false;
     if (width <= 0 || height <= 0 || netScale <= 0 || outScale <= 0 || netScale % outScale || tile <= 0 || overlap < 0) return -1;
     if (env->GetArrayLength(input) < width * height || env->GetArrayLength(output) < width * outScale * height * outScale) return -1;
     const int factor = netScale / outScale;
@@ -374,7 +379,6 @@ extern "C" JNIEXPORT jint JNICALL
 Java_app_absentmotion_ai_AiNative_nativeInterpolate(JNIEnv *env, jobject, jlong handle, jintArray first, jintArray second, jint width, jint height,
                                                     jfloat t, jint padding, jint maxPixels, jintArray output) {
     Model *m = model(handle);
-    m->cancel = false;
     if (width <= 0 || height <= 0 || padding <= 0 || maxPixels <= 0 || m->flow < 0 || m->mask < 0) return -1;
     jsize count = width * height;
     if (env->GetArrayLength(first) < count || env->GetArrayLength(second) < count || env->GetArrayLength(output) < count) return -1;
@@ -413,28 +417,49 @@ Java_app_absentmotion_ai_AiNative_nativeInterpolate(JNIEnv *env, jobject, jlong 
     const float fx = static_cast<float>(nw) / width, fy = static_cast<float>(nh) / height;
     const float sx = static_cast<float>(width) / nw, sy = static_cast<float>(height) / nh;
     const ncnn::Mat f0 = flow.channel(0), f1 = flow.channel(1), f2 = flow.channel(2), f3 = flow.channel(3), weight = mask.channel(0);
-    for (int y = 0; y < height; y++) {
-        float ny = (y + 0.5f) * fy - 0.5f;
-        for (int x = 0; x < width; x++) {
-            float nx = (x + 0.5f) * fx - 0.5f;
-            float w0 = sampleBilinear(weight, nx, ny, nw, nh);
-            float ca[3], cb[3];
-            warpPixel(a.data, width, height, x + sampleBilinear(f0, nx, ny, nw, nh) * sx, y + sampleBilinear(f1, nx, ny, nw, nh) * sy, ca);
-            warpPixel(b.data, width, height, x + sampleBilinear(f2, nx, ny, nw, nh) * sx, y + sampleBilinear(f3, nx, ny, nw, nh) * sy, cb);
-            size_t at = static_cast<size_t>(y) * width + x;
-            float alpha = static_cast<float>(a.data[at] >> 24) * (1 - t) + static_cast<float>(b.data[at] >> 24) * t;
-            uint32_t value = static_cast<uint32_t>(std::clamp(static_cast<int>(std::lround(alpha)), 0, 255)) << 24;
-            for (int c = 0; c < 3; c++) value |= byte(ca[c] * w0 + cb[c] * (1 - w0)) << (16 - 8 * c);
-            out.data[at] = value;
+    const auto rows = [&](int from, int to) {
+        for (int y = from; y < to; y++) {
+            float ny = (y + 0.5f) * fy - 0.5f;
+            for (int x = 0; x < width; x++) {
+                float nx = (x + 0.5f) * fx - 0.5f;
+                float w0 = sampleBilinear(weight, nx, ny, nw, nh);
+                float ca[3], cb[3];
+                warpPixel(a.data, width, height, x + sampleBilinear(f0, nx, ny, nw, nh) * sx, y + sampleBilinear(f1, nx, ny, nw, nh) * sy, ca);
+                warpPixel(b.data, width, height, x + sampleBilinear(f2, nx, ny, nw, nh) * sx, y + sampleBilinear(f3, nx, ny, nw, nh) * sy, cb);
+                size_t at = static_cast<size_t>(y) * width + x;
+                float alpha = static_cast<float>(a.data[at] >> 24) * (1 - t) + static_cast<float>(b.data[at] >> 24) * t;
+                uint32_t value = static_cast<uint32_t>(std::clamp(static_cast<int>(std::lround(alpha)), 0, 255)) << 24;
+                for (int c = 0; c < 3; c++) value |= byte(ca[c] * w0 + cb[c] * (1 - w0)) << (16 - 8 * c);
+                out.data[at] = value;
+            }
         }
+    };
+    struct Band {
+        const decltype(rows)* work;
+        int from, to;
+    };
+    const int split = std::clamp(std::min(ncnn::get_big_cpu_count(), height / 16), 1, 8);
+    std::vector<Band> bands;
+    for (int k = 0; k < split; k++) bands.push_back({&rows, height * k / split, height * (k + 1) / split});
+    std::vector<pthread_t> workers;
+    for (int k = 1; k < split; k++) {
+        pthread_t worker;
+        const auto run = [](void* band) -> void* {
+            const Band* b = static_cast<const Band*>(band);
+            (*b->work)(b->from, b->to);
+            return nullptr;
+        };
+        if (pthread_create(&worker, nullptr, run, &bands[k]) == 0) workers.push_back(worker);
+        else rows(bands[k].from, bands[k].to);
     }
+    rows(bands[0].from, bands[0].to);
+    for (pthread_t worker : workers) pthread_join(worker, nullptr);
     return 0;
 }
 
 extern "C" JNIEXPORT jint JNICALL
 Java_app_absentmotion_ai_AiNative_nativeCutout(JNIEnv *env, jobject, jlong handle, jobject bitmap, jint size) {
     Model *m = model(handle);
-    m->cancel = false;
     AndroidBitmapInfo info;
     if (size < 32 || AndroidBitmap_getInfo(env, bitmap, &info) != ANDROID_BITMAP_RESULT_SUCCESS || info.format != ANDROID_BITMAP_FORMAT_RGBA_8888 ||
         info.width < 1 || info.height < 1 || m->net.input_names().empty() || m->net.output_names().empty()) return -1;
@@ -454,7 +479,7 @@ Java_app_absentmotion_ai_AiNative_nativeCutout(JNIEnv *env, jobject, jlong handl
             ncnn::Mat in(size, size, 3);
             if (in.empty()) code = -2;
             else if (in.cstep != static_cast<size_t>(size) * size) code = -1;
-            if (code == 0) cutout::netInput(rgba, stride, width, height, size, box, static_cast<float *>(in.data));
+            if (code == 0 && !cutout::netInput(rgba, stride, width, height, size, box, static_cast<float *>(in.data))) code = -2;
             if (code == 0 && m->cancel) code = 1;
             if (code == 0) {
                 ncnn::Extractor ex = m->extractor();
@@ -472,6 +497,7 @@ Java_app_absentmotion_ai_AiNative_nativeCutout(JNIEnv *env, jobject, jlong handl
         }
     }
     if (code == 0 && m->cancel) code = 1;
+    if (code == 0) cutout::clean(alpha, box.width, box.height);
     if (code == 0) code = cutout::refine(rgba, stride, width, height, alpha, box.width, box.height, m->cancel);
     std::free(alpha);
     AndroidBitmap_unlockPixels(env, bitmap);

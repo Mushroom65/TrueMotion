@@ -1,6 +1,8 @@
 package app.truemotion.vector
 
 object VectorPortable {
+    fun mediaUris(marker: String): Set<String> = VectorMediaPortable.all(VectorAnimation.decode(marker))
+        .mapNotNull { it.mediaUri.takeIf(String::isNotEmpty) }.toSet()
     fun remap(marker: String, change: (String) -> String): String {
         val document = VectorAnimation.decode(marker)
         var changed = false

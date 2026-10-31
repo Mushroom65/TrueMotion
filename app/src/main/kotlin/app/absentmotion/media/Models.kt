@@ -1,5 +1,7 @@
 package app.absentmotion.media
 
+import app.absentmotion.R
+import app.absentmotion.i18n.AppText
 import app.absentmotion.model.finiteFloat
 import org.json.JSONArray
 import org.json.JSONObject
@@ -33,7 +35,7 @@ internal fun modelFileName(value: String): String = value.substringAfterLast('/'
 
 fun parseModel(name: String, bytes: ByteArray, open: (String) -> ByteArray?): Mesh {
     val mesh = if (name.substringAfterLast('.').lowercase() == "obj") ObjReader.read(bytes.toString(Charsets.UTF_8), open) else GltfReader.read(bytes, open)
-    require(mesh.triangleCount > 0) { "The model has no triangles" }
+    require(mesh.triangleCount > 0) { AppText.get(R.string.model_err_no_triangles) }
     return mesh
 }
 
@@ -42,6 +44,7 @@ fun readModel(name: String, bytes: ByteArray, open: (String) -> ByteArray?): Mes
 private class Floats {
     var data = FloatArray(4096)
     var size = 0
+    fun reserve(extra: Int) { if (size + extra > data.size) data = data.copyOf(size + extra) }
     fun add(v: Float) {
         if (size == data.size) data = data.copyOf(size * 2)
         data[size++] = v
@@ -52,6 +55,7 @@ private class Floats {
 private class Ints {
     var data = IntArray(4096)
     var size = 0
+    fun reserve(extra: Int) { if (size + extra > data.size) data = data.copyOf(size + extra) }
     fun add(v: Int) {
         if (size == data.size) data = data.copyOf(size * 2)
         data[size++] = v
@@ -68,6 +72,11 @@ private class MeshBuilder {
     val slots = Ints()
     private val missing = Ints()
     val count get() = colors.size
+
+    fun reserve(vertices: Int, corners: Int) {
+        positions.reserve(vertices * 3); normals.reserve(vertices * 3); uvs.reserve(vertices * 2); colors.reserve(vertices)
+        triangles.reserve(corners); slots.reserve(corners / 3)
+    }
 
     fun vertex(x: Float, y: Float, z: Float, normal: FloatArray?, u: Float, v: Float, color: Int): Int {
         positions.add(x); positions.add(-y); positions.add(-z)
@@ -141,6 +150,22 @@ private fun argb(r: Float, g: Float, b: Float, a: Float): Int {
 
 private fun tokens(line: String): List<String> = line.split(' ', '\t').filter { it.isNotEmpty() }
 
+private fun mapFileName(args: String): String? {
+    fun split(s: String): Pair<String, String> { val w = s.takeWhile { !it.isWhitespace() }; return w to s.substring(w.length).trimStart() }
+    var rest = args.trim()
+    while (rest.startsWith("-")) {
+        val (option, after) = split(rest)
+        rest = after
+        var count = when (option.lowercase()) { "-s", "-o", "-t" -> 3; "-mm" -> 2; else -> 1 }
+        while (count-- > 0) {
+            val (arg, tail) = split(rest)
+            if (arg.toFloatOrNull() == null && arg.lowercase() !in setOf("on", "off", "r", "g", "b", "m", "l", "z")) break
+            rest = tail
+        }
+    }
+    return rest.takeIf { it.isNotEmpty() }
+}
+
 object ObjReader {
     private const val LIMIT = (1 shl 21) - 1
 
@@ -166,7 +191,7 @@ object ObjReader {
             val t = tokens(line)
             if (t[0] == "v" || t[0] == "vt" || t[0] == "vn" || t[0] == "f") {
                 work += if (t[0] == "f") t.size - 1L else 1L
-                require(work <= limit) { "The model is too complex" }
+                require(work <= limit) { AppText.get(R.string.model_err_too_complex) }
             }
             when (t[0]) {
                 "v" -> {
@@ -190,8 +215,8 @@ object ObjReader {
                         val v = resolve(parts[0].toIntOrNull() ?: 0, vs.size / 3)
                         val vt = parts.getOrNull(1)?.toIntOrNull()?.let { resolve(it, vts.size / 2) } ?: -1
                         val vn = parts.getOrNull(2)?.toIntOrNull()?.let { resolve(it, vns.size / 3) } ?: -1
-                        require(v in 0 until vs.size / 3) { "A face uses a vertex that does not exist" }
-                        require(v < LIMIT && vt < LIMIT && vn < LIMIT) { "The model is too large" }
+                        require(v in 0 until vs.size / 3) { AppText.get(R.string.model_err_missing_vertex) }
+                        require(v < LIMIT && vt < LIMIT && vn < LIMIT) { AppText.get(R.string.model_err_too_large) }
                         val key = (v.toLong() shl 42) or ((vt + 1).toLong() shl 21) or (vn + 1).toLong()
                         corners[k - 1] = seen.getOrPut(key) {
                             val c = material.color
@@ -220,7 +245,7 @@ object ObjReader {
                 "Kd" -> current?.let { m -> for (i in 0..2) m.color[i] = t.getOrNull(i + 1)?.finiteFloat() ?: 1f }
                 "d" -> current?.let { m -> m.color[3] = t.getOrNull(1)?.finiteFloat() ?: 1f }
                 "Tr" -> current?.let { m -> m.color[3] = 1f - (t.getOrNull(1)?.finiteFloat() ?: 0f) }
-                "map_Kd" -> current?.texture = t.last().takeIf { t.size > 1 }
+                "map_Kd" -> current?.texture = mapFileName(line.substring("map_Kd".length))
             }
         }
     }
@@ -240,7 +265,7 @@ object GltfReader {
                 val length = le(bytes, at)
                 val type = le(bytes, at + 4)
                 val start = at + 8
-                require(length >= 0 && start + length <= bytes.size) { "The model file is cut short" }
+                require(length >= 0 && start + length <= bytes.size) { AppText.get(R.string.model_err_truncated) }
                 if (type == JSON && text == null) text = String(bytes, start, length, Charsets.UTF_8)
                 else if (type == BIN && bin == null) bin = ByteBuffer.wrap(bytes, start, length).slice()
                 at = start + ((length + 3) and 3.inv())
@@ -265,14 +290,14 @@ object GltfReader {
             val data = buffers.getOrNull(view.optInt("buffer", -1)) ?: return null
             val offset = view.optInt("byteOffset", 0)
             val length = view.optInt("byteLength", 0)
-            require(offset >= 0 && length >= 0 && offset.toLong() + length <= data.capacity()) { "A buffer view lies outside its buffer" }
+            require(offset >= 0 && length >= 0 && offset.toLong() + length <= data.capacity()) { AppText.get(R.string.model_err_buffer_view) }
             return Triple(data.duplicate().apply { limit(offset + length) }.order(ByteOrder.LITTLE_ENDIAN), offset, view.optInt("byteStride", 0))
         }
 
         fun read(index: Int, normalizeInts: Boolean = true, expect: Int = -1): Pair<FloatArray, Int>? {
             val a = accessors.getOrNull(index) ?: return null
             val count = a.optInt("count", 0)
-            require(count <= limit) { "The model is too complex" }
+            require(count <= limit) { AppText.get(R.string.model_err_too_complex) }
             if (expect >= 0 && count != expect) return null
             val comps = when (a.optString("type")) { "SCALAR" -> 1; "VEC2" -> 2; "VEC3" -> 3; "VEC4" -> 4; else -> return null }
             val type = a.optInt("componentType")
@@ -282,7 +307,7 @@ object GltfReader {
             val stride = if (viewStride > 0) viewStride else comps * size
             val base = start + a.optInt("byteOffset", 0).toLong()
             val scaled = normalizeInts && (a.optBoolean("normalized") || type == 5121 || type == 5123)
-            require(count >= 0 && base >= 0 && (count == 0 || base + (count - 1L) * stride + comps * size <= buffer.limit())) { "An accessor reads past its buffer" }
+            require(count >= 0 && base >= 0 && (count == 0 || base + (count - 1L) * stride + comps * size <= buffer.limit())) { AppText.get(R.string.model_err_accessor) }
             val out = FloatArray(count * comps)
             for (e in 0 until count) for (c in 0 until comps) {
                 val at = (base + e.toLong() * stride + c * size).toInt()
@@ -307,22 +332,40 @@ object GltfReader {
         }
 
         fun indices(primitive: JSONObject, count: Int): IntArray {
-            if (accessors.getOrNull(primitive.optInt("indices", -1))?.has("bufferView") == false) return IntArray(0)
-            val (values, _) = (if (primitive.has("indices")) read(primitive.getInt("indices"), false) else null) ?: return IntArray(count) { it }
-            return IntArray(values.size) { values[it].toInt() }
+            if (!primitive.has("indices")) return IntArray(count) { it }
+            val accessor = accessors.getOrNull(primitive.optInt("indices", -1))
+                ?: throw IllegalArgumentException(AppText.get(R.string.model_err_accessor))
+            if (!accessor.has("bufferView")) return IntArray(0)
+            val count = accessor.optInt("count", 0)
+            val type = accessor.optInt("componentType")
+            val size = when (type) { 5121 -> 1; 5123 -> 2; 5125 -> 4; else -> throw IllegalArgumentException(AppText.get(R.string.model_err_accessor)) }
+            require(count <= limit && accessor.optString("type") == "SCALAR") { AppText.get(R.string.model_err_accessor) }
+            val (buffer, start, viewStride) = slice(accessor.optInt("bufferView", -1)) ?: throw IllegalArgumentException(AppText.get(R.string.model_err_accessor))
+            val stride = if (viewStride > 0) viewStride else size
+            val base = start + accessor.optInt("byteOffset", 0).toLong()
+            require(count >= 0 && base >= 0 && (count == 0 || base + (count - 1L) * stride + size <= buffer.limit())) { AppText.get(R.string.model_err_accessor) }
+            return IntArray(count) { e ->
+                val at = (base + e.toLong() * stride).toInt()
+                when (type) {
+                    5121 -> buffer.get(at).toInt() and 0xff
+                    5123 -> buffer.getShort(at).toInt() and 0xffff
+                    else -> buffer.getInt(at).let { if (it < 0) Int.MAX_VALUE else it }
+                }
+            }
         }
 
         var work = 0L
         fun charge(accessor: Int) {
             work += accessors.getOrNull(accessor)?.optInt("count", 0)?.coerceAtLeast(0) ?: 0
-            require(work <= limit) { "The model is too complex" }
+            require(work <= limit) { AppText.get(R.string.model_err_too_complex) }
         }
 
         fun addMesh(meshIndex: Int, world: FloatArray) {
             val normalMatrix = normalMatrix(world)
             val flip = determinant(world) < 0
             for (primitive in meshes.getOrNull(meshIndex)?.optJSONArray("primitives").objects()) {
-                if (primitive.optInt("mode", 4) != 4) continue
+                val mode = primitive.optInt("mode", 4)
+                if (mode !in 4..6) continue
                 val attributes = primitive.optJSONObject("attributes") ?: continue
                 charge(attributes.optInt("POSITION", -1))
                 charge(primitive.optInt("indices", -1))
@@ -338,6 +381,8 @@ object GltfReader {
                 val factor = pbr?.optJSONArray("baseColorFactor")?.let { f -> FloatArray(4) { f.optDouble(it, 1.0).toFloat() } } ?: floatArrayOf(1f, 1f, 1f, 1f)
                 val slot = pbr?.optJSONObject("baseColorTexture")?.optInt("index", -1)?.let { textureList.getOrNull(it) }?.optInt("source", -1)
                     ?.takeIf { it >= 0 }?.let { src -> imageSlots.getOrPut(src) { image(src)?.let { textures += it; textures.size - 1 } ?: -1 } } ?: -1
+                val list = indices(primitive, count)
+                builder.reserve(count, list.size)
                 val first = builder.count
                 for (v in 0 until count) {
                     val p = transform(world, positions[v * 3], positions[v * 3 + 1], positions[v * 3 + 2])
@@ -346,11 +391,16 @@ object GltfReader {
                     builder.vertex(p[0], p[1], p[2], n, uvs?.get(v * 2) ?: 0f, uvs?.get(v * 2 + 1) ?: 0f,
                         argb(factor[0] * c[0], factor[1] * c[1], factor[2] * c[2], factor[3] * c[3]))
                 }
-                val list = indices(primitive, count)
-                for (k in 0 until list.size - 2 step 3) {
-                    val a = list[k]; val b = list[k + 1]; val c = list[k + 2]
-                    if (a !in 0 until count || b !in 0 until count || c !in 0 until count) continue
+                fun emit(a: Int, b: Int, c: Int) {
+                    if (a !in 0 until count || b !in 0 until count || c !in 0 until count) return
                     if (flip) builder.triangle(first + a, first + c, first + b, slot) else builder.triangle(first + a, first + b, first + c, slot)
+                }
+                when (mode) {
+                    4 -> for (k in 0 until list.size - 2 step 3) emit(list[k], list[k + 1], list[k + 2])
+                    5 -> for (k in 0 until list.size - 2) {
+                        if (k % 2 == 0) emit(list[k], list[k + 1], list[k + 2]) else emit(list[k + 1], list[k], list[k + 2])
+                    }
+                    else -> for (k in 1 until list.size - 1) emit(list[0], list[k], list[k + 1])
                 }
             }
         }
@@ -384,7 +434,7 @@ object GltfReader {
 
     private fun load(uri: String, open: (String) -> ByteArray?): ByteArray? =
         if (uri.startsWith("data:")) runCatching { Base64.getDecoder().decode(uri.substringAfter(',')) }.getOrNull()
-        else open(java.net.URLDecoder.decode(uri.replace("+", "%2B"), "UTF-8"))
+        else open(runCatching { java.net.URLDecoder.decode(uri.replace("+", "%2B"), "UTF-8") }.getOrDefault(uri))
 
     private fun localMatrix(node: JSONObject): FloatArray {
         node.optJSONArray("matrix")?.takeIf { it.length() == 16 }?.let { m -> return FloatArray(16) { m.optDouble(it, 0.0).toFloat() } }
@@ -439,31 +489,62 @@ fun decimated(mesh: Mesh, budget: Int): Mesh {
     }
 }
 
+private const val UV_CELLS = 512
+
 private fun clustered(mesh: Mesh, cells: Int): Mesh {
     val p = mesh.positions
-    val remap = IntArray(mesh.vertexCount)
-    val owner = HashMap<Long, Int>()
-    val keep = Ints()
+    val group = IntArray(mesh.vertexCount)
+    val groups = HashMap<Long, Int>()
     fun cell(v: Float) = ((v + 1f) / 2f * cells).toInt().coerceIn(0, cells - 1).toLong()
     for (v in 0 until mesh.vertexCount) {
-        val key = (cell(p[v * 3]) * cells + cell(p[v * 3 + 1])) * cells + cell(p[v * 3 + 2])
-        remap[v] = owner.getOrPut(key) { keep.add(v); keep.size - 1 }
+        group[v] = groups.getOrPut((cell(p[v * 3]) * cells + cell(p[v * 3 + 1])) * cells + cell(p[v * 3 + 2])) { groups.size }
     }
-    val triangles = Ints()
+    val centres = DoubleArray(groups.size * 3)
+    val members = IntArray(groups.size)
+    for (v in 0 until mesh.vertexCount) {
+        members[group[v]]++
+        for (i in 0..2) centres[group[v] * 3 + i] += p[v * 3 + i].toDouble()
+    }
+    val corners = Ints()
     val slots = Ints()
     val seen = HashSet<Triple<Int, Int, Int>>()
     val t = mesh.triangles
     for (k in 0 until mesh.triangleCount) {
-        val a = remap[t[k * 3]]; val b = remap[t[k * 3 + 1]]; val c = remap[t[k * 3 + 2]]
+        val a = group[t[k * 3]]; val b = group[t[k * 3 + 1]]; val c = group[t[k * 3 + 2]]
         if (a == b || b == c || a == c) continue
         val first = min(a, min(b, c))
         val key = when (first) { a -> Triple(a, b, c); b -> Triple(b, c, a); else -> Triple(c, a, b) }
         if (!seen.add(key)) continue
-        triangles.add(a); triangles.add(b); triangles.add(c)
+        for (i in 0..2) corners.add(t[k * 3 + i])
         slots.add(mesh.slots[k])
     }
-    val kept = keep.array()
-    fun pick(source: FloatArray, n: Int) = FloatArray(kept.size * n) { source[kept[it / n] * n + it % n] }
-    return Mesh(pick(mesh.positions, 3), pick(mesh.normals, 3), pick(mesh.uvs, 2), IntArray(kept.size) { mesh.colors[kept[it]] },
-        triangles.array(), slots.array(), mesh.textures, mesh.twoSided)
+    val output = HashMap<Long, Int>()
+    val outGroup = Ints()
+    val sums = ArrayList<DoubleArray>()
+    val triangles = IntArray(corners.size)
+    fun quantised(v: Float) = (kotlin.math.floor(v.toDouble() * UV_CELLS).toLong() and 0xffff)
+    for (k in 0 until corners.size) {
+        val v = corners.data[k]
+        val key = (group[v].toLong() shl 40) or (((slots.data[k / 3] + 1).toLong() and 0xff) shl 32) or
+            (quantised(mesh.uvs[v * 2]) shl 16) or quantised(mesh.uvs[v * 2 + 1])
+        val out = output.getOrPut(key) { outGroup.add(group[v]); sums.add(DoubleArray(10)); sums.size - 1 }
+        triangles[k] = out
+        val s = sums[out]
+        for (i in 0..2) s[i] += mesh.normals[v * 3 + i].toDouble()
+        s[3] += mesh.uvs[v * 2].toDouble(); s[4] += mesh.uvs[v * 2 + 1].toDouble()
+        val colour = mesh.colors[v]
+        for (i in 0..3) s[5 + i] += ((colour ushr (24 - 8 * i)) and 0xff).toDouble()
+        s[9] += 1.0
+    }
+    val n = sums.size
+    val positions = FloatArray(n * 3) { centres[outGroup.data[it / 3] * 3 + it % 3].toFloat() / members[outGroup.data[it / 3]] }
+    val normals = FloatArray(n * 3)
+    for (o in 0 until n) {
+        val s = sums[o]
+        val length = sqrt(s[0] * s[0] + s[1] * s[1] + s[2] * s[2])
+        if (length > 0) for (i in 0..2) normals[o * 3 + i] = (s[i] / length).toFloat()
+    }
+    val uvs = FloatArray(n * 2) { (sums[it / 2][3 + it % 2] / sums[it / 2][9]).toFloat() }
+    val colors = IntArray(n) { o -> (0..3).fold(0) { c, i -> (c shl 8) or (sums[o][5 + i] / sums[o][9] + 0.5).toInt().coerceIn(0, 255) } }
+    return Mesh(positions, normals, uvs, colors, triangles, slots.array(), mesh.textures, mesh.twoSided)
 }

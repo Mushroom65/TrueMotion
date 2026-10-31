@@ -1,6 +1,8 @@
 package app.absentmotion.fonts
 
 import android.os.Build
+import app.absentmotion.R
+import app.absentmotion.i18n.AppText
 import android.content.Context
 import android.graphics.Typeface
 import android.graphics.fonts.Font
@@ -135,8 +137,9 @@ class FontLibrary(context: Context) {
             .firstOrNull { it.isFile }
     }
     fun renderFile(name: String): File? = localFile(name) ?: bundledAsset(FontName.parse(name), exact = false)?.let { bundledFile(it) }
+    fun androidEmoji(): Boolean = context.getSharedPreferences("settings", Context.MODE_PRIVATE).getBoolean(ANDROID_EMOJI, false)
     fun emojiFile(flags: Boolean = false): File? =
-        if (context.getSharedPreferences("settings", Context.MODE_PRIVATE).getBoolean(ANDROID_EMOJI, false)) bundledFile(if (flags) EMOJI_FLAGS else EMOJI, "emoji") else null
+        if (androidEmoji()) bundledFile(if (flags) EMOJI_FLAGS else EMOJI, "emoji") else null
     private val faces = ConcurrentHashMap<String, Pair<String, Typeface>>()
     fun cachedTypeface(name: String): Typeface? = faces[name]?.second
     fun typeface(name: String): Typeface {
@@ -149,7 +152,8 @@ class FontLibrary(context: Context) {
             Typeface.Builder(it).setTtcIndex(fontIndex(name)).apply { if (variable) setFontVariationSettings("'wght' ${font.weight}") }.build()
         }.getOrNull() }
             ?: Typeface.create(systemFamily(name) ?: font.family, Typeface.NORMAL)
-        return (if (font.source == "imported" || variable) face else Typeface.create(face, font.weight, font.italic)).also { faces[name] = stamp to it }
+        return (if (font.source == "imported" || variable) face else if (android.os.Build.VERSION.SDK_INT >= 28) Typeface.create(face, font.weight, font.italic)
+            else Typeface.create(face, when { font.weight >= 600 && font.italic -> Typeface.BOLD_ITALIC; font.weight >= 600 -> Typeface.BOLD; font.italic -> Typeface.ITALIC; else -> Typeface.NORMAL })).also { faces[name] = stamp to it }
     }
     suspend fun import(uri: Uri): FontName = withContext(Dispatchers.IO) {
         val filename = runCatching { context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
@@ -184,7 +188,7 @@ class FontLibrary(context: Context) {
             if (System.currentTimeMillis() - (failed[name] ?: 0L) < 60_000) return@withLock null
             runCatching {
                 val css = request("https://fonts.googleapis.com/css2?family=${Uri.encode(font.family)}:ital,wght@${if (font.italic) 1 else 0},${font.weight}") { it.reader().readText() }
-                val fontUrl = Regex("url\\((https://fonts\\.gstatic\\.com/[^)]+)\\)").find(css)?.groupValues?.get(1) ?: error("Font unavailable")
+                val fontUrl = Regex("url\\((https://fonts\\.gstatic\\.com/[^)]+)\\)").find(css)?.groupValues?.get(1) ?: error(AppText.get(R.string.font_err_unavailable))
                 val temporary = File.createTempFile("download-", ".font", cache)
                 try {
                     request(fontUrl) { input -> temporary.outputStream().use { copyLimited(input, it) } }

@@ -42,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import app.absentmotion.editor.MultiSelect
+import app.absentmotion.editor.openCrop
 import app.absentmotion.editor.keepCopy
 import app.absentmotion.model.replaceMedia
 import app.absentmotion.audio.soundUri
@@ -203,6 +204,10 @@ internal fun LayerMenu(state: EditorState, onDismiss: () -> Unit) {
                 state.flip(horizontal = false)
                 onDismiss()
             }
+            if (media != null && !MultiSelect.active) MenuRow(stringResource(R.string.layer_tool_crop)) {
+                onDismiss()
+                state.openCrop()
+            }
             MenuRow(stringResource(R.string.menu_fit_to_canvas)) { scope.launch { state.compositionArea("fit"); onDismiss() } }
             MenuRow(stringResource(R.string.menu_fill_the_canvas)) { scope.launch { state.compositionArea("fill"); onDismiss() } }
             MenuRow(stringResource(R.string.menu_stretch_to_canvas)) { scope.launch { state.compositionArea("stretch"); onDismiss() } }
@@ -236,7 +241,7 @@ internal fun LayerMenu(state: EditorState, onDismiss: () -> Unit) {
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    e.message ?: context.getString(R.string.menu_beats_not_found)
+                    app.absentmotion.i18n.failureText(context.getString(R.string.menu_beats_not_found), e)
                 }
                 Toast.makeText(context, note, Toast.LENGTH_SHORT).show()
                 onDismiss()
@@ -261,15 +266,33 @@ internal object AboveLeft : PopupPositionProvider {
 
 @Composable
 internal fun TransformMenu(state: EditorState, tab: Int, turn: Turn?, onDismiss: () -> Unit) {
-    val resetName = listOf(R.string.menu_reset_location, R.string.menu_reset_scale, R.string.menu_reset_rotation, R.string.menu_reset_3d_rotation, R.string.menu_reset_skew, R.string.true_pivot_reset)[tab]
+    val resetName = listOf(R.string.menu_reset_location, R.string.menu_reset_rotation, R.string.menu_reset_scale, R.string.menu_reset_3d_rotation, R.string.menu_reset_skew, R.string.menu_reset_pivot)[tab]
     MenuPopup(AboveLeft, onDismiss, TransformOrigin(0f, 1f)) {
         MenuRow(stringResource(resetName)) {
             if (tab == ROTATE_TAB && turn != null) state.editSelected { turn.reset(it) } else state.resetTransform(listOf(tab))
             onDismiss()
         }
         MenuRow(stringResource(R.string.menu_reset_transform), divider = true) {
-            state.resetTransform(listOf(0, 1, 2, 3, 4))
+            state.resetTransform(listOf(0, 1, 2, 3, 4, 5))
             onDismiss()
+        }
+        val basic = state.settings.basicTransform
+        MenuRow(stringResource(if (basic) R.string.transform_advanced_controls else R.string.transform_basic_controls), divider = true) {
+            state.settings.basicTransform = !basic
+            onDismiss()
+        }
+    }
+}
+
+@Composable
+internal fun TransformControlsMenu(state: EditorState, onDone: (Boolean?) -> Unit) {
+    MenuPopup(DropOrRise, { onDone(null) }) {
+        for (basic in listOf(true, false)) {
+            MenuRow(stringResource(if (basic) R.string.transform_basic_controls else R.string.transform_advanced_controls),
+                trailing = if (state.settings.basicTransform == basic) PanelIcons.Check else null, divider = !basic) {
+                state.settings.basicTransform = basic
+                onDone(basic)
+            }
         }
     }
 }

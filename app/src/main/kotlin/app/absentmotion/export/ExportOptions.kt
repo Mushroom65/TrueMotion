@@ -176,6 +176,7 @@ data class ExportSettings(
     val audioFormat: AudioFormat = AudioFormat.M4a,
     val interpolationLevel: SmoothLevel = SmoothLevel.Medium,
     val motionBlur: MotionBlur = MotionBlur.Off,
+    val alightPackage: Boolean = true,
 ) {
     val smoothing: Smoothing get() = Smoothing(interpolation, interpolationLevel, motionBlur)
 }

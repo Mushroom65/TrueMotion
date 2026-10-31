@@ -1,5 +1,6 @@
 package app.absentmotion.ui.editor
 
+import app.absentmotion.ui.tutorial.tutorialGuard
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
@@ -31,6 +32,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,7 +61,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.absentmotion.R
-import app.absentmotion.editor.ChoppyWatch
 import app.absentmotion.editor.EditorPanel
 import app.absentmotion.editor.EditorState
 import app.absentmotion.editor.PreviewCache
@@ -66,10 +69,9 @@ import app.absentmotion.ui.theme.Presence
 import app.absentmotion.ui.theme.presence
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 
 const val RENDER_PREVIEW_TAG = "render_preview"
-
-private const val RECENT_NS = 250_000_000L
 
 internal class LiveHandoff {
     var requested by mutableLongStateOf(0L)
@@ -78,7 +80,8 @@ internal class LiveHandoff {
 
 internal fun cacheMatches(state: EditorState, resources: Long): Boolean =
     PreviewCache.phase == PreviewCache.Phase.Ready && PreviewCache.key == PreviewCache.keyOf(state, resources) && state.soloMode == 0 && !state.pixelMode &&
-        state.drawing == null && state.panel != EditorPanel.EditText && (state.cameraMode || state.scene.layers.none { it.kind == "camera" })
+        !state.gridMode && state.canvasZoom == 1f && state.canvasPan == Offset.Zero && (state.selectedId == null || state.playing) && state.drawing == null && state.panel != EditorPanel.EditText &&
+        (state.cameraMode || state.scene.layers.none { it.kind == "camera" })
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -95,7 +98,7 @@ internal fun RenderPreviewButton(state: EditorState, modifier: Modifier) {
         else -> stringResource(R.string.preview_cache_state_outdated)
     }
     Box(
-        modifier.testTag(RENDER_PREVIEW_TAG).semantics { contentDescription = label; if (status != null) stateDescription = status }.combinedClickable(
+        modifier.testTag(RENDER_PREVIEW_TAG).tutorialGuard(any = true).semantics { contentDescription = label; if (status != null) stateDescription = status }.combinedClickable(
             onLongClick = {
                 if (phase == PreviewCache.Phase.Ready) {
                     PreviewCache.clear()
@@ -162,7 +165,7 @@ internal fun CachedFrame(state: EditorState, usable: Boolean, live: LiveHandoff,
     val background = Am.PreviewBg
     Canvas(Modifier.fillMaxSize()) {
         val shown = player.shown ?: return@Canvas
-        if (shown.frame != frame && !handing && System.nanoTime() - shown.at > RECENT_NS) return@Canvas
+        if (shown.frame != frame) return@Canvas
         drawRect(background)
         drawImage(
             shown.bitmap.asImageBitmap(), dstOffset = IntOffset(left.roundToInt(), top.roundToInt()),
@@ -173,13 +176,9 @@ internal fun CachedFrame(state: EditorState, usable: Boolean, live: LiveHandoff,
 
 @Composable
 internal fun RenderPreviewNotes(state: EditorState, cachedPlaying: State<Boolean>, modifier: Modifier) {
-    val context = LocalContext.current
-    val scope = LocalEditorScope.current
-    var hint by remember { mutableStateOf(false) }
-    val session = System.identityHashCode(state)
+    AutomaticPreview(state)
     LaunchedEffect(state.playing) {
         if (!state.playing) return@LaunchedEffect
-        val watch = ChoppyWatch()
         val startNs = System.nanoTime()
         val startFrame = state.frame
         val startRenders = state.engine.renders
@@ -190,20 +189,12 @@ internal fun RenderPreviewNotes(state: EditorState, cachedPlaying: State<Boolean
                 delay(250)
                 val cached = cachedPlaying.value
                 cachedTime = cachedTime || cached
-                if (cached || PreviewCache.phase == PreviewCache.Phase.Rendering) { watch.reset(); continue }
-                if (watch.sample(System.nanoTime(), state.frame, state.engine.renders) && state.settings.previewCacheHint && PreviewCache.hinted != session) {
-                    PreviewCache.hinted = session
-                    hint = true
-                }
             }
         } finally {
             Log.i("AMCache", "play cached=%b frames=%d renders=%d cachedShows=%d ms=%d".format(
                 cachedTime, state.frame - startFrame, state.engine.renders - startRenders, (PreviewCache.player?.shows ?: 0L) - startShows,
                 (System.nanoTime() - startNs) / 1_000_000))
         }
-    }
-    LaunchedEffect(hint) {
-        if (hint) { delay(12_000); hint = false }
     }
     LaunchedEffect(state.exportOpen) {
         if (state.exportOpen) PreviewCache.cancel()
@@ -224,17 +215,38 @@ internal fun RenderPreviewNotes(state: EditorState, cachedPlaying: State<Boolean
                 TextButton({ PreviewCache.cancel() }) { Text(stringResource(R.string.cancel), color = Am.Accent, fontSize = 13.sp, maxLines = 1) }
             }
         }
-        Presence(hint && !rendering) {
-            Note(Modifier.presence(rise = (-8).dp)) {
-                Text(stringResource(R.string.preview_cache_hint), Modifier.weight(1f), color = Am.OnDark, fontSize = 13.sp, lineHeight = 16.sp, maxLines = 3)
-                TextButton({ hint = false; PreviewCache.render(state, context, scope) }) {
-                    Text(stringResource(R.string.preview_cache_hint_action), color = Am.Accent, fontSize = 13.sp, maxLines = 1)
+    }
+}
+
+private data class PreparationRequest(val key: app.absentmotion.editor.CacheKey, val frame: Int, val eligible: Boolean, val fit: Float, val cell: Float)
+
+@Composable
+private fun AutomaticPreview(state: EditorState) {
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val resources by state.engine.mediaRevision.collectAsState()
+    val thermal = remember(context) { app.absentmotion.export.ThermalMonitor.of(context) }
+    LaunchedEffect(state, lifecycle, resources) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            thermal.start()
+            try {
+                snapshotFlow {
+                    PreparationRequest(PreviewCache.keyOf(state), state.frame,
+                        !state.playing && !state.exportOpen && state.soloMode == 0 && !state.pixelMode && !state.gridMode && state.canvasZoom == 1f && state.canvasPan == Offset.Zero &&
+                            state.drawing == null && state.panel != EditorPanel.EditText &&
+                            (state.cameraMode || state.scene.layers.none { it.kind == "camera" }), PreviewCache.fit, PreviewCache.checkerCell)
+                }.collectLatest { request ->
+                    if (!request.eligible) return@collectLatest
+                    delay(250)
+                    while (!PreviewCache.idle()) delay(80)
+                    fun current() = lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) && PreviewCache.idle() && !thermal.hot &&
+                        !state.playing && !state.exportOpen && state.scene == request.key.scene && state.frame == request.frame &&
+                        state.settings.fullMotionBlur == request.key.accurateBlur && state.settings.androidEmoji == request.key.androidEmoji &&
+                        state.settings.previewQuality.divisor == request.key.divisor &&
+                        state.soloMode == 0 && !state.pixelMode && !state.gridMode && state.canvasZoom == 1f && state.canvasPan == Offset.Zero && state.drawing == null && state.panel != EditorPanel.EditText
+                    if (current()) PreviewCache.prepare(state, context, ::current)
                 }
-                Icon(
-                    ChromeIcons.Close, stringResource(R.string.preview_cache_close),
-                    Modifier.size(36.dp).clip(RoundedCornerShape(18.dp)).clickable { hint = false }.padding(10.dp), tint = Am.OnDarkDim,
-                )
-            }
+            } finally { thermal.stop() }
         }
     }
 }

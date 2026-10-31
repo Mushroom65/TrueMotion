@@ -37,12 +37,22 @@ data class EffectCatalog(
             .map { (k, v) -> k to (categoryNames[k] ?: v) }
 
     fun drawable(path: String?): Drawable? = path?.let { p ->
-        runCatching { open?.invoke(p)?.use { ImageDecoder.decodeDrawable(ImageDecoder.createSource(java.nio.ByteBuffer.wrap(it.readBytes()))) } }.getOrNull()
+        runCatching { open?.invoke(p)?.use { stream ->
+            val bytes = stream.readBytes()
+            if (android.os.Build.VERSION.SDK_INT >= 28) ImageDecoder.decodeDrawable(ImageDecoder.createSource(java.nio.ByteBuffer.wrap(bytes)))
+            else android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { android.graphics.drawable.BitmapDrawable(null, it) }
+        } }.getOrNull()
     }
 
     fun loadInto(load: (String) -> String): EffectCatalog {
         val status = definitions.associate { it.id to load(it.runtimeXml()).substringBefore('\n') }
         return copy(definitions = definitions.map { it.copy(status = status.getValue(it.id)) })
+    }
+
+    fun withRuntimeStatusFrom(previous: EffectCatalog): EffectCatalog {
+        if (message != null && previous.definitions.isNotEmpty()) return previous
+        val status = previous.definitions.associate { it.id to it.status }
+        return copy(definitions = definitions.map { it.copy(status = status[it.id] ?: it.status) })
     }
 
     companion object {

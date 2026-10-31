@@ -89,14 +89,14 @@ internal data class Turn(val effect: Int = -1, private val axes: List<EffectPara
 }
 
 internal fun turnFor(layer: Layer, catalog: EffectCatalog, tab: Int): Turn? {
-    if (tab != ROTATE_TAB && tab != TILT_TAB || layer.kind == "camera") return null
+    if (tab != ROTATE_TAB && tab != TILT_TAB) return null
+    if (layer.kind == "camera") return Turn().takeIf { tab == TILT_TAB }
     val turn = layer.effects.withIndex().firstNotNullOfOrNull { (i, node) ->
         val definition = catalog.find(node["id"] ?: "")?.takeIf { it.available && node["hidden"] != "true" } ?: return@firstNotNullOfOrNull null
         val axes = TURN_AXES.map { id -> definition.params.firstOrNull { it.id == id } ?: return@firstNotNullOfOrNull null }
         Turn(i, axes)
     } ?: Turn()
-    val solid = turn.effect >= 0 || layer.kind == "model" || layer.tilt.any { it != 0f } || layer.keyframes(PropRef.Tilt).isNotEmpty()
-    return turn.takeIf { tab == TILT_TAB || solid }
+    return turn.takeIf { tab == TILT_TAB || turn.effect >= 0 }
 }
 
 private val TURN_AXES = listOf("rotX", "rotY", "rotZ")

@@ -13,6 +13,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.semantics
 import app.absentmotion.ui.editor.ChromeIcons
@@ -21,6 +22,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
@@ -121,7 +124,7 @@ fun SettingsDrawer(settings: AppSettings, drawer: androidx.compose.material3.Dra
                 ThemeRow(settings)
                 DurationRow(settings)
                 SwitchRow(stringResource(R.string.settings_vibration), settings.vibration, enabled = true) { settings.vibration = it }
-                SwitchRow(stringResource(R.string.preview_cache_hint_setting), settings.previewCacheHint, enabled = true) { settings.previewCacheHint = it }
+                SwitchRow(stringResource(R.string.settings_transition_in_preview), settings.transitionInPreview, enabled = true) { settings.transitionInPreview = it }
                 Divider(10.dp)
                 ChoicesBlock(R.string.settings_emoji) {
                     Choices(listOf(R.string.settings_emoji_system, R.string.settings_emoji_android), if (settings.androidEmoji) 1 else 0) { settings.androidEmoji = it == 1 }
@@ -130,6 +133,14 @@ fun SettingsDrawer(settings: AppSettings, drawer: androidx.compose.material3.Dra
             Category(R.string.settings_group_playback, HomeIcons.ProjectsTabOff) {
                 ChoicesBlock(R.string.preview_quality) {
                     Choices(PreviewQuality.entries.map { it.label }, settings.previewQuality.ordinal) { settings.previewQuality = PreviewQuality.entries[it] }
+                }
+                Divider(10.dp)
+                ChoicesBlock(R.string.settings_graphics) {
+                    Choices(listOf(R.string.settings_graphics_auto, R.string.settings_graphics_opengl), if (settings.openGl) 1 else 0) { settings.openGl = it == 1 }
+                    Spacer(Modifier.height(8.dp))
+                    val now = stringResource(R.string.settings_graphics_note, if (app.absentmotion.Tier.openGl) "OpenGL" else "Vulkan")
+                    Text(if (settings.openGl) now else now + " " + stringResource(R.string.settings_graphics_hint), Modifier.padding(horizontal = 10.dp),
+                        color = Am.HomeMid, fontSize = 12.sp, lineHeight = 16.sp)
                 }
                 Divider(10.dp)
                 ChoicesBlock(R.string.playback_resampling) {
@@ -158,7 +169,12 @@ fun SettingsDrawer(settings: AppSettings, drawer: androidx.compose.material3.Dra
             app.absentmotion.ui.tutorial.TutorialRows(settings)
             Spacer(Modifier.height(CardGap))
             LinkRow(stringResource(R.string.settings_about)) { about = true }
-            Spacer(Modifier.height(CardGap))
+            val links = LocalUriHandler.current
+            Text(
+                stringResource(R.string.settings_report_issue),
+                Modifier.padding(horizontal = 6.dp).clickable { runCatching { links.openUri(REPORT_FORM) } }.padding(horizontal = 15.dp, vertical = 10.dp),
+                color = Am.HomeInk, fontSize = 13.sp, textDecoration = TextDecoration.Underline,
+            )
             UpdateRows(settings) { crashLogs = true }
         }
     }
@@ -220,27 +236,61 @@ private fun PreviewCopiesRow() {
     val made by VideoProxies.revision.collectAsState()
     var bytes by remember { mutableLongStateOf(0L) }
     LaunchedEffect(made) { bytes = withContext(Dispatchers.IO) { VideoProxies.bytes(context) } }
-    ActionRow(stringResource(R.string.settings_clear_preview_copies), formatBytes(bytes), chevron = false) { VideoProxies.clear(context) }
+    var ask by remember { mutableStateOf(false) }
+    ActionRow(stringResource(R.string.settings_clear_preview_copies), formatBytes(bytes), chevron = false) { ask = true }
+    if (ask) AlertDialog(
+        onDismissRequest = { ask = false },
+        title = { Text(stringResource(R.string.settings_clear_preview_title), color = Am.Navy) },
+        text = { Text(stringResource(R.string.settings_clear_preview_text), color = Am.Navy) },
+        confirmButton = { TextButton({ ask = false; VideoProxies.clear(context) }) { Text(stringResource(R.string.settings_clear_preview_copies), color = Am.Navy) } },
+        dismissButton = { TextButton({ ask = false }) { Text(stringResource(R.string.cancel), color = Am.Navy) } },
+        containerColor = Am.Card,
+    )
 }
 
 @Composable
 private fun CaptionModelRow() {
     val context = LocalContext.current
-    var bytes by remember { mutableLongStateOf(CaptionModel.file(context).length()) }
-    val downloaded = remember { bytes > 0L }
+    var bytes by remember { mutableLongStateOf(CaptionModel.storedBytes(context)) }
+    val downloaded = bytes > 0L
     if (!downloaded) return
-    ActionRow(stringResource(R.string.remove_caption_model), formatBytes(bytes), chevron = false) { CaptionModel.remove(context); bytes = CaptionModel.file(context).length() }
+    var ask by remember { mutableStateOf(false) }
+    ActionRow(stringResource(R.string.remove_caption_model), formatBytes(bytes), chevron = false) { ask = true }
+    if (ask) AlertDialog(
+        onDismissRequest = { ask = false },
+        title = { Text(stringResource(R.string.settings_delete_model_title, stringResource(R.string.caption_model)), color = Am.Navy) },
+        text = { Text(stringResource(R.string.settings_delete_model_text), color = Am.Navy) },
+        confirmButton = { TextButton({ ask = false; CaptionModel.remove(context); bytes = CaptionModel.storedBytes(context) }) { Text(stringResource(R.string.delete), color = Am.Navy) } },
+        dismissButton = { TextButton({ ask = false }) { Text(stringResource(R.string.cancel), color = Am.Navy) } },
+        containerColor = Am.Card,
+    )
 }
 
 @Composable
 private fun AiModelRows() {
     val context = LocalContext.current
     var models by remember { mutableStateOf(app.absentmotion.ai.AiModel.downloaded(context) - app.absentmotion.ai.AiModel.Cutout) }
+    var askFor by remember { mutableStateOf<app.absentmotion.ai.AiModel?>(null) }
     for (model in models) {
         ActionRow(stringResource(R.string.ai_delete_model, stringResource(model.title)), formatBytes(model.onDisk(context)), chevron = false) {
-            model.delete(context)
-            models = app.absentmotion.ai.AiModel.downloaded(context) - app.absentmotion.ai.AiModel.Cutout
+            askFor = model
         }
+    }
+    askFor?.let { target ->
+        AlertDialog(
+            onDismissRequest = { askFor = null },
+            title = { Text(stringResource(R.string.settings_delete_model_title, stringResource(target.title)), color = Am.Navy) },
+            text = { Text(stringResource(R.string.settings_delete_model_text), color = Am.Navy) },
+            confirmButton = {
+                TextButton({
+                    askFor = null
+                    target.delete(context)
+                    models = app.absentmotion.ai.AiModel.downloaded(context) - app.absentmotion.ai.AiModel.Cutout
+                }) { Text(stringResource(R.string.delete), color = Am.Navy) }
+            },
+            dismissButton = { TextButton({ askFor = null }) { Text(stringResource(R.string.cancel), color = Am.Navy) } },
+            containerColor = Am.Card,
+        )
     }
 }
 
@@ -260,12 +310,26 @@ private fun CutoutRows() {
         }
     }
     Divider(10.dp)
+    var ask by remember { mutableStateOf(false) }
     if (bytes > 0L) ActionRow(stringResource(R.string.ai_delete_model, stringResource(model.title)), formatBytes(bytes), chevron = false) {
-        model.delete(context)
-        bytes = model.onDisk(context)
-        choice.choose(app.absentmotion.ai.CutoutQuality.Standard)
-        chosen = app.absentmotion.ai.CutoutQuality.Standard
+        ask = true
     }
+    if (ask) AlertDialog(
+        onDismissRequest = { ask = false },
+        title = { Text(stringResource(R.string.settings_delete_model_title, stringResource(model.title)), color = Am.Navy) },
+        text = { Text(stringResource(R.string.settings_delete_model_text), color = Am.Navy) },
+        confirmButton = {
+            TextButton({
+                ask = false
+                model.delete(context)
+                bytes = model.onDisk(context)
+                choice.choose(app.absentmotion.ai.CutoutQuality.Standard)
+                chosen = app.absentmotion.ai.CutoutQuality.Standard
+            }) { Text(stringResource(R.string.delete), color = Am.Navy) }
+        },
+        dismissButton = { TextButton({ ask = false }) { Text(stringResource(R.string.cancel), color = Am.Navy) } },
+        containerColor = Am.Card,
+    )
 }
 
 @Composable
@@ -316,6 +380,14 @@ private fun UpdateRows(settings: AppSettings, onCrashLogs: () -> Unit) {
         SwitchRow(stringResource(R.string.update_check_on_open), settings.autoUpdateCheck, enabled = true) { settings.chooseUpdates(it) }
         Divider(10.dp)
         ActionRow(stringResource(R.string.update_check_now), busy = Updates.checking) { Updates.check(context, settings, manual = true) }
+        val version = app.absentmotion.platform.appVersion().trim()
+        if (version.isNotEmpty()) {
+            val spoken = stringResource(R.string.about_version, version)
+            Text(
+                "V $version", Modifier.fillMaxWidth().padding(start = 15.dp, end = 15.dp, bottom = 8.dp).semantics { contentDescription = spoken },
+                color = Am.HomeMid, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 

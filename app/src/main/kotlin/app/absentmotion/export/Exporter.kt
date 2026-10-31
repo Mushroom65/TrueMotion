@@ -66,6 +66,7 @@ class Exporter(context: Context, private val engine: EngineThread, private val s
                                 (mix as? java.io.Closeable)?.close()
                             }
                         }
+                        note(txt(R.string.export_note_checking))
                         written.verified(kind, scene, f, mix != null, looks).unreadable(mix, scene).also {
                             val (w, h) = exportSize(scene, f.shortSide, even = true)
                             val ms = android.os.SystemClock.elapsedRealtime() - started - paused
@@ -100,8 +101,8 @@ class Exporter(context: Context, private val engine: EngineThread, private val s
                         save(saved, null, "$name.xml", "text/xml") { it.write(xml.toByteArray()) }
                         ExportResult(saved, "text/xml", store.location("Documents/$AppFolder"))
                     }
-                    ExportKind.Package -> direct(saved, name, "absproj", "application/octet-stream", "Documents/$AppFolder") { fd ->
-                        watched { alive -> pack(scene, xml, fdStream(fd)) { alive(); progress(it) } }
+                    ExportKind.Package -> direct(saved, name, if (s.alightPackage) "alight" else "absproj", "application/octet-stream", "Documents/$AppFolder") { fd ->
+                        watched { alive -> pack(scene, xml, fdStream(fd), s.alightPackage) { alive(); progress(it) } }
                     }
                     ExportKind.Sequence -> watched { alive -> sequence(saved, scene, xml, s, name) { alive(); progress(it) } }
                 }
@@ -225,8 +226,8 @@ class Exporter(context: Context, private val engine: EngineThread, private val s
         return ExportResult(saved, s.image.mime, store.location("Pictures/$AppFolder/$name"))
     }
 
-    private suspend fun pack(scene: Scene, xml: String, out: OutputStream, progress: (Float) -> Unit) = withContext(Dispatchers.IO) {
-        writeProjectPackage(scene, xml, out, access, { uri -> runCatching { context.contentResolver.openInputStream(Uri.parse(uri)) }.getOrNull() }) { ensureStorage(); progress(it) }
+    private suspend fun pack(scene: Scene, xml: String, out: OutputStream, alight: Boolean, progress: (Float) -> Unit) = withContext(Dispatchers.IO) {
+        writePackedProject(scene, xml, out, access, { uri -> runCatching { context.contentResolver.openInputStream(Uri.parse(uri)) }.getOrNull() }, alight) { ensureStorage(); progress(it) }
     }
 
     private fun encode(pixels: ByteArray, width: Int, height: Int, settings: ExportSettings, reuse: Bitmap?, out: OutputStream) {
@@ -268,14 +269,24 @@ internal suspend fun <T> watched(stallMs: Long = StallMs, block: suspend (alive:
 
 internal suspend fun writeProjectPackage(
     scene: Scene, xml: String, out: OutputStream, access: MediaAccess, open: (String) -> InputStream?, progress: (Float) -> Unit,
+) = writePackedProject(scene, xml, out, access, open, false, progress)
+
+internal suspend fun writeAlightPackage(
+    scene: Scene, xml: String, out: OutputStream, access: MediaAccess, open: (String) -> InputStream?, progress: (Float) -> Unit,
+) = writePackedProject(scene, xml, out, access, open, true, progress)
+
+private suspend fun writePackedProject(
+    scene: Scene, xml: String, out: OutputStream, access: MediaAccess, open: (String) -> InputStream?, alight: Boolean, progress: (Float) -> Unit,
 ) {
     val uris = scene.node.storedMediaUris().toList()
-    val manifest = JSONObject().put("format", "absentmotion-package").put("version", 1)
-        .put("title", scene.title).put("project", "project.xml")
+    val projectEntry = if (alight) "scene.xml" else "project.xml"
+    val manifest = JSONObject().put("format", if (alight) "true-motion-project" else "absentmotion-package").put("version", 1)
+        .put("title", scene.title).put("project", projectEntry)
+    if (alight) manifest.put("sceneSha256", java.security.MessageDigest.getInstance("SHA-256").digest(xml.toByteArray()).joinToString("") { "%02x".format(it) })
     val media = JSONArray()
     ZipOutputStream(out.buffered()).use { zip ->
         zip.setLevel(0)
-        zip.putNextEntry(ZipEntry("project.xml")); zip.write(xml.toByteArray()); zip.closeEntry()
+        zip.putNextEntry(ZipEntry(projectEntry)); zip.write(xml.toByteArray()); zip.closeEntry()
         uris.forEachIndexed { i, uri ->
             currentCoroutineContext().ensureActive()
             val file = scene.mediaName(uri)
@@ -305,7 +316,10 @@ internal suspend fun writeProjectPackage(
                     record.put("entry", entry)
                 }
             }
-            media.put(record)
+            if (!alight || record.has("entry")) {
+                if (alight) record.put("path", record.getString("entry"))
+                media.put(record)
+            }
             progress((i + 1f) / uris.size * 0.95f)
         }
         val fonts = JSONArray()

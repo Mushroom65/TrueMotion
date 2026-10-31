@@ -21,6 +21,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import app.absentmotion.R
 import app.absentmotion.audio.AudioEngine
 import app.absentmotion.export.exportCheck
@@ -53,17 +54,19 @@ import java.util.concurrent.atomic.AtomicReference
 
 object EngineDebug {
     @Volatile var failStart: String? = null
+    @Volatile var forceGl = false
 }
 
 internal data class AudioEffectState(val pending: Boolean = false, val error: String? = null)
 
-class EngineThread(private val background: Int, context: Context? = null) {
+class EngineThread(private val background: Int, context: Context? = null, private val preferOpenGl: () -> Boolean = { false }) {
     private val thread = HandlerThread("am-engine").apply { start() }
     private val handler = Handler(thread.looper)
     private val dispatcher = handler.asCoroutineDispatcher()
     private val mediaScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     val fonts = context?.let { FontLibrary(it) }
     private var fontJob: Job? = null
+    private var effectLabelsJob: Job? = null
     private var fontNames = emptyList<String>()
     private val media = context?.let { MediaLibrary(it, this) }
     private val videos = context?.let { VideoLibrary(it, this) }
@@ -110,6 +113,16 @@ class EngineThread(private val background: Int, context: Context? = null) {
         }
     }
 
+    fun relabelEffects(context: Context) {
+        effectLabelsJob?.cancel()
+        val local = context.createConfigurationContext(android.content.res.Configuration(context.resources.configuration))
+        effectLabelsJob = mediaScope.launch {
+            effectJob?.join()
+            val labels = EffectCatalog.read(local)
+            withContext(dispatcher) { if (!closed) effectCatalog.value = labels.withRuntimeStatusFrom(effectCatalog.value) }
+        }
+    }
+
     suspend fun effectCheck(directory: File) {
         effectJob?.join()
         val catalog = effectCatalog.value
@@ -142,10 +155,22 @@ class EngineThread(private val background: Int, context: Context? = null) {
     }
 
     @Volatile private var closed = false
-    private var mediaJob: Job? = null
+    @Volatile private var mediaJob: Job? = null
     @Volatile private var mediaScene: Scene? = null
     private val pictureRevision = MutableStateFlow(0L)
     val mediaRevision = pictureRevision.asStateFlow()
+    private val installedSources = MutableStateFlow<Map<String, String>>(emptyMap())
+    val sources = installedSources.asStateFlow()
+    val instance = instances.incrementAndGet()
+    private val refreshes = java.util.concurrent.atomic.AtomicLong()
+    @Volatile private var checkedRefresh = 0L
+    val sourcesChecked: Boolean get() = checkedRefresh == refreshes.get()
+
+    internal fun publishSource(uri: String, identity: String?) = installedSources.update {
+        if (it[uri] == identity) it else if (identity == null) it - uri else it + (uri to identity)
+    }
+
+    fun textIdentity(revision: Long): String = "$instance:$revision:${fonts?.androidEmoji() ?: false}"
 
     private var engine: NativeEngine? = null
     private var target = 0L
@@ -158,8 +183,10 @@ class EngineThread(private val background: Int, context: Context? = null) {
     private var scene: String? = null
 
     private val pendingScene = PendingScene()
+    private var mediaKey: List<Any?>? = null
     private val pendingView = AtomicReference<Pair<PreviewView, Long>?>(null)
     private val renderPosted = AtomicBoolean(false)
+    private val retryRender = Runnable { requestRender() }
     private val viewSerial = java.util.concurrent.atomic.AtomicLong()
     private var shownSerial = 0L
     private val renderedView = MutableStateFlow(RenderedView(0L, -1))
@@ -170,7 +197,7 @@ class EngineThread(private val background: Int, context: Context? = null) {
     init {
         fonts?.let { library -> mediaScope.launch {
             library.revision.collect {
-                pendingScene.fontsChanged(); pictureRevision.value++; requestRender()
+                pendingScene.fontsChanged(); pictureRevision.update { it + 1 }; requestRender()
             }
         } }
     }
@@ -216,7 +243,19 @@ class EngineThread(private val background: Int, context: Context? = null) {
         startFailure?.let { throw IllegalStateException(it) }
         return try {
             EngineDebug.failStart?.let { throw IllegalStateException(it) }
-            NativeEngine(NativeEngine.Backend.GRAPHITE)
+            val glFirst = EngineDebug.forceGl || preferOpenGl()
+            val order = if (glFirst) listOf(NativeEngine.Backend.GL, NativeEngine.Backend.GRAPHITE) else listOf(NativeEngine.Backend.GRAPHITE, NativeEngine.Backend.GL)
+            val first = runCatching { NativeEngine(order[0]) }
+            (first.getOrNull() ?: run {
+                val failed = first.exceptionOrNull()
+                Log.w("AMEngine", "${order[0]} cannot start, trying ${order[1]}", failed)
+                try {
+                    NativeEngine(order[1])
+                } catch (second: Throwable) {
+                    val (vulkan, gl) = if (glFirst) second to failed else failed to second
+                    throw IllegalStateException("${vulkan?.message ?: vulkan}; OpenGL: ${gl?.message ?: gl}", second)
+                }
+            }).also { app.absentmotion.Tier.openGl = it.openGl }
         } catch (t: Throwable) {
             val reason = t.message ?: t.toString()
             Log.e("AMEngine", "the engine cannot start", t)
@@ -242,6 +281,7 @@ class EngineThread(private val background: Int, context: Context? = null) {
             renderNow()
         } catch (e: Exception) {
             Log.e("AMEngine", "preview attachment failed", e)
+            if (target == 0L) this.surface = surface
             if (retry) handler.postDelayed({ if (!closed && target == 0L && surface.isValid) attach(surface, retry = false) }, 250)
         }
     }
@@ -261,7 +301,9 @@ class EngineThread(private val background: Int, context: Context? = null) {
         videos?.suspendPreview()
     }
 
-    fun setScene(next: Scene, xml: String = next.toXml()) {
+    fun setScene(next: Scene, xml: String) = setScene(next, lazyOf(xml))
+
+    fun setScene(next: Scene, xml: Lazy<String> = lazy { next.toXml() }) {
         pendingScene.set(xml)
         fonts?.let { library ->
             val names = next.fontNames()
@@ -275,9 +317,12 @@ class EngineThread(private val background: Int, context: Context? = null) {
             mediaScene = next
             audio?.setScene(next)
             videos?.update(next, requestedView?.timeMs ?: 0, playing)
-            if (previous?.node?.imageUris() != next.node.imageUris() || previous.node.modelUris() != next.node.modelUris() || previous.media != next.media) {
+            val key = listOf(next.node.imageUris(), next.node.modelUris(), next.media)
+            if (previous == null || key != mediaKey) {
+                mediaKey = key
+                val serial = refreshes.get()
                 mediaJob?.cancel()
-                mediaJob = mediaScope.launch { media.update(next) }
+                mediaJob = mediaScope.launch { media.update(next); checked(serial) }.also { loading -> loading.invokeOnCompletion { requestRender() } }
             }
         }
         requestRender()
@@ -291,8 +336,9 @@ class EngineThread(private val background: Int, context: Context? = null) {
 
     fun refreshMedia() {
         val next = mediaScene ?: return
+        val serial = refreshes.incrementAndGet()
         mediaJob?.cancel()
-        mediaJob = mediaScope.launch { media?.update(next); videos?.retry() }
+        mediaJob = mediaScope.launch { media?.update(next); checked(serial); videos?.retry() }.also { loading -> loading.invokeOnCompletion { requestRender() } }
         handler.post {
             if (!closed && !capturing) {
                 audioRenderJob?.cancel(); audioWantedXml = null; preparedAudio = null
@@ -301,6 +347,8 @@ class EngineThread(private val background: Int, context: Context? = null) {
             }
         }
     }
+
+    private fun checked(serial: Long) = synchronized(refreshes) { if (serial > checkedRefresh) checkedRefresh = serial }
 
     suspend fun awaitMedia() {
         do { val loading = mediaJob; loading?.join() } while (loading !== mediaJob)
@@ -365,19 +413,19 @@ class EngineThread(private val background: Int, context: Context? = null) {
 
     suspend fun setPicture(uri: String, bitmap: Bitmap?, layerId: Long = 0): Boolean = withContext(dispatcher) {
         if (closed) return@withContext false
-        engine().setPicture(uri, bitmap, layerId).also { if (bitmap != null) pictureRevision.value++; renderNow() }
+        engine().setPicture(uri, bitmap, layerId).also { if (bitmap != null) pictureRevision.update { it + 1 }; renderNow() }
     }
 
     suspend fun setModel(uri: String, mesh: Mesh?, textures: List<Bitmap?>): Boolean = withContext(dispatcher) {
         if (closed) return@withContext false
         val engine = engine()
         textures.forEachIndexed { k, bitmap -> engine.setPicture("$uri#$k", bitmap) }
-        engine.setModel(uri, mesh).also { if (mesh != null) pictureRevision.value++; renderNow() }
+        engine.setModel(uri, mesh).also { if (mesh != null) pictureRevision.update { it + 1 }; renderNow() }
     }
 
     suspend fun setPicture(uri: String, buffer: HardwareBuffer, layerId: Long = 0, opaque: Boolean = true): Boolean = withContext(dispatcher) {
         if (closed) return@withContext false
-        engine().setPicture(uri, buffer, layerId, opaque).also { pictureRevision.value++; renderNow() }
+        engine().setPicture(uri, buffer, layerId, opaque).also { pictureRevision.update { it + 1 }; renderNow() }
     }
 
     fun setView(view: PreviewView): Long {
@@ -389,6 +437,15 @@ class EngineThread(private val background: Int, context: Context? = null) {
         return serial
     }
 
+    fun restart() {
+        handler.post {
+            if (closed) return@post
+            simulateGpuLoss = true
+            runCatching { engine() }.onFailure { Log.e("AMEngine", "the engine could not restart", it) }
+            renderNow()
+        }
+    }
+
     private fun requestRender() {
         if (closed || !renderPosted.compareAndSet(false, true)) return
         if (!handler.post {
@@ -396,6 +453,8 @@ class EngineThread(private val background: Int, context: Context? = null) {
             renderNow()
         }) renderPosted.set(false)
     }
+
+    internal fun videoFrameReady() = requestRender()
 
     private fun applyPending() {
         if (closed || capturing) return
@@ -470,10 +529,11 @@ class EngineThread(private val background: Int, context: Context? = null) {
     }
 
     private fun renderNow() {
-        if (closed || capturing) return
+        if (closed || capturing || mediaJob?.isActive == true) return
         try {
             applyPending()
             val v = view ?: return
+            if (mediaScene?.let { videos?.previewReady(it, v.timeMs, playing) == false } == true) return
             if (target != 0L) {
                 val native = engine()
                 val started = System.nanoTime()
@@ -486,6 +546,33 @@ class EngineThread(private val background: Int, context: Context? = null) {
             }
         } catch (e: Exception) {
             if (!closed) Log.e("AMEngine", "preview rendering failed", e)
+        }
+        if (!closed && (lost || engine?.failed == true)) {
+            handler.removeCallbacks(retryRender)
+            handler.postDelayed(retryRender, GPU_RETRY_MS)
+        }
+    }
+
+    suspend fun capturePreviewFrame(document: Scene, timeMs: Int, width: Int, height: Int, accurateBlur: Boolean,
+                                    accept: () -> Boolean): ByteArray? {
+        if (closed || playing || mediaJob?.isActive == true || fontJob?.isActive == true || effectJob?.isActive == true || !accept() || !captureLock.tryLock()) return null
+        try {
+            return withContext(dispatcher) {
+                if (closed || capturing || playing || target == 0L || mediaScene != document || !accept()) return@withContext null
+                applyPending()
+                if (videos?.previewReady(document, timeMs, false) == false) return@withContext null
+                capturing = true
+                try {
+                    prepareTextTime(timeMs)
+                    val started = System.nanoTime()
+                    engine().previewStill(timeMs.toDouble(), width, height, accurateBlur).also { lastStillMs = (System.nanoTime() - started) / 1e6 }
+                } finally {
+                    capturing = false
+                    prepareTextTime(requestedView?.timeMs ?: 0)
+                }
+            }
+        } finally {
+            captureLock.unlock()
         }
     }
 
@@ -593,6 +680,9 @@ class EngineThread(private val background: Int, context: Context? = null) {
         suspend fun still(timeMs: Int, width: Int, height: Int): ByteArray? =
             atFrame(document, timeMs, smoothing, fps) { engine().still(timeMs.toDouble(), width, height) }
 
+        suspend fun previewStill(timeMs: Int, width: Int, height: Int, accurateBlur: Boolean): ByteArray? =
+            atFrame(document, timeMs, smoothing, fps) { engine().previewStill(timeMs.toDouble(), width, height, accurateBlur) }
+
         suspend fun attach(surface: Surface): Long = withContext(dispatcher) { engine().attach(surface, forEncoder = true) }
 
         suspend fun detach(target: Long) = withContext(NonCancellable + dispatcher) { engine?.detach(target) }
@@ -601,6 +691,8 @@ class EngineThread(private val background: Int, context: Context? = null) {
             atFrame(document, timeMs, smoothing, fps) { engine().renderFrame(target, timeMs.toDouble(), 0xFF000000.toInt(), presentTimeNs) == 0 }
 
         suspend fun stampsPresentTime(): Boolean = withContext(dispatcher) { engine().displayTiming }
+
+        suspend fun openGl(): Boolean = withContext(dispatcher) { engine().openGl }
 
         suspend fun renderInto(buffer: HardwareBuffer, timeMs: Int): Boolean =
             atFrame(document, timeMs, smoothing, fps) { engine().renderBuffer(buffer, timeMs.toDouble(), 0xFF000000.toInt()) == 0 }
@@ -618,22 +710,16 @@ class EngineThread(private val background: Int, context: Context? = null) {
         awaitMedia()
         fontJob?.join()
         effectJob?.join()
-        val document = Scene.parse(xml)
+        val document = withContext(Dispatchers.Default) { Scene.parse(xml) }
         val prepared = prepareAudioEffects(xml, document)
         fonts?.let { library -> document.fontNames().forEach { library.resolve(it) } }
         var shown: String? = null
+        var swapped = false
+        var held: Job? = null
         var previousAudio: Pair<String, AudioReactive.Prepared>? = null
-        var captureStarted = false
-        withContext(dispatcher) {
-            check(!closed) { "engine closed" }
-            applyPending()
-            shown = scene
-            previousAudio = preparedAudio
-            capturing = true
-            captureStarted = true
-        }
-        val held = videos?.hold()
         try {
+            withContext(dispatcher) { capturing = true }
+            held = videos?.hold()
             held?.join()
             media?.pinned = document
             media?.prepare(document)
@@ -641,19 +727,23 @@ class EngineThread(private val background: Int, context: Context? = null) {
             withContext(dispatcher) {
                 check(!closed) { "engine closed" }
                 applyPending()
+                shown = scene
+                capturing = true
+                swapped = true
+                previousAudio = preparedAudio
                 audioRenderJob?.cancel(); audioWantedXml = null
                 preparedAudio = prepared
                 setEngineScene(xml, 0)
             }
             ExportSession(document, smoothing, fps).block()
         } finally {
-            if (held != null) videos.release()
+            if (held != null) videos?.release()
             media?.pinned = null
             var noPreview = true
             try {
                 withContext(NonCancellable + dispatcher) {
-                    if (captureStarted) preparedAudio = previousAudio
-                    try { restoreScene(shown) }
+                    if (swapped) preparedAudio = previousAudio
+                    try { if (swapped) restoreScene(shown) }
                     finally { capturing = false; noPreview = target == 0L }
                 }
             } finally {
@@ -680,8 +770,10 @@ class EngineThread(private val background: Int, context: Context? = null) {
     private fun writePng(pixels: ByteArray, width: Int, height: Int, file: File): Boolean {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         bitmap.isPremultiplied = false
-        bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(pixels))
-        return file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        try {
+            bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(pixels))
+            return file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        } finally { bitmap.recycle() }
     }
 
     suspend fun timing(): String = withContext(dispatcher) { if (!closed && target != 0L && engine?.failed != true) engine().timing(target) else "{}" }
@@ -710,21 +802,27 @@ class EngineThread(private val background: Int, context: Context? = null) {
     }
 }
 
+private val instances = java.util.concurrent.atomic.AtomicLong()
+
+private const val GPU_RETRY_MS = 1000L
+
 private val spacingEffects = Regex("<effect\\b[^>]*\"${Regex.escape(app.absentmotion.compat.ForeignEffectIds.TEXT_SPACING)}\"[^>]*?(/>|>.*?</effect>)", RegexOption.DOT_MATCHES_ALL)
 
 internal fun animatesTextSpacing(xml: String): Boolean =
     xml.contains(app.absentmotion.compat.ForeignEffectIds.TEXT_SPACING) && spacingEffects.findAll(xml).any { it.value.contains("<kf") }
 
 internal class PendingScene {
-    private val next = AtomicReference<String?>(null)
+    private val next = AtomicReference<Lazy<String>?>(null)
     private val fonts = AtomicBoolean(false)
 
-    fun set(xml: String) = next.set(xml)
+    fun set(xml: String) = next.set(lazyOf(xml))
+
+    fun set(xml: Lazy<String>) = next.set(xml)
 
     fun fontsChanged() = fonts.set(true)
 
     fun take(shown: String?): String? {
         val again = fonts.getAndSet(false)
-        return next.getAndSet(null) ?: shown.takeIf { again }
+        return next.getAndSet(null)?.value ?: shown.takeIf { again }
     }
 }

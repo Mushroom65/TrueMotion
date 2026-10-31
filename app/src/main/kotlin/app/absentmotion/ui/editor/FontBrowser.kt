@@ -1,5 +1,7 @@
 package app.absentmotion.ui.editor
 
+import app.absentmotion.ui.tutorial.tutorialGuard
+
 import app.absentmotion.ui.theme.Am
 import app.absentmotion.ui.theme.Presence
 import app.absentmotion.ui.theme.presence
@@ -72,7 +74,7 @@ internal fun FontBrowser(library: FontLibrary, onSelect: (String) -> Unit, onClo
             uris.forEach { uri ->
                 val problem = try { library.import(uri); null } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: FontImportError) { e.problem } catch (_: Exception) { FontProblem.Corrupted }
                 if (problem != null) failures += app.absentmotion.i18n.AppText.get(R.string.font_import_reason_line,
-                    runCatching { context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { if (it.moveToFirst()) it.getString(0) else null } }.getOrNull() ?: uri.lastPathSegment ?: "",
+                    withContext(Dispatchers.IO) { runCatching { context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { if (it.moveToFirst()) it.getString(0) else null } }.getOrNull() } ?: uri.lastPathSegment ?: "",
                     app.absentmotion.i18n.AppText.get(FontReasons.getValue(problem)))
             }
             if (failures.isNotEmpty()) error = FontError(if (failures.size == uris.size) R.string.font_import_failed_title else R.string.font_import_some_failed_title, R.string.font_import_reasons_body, failures.joinToString("\n"))
@@ -216,9 +218,9 @@ private val LanguageLabels = mapOf(
 )
 
 @Composable
-internal fun FontIconButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
-    Box(Modifier.size(42.dp).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(icon, label, Modifier.size(24.dp), tint = Am.OnDark)
+internal fun FontIconButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, modifier: Modifier = Modifier, tint: Color = Am.OnDark, onClick: () -> Unit) {
+    Box(modifier.size(42.dp).tutorialGuard().clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Icon(icon, label, Modifier.size(24.dp), tint = tint)
     }
 }
 

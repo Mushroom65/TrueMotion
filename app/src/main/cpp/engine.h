@@ -12,7 +12,7 @@ struct AHardwareBuffer;
 
 namespace am {
 
-enum class Backend : int { kGraphite = 0, kGanesh = 1 };
+enum class Backend : int { kGraphite = 0, kGanesh = 1, kGaneshGL = 2 };
 
 struct SnapGuide {
     bool vertical;
@@ -114,6 +114,8 @@ public:
     virtual int64_t hitTest(float x, float y, double timeMs) = 0;
 
     virtual bool still(double timeMs, int width, int height, std::vector<uint8_t>* rgba) = 0;
+
+    virtual bool previewStill(double timeMs, int width, int height, bool accurateBlur, std::vector<uint8_t>* rgba) = 0;
 
     virtual bool shapeIcon(const std::string& xml, int size, uint32_t color, std::vector<uint8_t>* rgba) = 0;
 

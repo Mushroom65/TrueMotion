@@ -30,7 +30,7 @@ import app.absentmotion.model.nestedTime
 enum class EditorPanel(@StringRes val title: Int) {
     Tools(0), Speed(R.string.edit_panel_time_remapping), MoveTransform(R.string.edit_panel_transform), ColorFill(R.string.edit_panel_fill_color),
     EditShape(R.string.edit_panel_shape_options), EditText(R.string.edit_panel_edit_text),
-    BorderShadow(R.string.edit_panel_frame_shadow), Blending(R.string.edit_panel_opacity_blend), Effects(R.string.edit_panel_effects), Camera(R.string.edit_panel_camera_options), Model(R.string.edit_panel_model_options), AudioMotion(R.string.true_audio_title),
+    BorderShadow(R.string.edit_panel_frame_shadow), Blending(R.string.edit_panel_opacity_blend), Effects(R.string.edit_panel_effects), Camera(R.string.edit_panel_camera_options), Model(R.string.edit_panel_model_options), Crop(R.string.layer_tool_crop), AudioMotion(R.string.true_audio_title),
 }
 
 data class KeyTarget(val ref: PropRef, val default: String, val type: String = "float")
@@ -65,6 +65,18 @@ object Glide {
 }
 
 class PointAdjust(val label: String, val move: (dx: Float, dy: Float) -> Unit)
+
+class LayerPoints(
+    val points: List<app.absentmotion.model.Pt>,
+    val selected: Int,
+    val pivot: Boolean = false,
+    val lines: List<Pair<Int, Int>> = emptyList(),
+    val guide: List<app.absentmotion.model.Pt> = emptyList(),
+    val pick: (Int) -> Unit = {},
+    val tap: ((app.absentmotion.model.Pt) -> Unit)? = null,
+    val source: (app.absentmotion.model.Pt) -> app.absentmotion.model.Pt = { it },
+    val move: (Int, app.absentmotion.model.Pt) -> Unit,
+)
 
 class EditorState(
     val projectId: String,
@@ -193,6 +205,7 @@ class EditorState(
     var keypad by mutableStateOf<KeypadRequest?>(null)
 
     var previewPanelOpen by mutableStateOf(false)
+    var transitionButtonDismissed by mutableStateOf(false)
     var pixelMode by mutableStateOf(false)
     var gridMode by mutableStateOf(false)
 
@@ -217,6 +230,7 @@ class EditorState(
         }
 
     var cameraTip by mutableStateOf(false)
+    var cameraFrameGuide by mutableStateOf(true)
 
     var canvasZoom by mutableFloatStateOf(1f)
     var timelineZoom by mutableFloatStateOf(100f)
@@ -271,7 +285,28 @@ class EditorState(
 
     var pointAdjust by mutableStateOf<PointAdjust?>(null)
 
+    var layerPoints by mutableStateOf<LayerPoints?>(null)
+
     var turner by mutableStateOf<((drag: Offset, twist: Float) -> Unit)?>(null)
+
+    var cropAspect by mutableStateOf<Float?>(null)
+
+    var previewChange: ((Scene) -> Scene)? = null
+        set(value) {
+            if (field === value) return
+            field = value
+            engine.setScene(value?.invoke(scene) ?: scene)
+        }
+
+    private fun show(next: Scene, xml: Lazy<String>) {
+        val change = previewChange
+        if (change == null) engine.setScene(next, xml) else engine.setScene(change(next))
+    }
+
+    private fun showCurrent(xml: Lazy<String>) {
+        val current = scene
+        if (editingGroup) show(current, lazy { current.toXml() }) else show(current, xml)
+    }
 
     var volumeOpen by mutableStateOf(false)
 
@@ -298,8 +333,9 @@ class EditorState(
         val ended = history.endGesture()
         if (pending || ended) {
             dropDraft()
-            val xml = document.toXml()
-            if (pending) engine.setScene(scene)
+            val current = document
+            val xml = lazy { current.toXml() }
+            if (pending) showCurrent(xml)
             if (ended) saver.commit(xml) else saver.draft(xml)
         }
         saver.flush()
@@ -309,8 +345,8 @@ class EditorState(
     private val sendDraft = Choreographer.FrameCallback {
         drafted?.let { next ->
             drafted = null
-            val xml = next.toXml()
-            engine.setScene(scene)
+            val xml = lazy { next.toXml() }
+            showCurrent(xml)
             saver.draft(xml)
         }
     }
@@ -385,8 +421,9 @@ class EditorState(
             return
         }
         dropDraft()
-        engine.setScene(scene)
-        saver.commit(document.toXml())
+        val xml = lazy { next.toXml() }
+        showCurrent(xml)
+        saver.commit(xml)
     }
 
     private companion object {

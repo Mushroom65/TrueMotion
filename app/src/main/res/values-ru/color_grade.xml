@@ -17,7 +17,7 @@
     <string name="true_grade_neutral">Сброс цвета</string>
     <string name="true_grade_master">Общая</string>
     <string name="true_grade_curve_control">Цветовая кривая: перемещай точку по вертикали</string>
-    <string name="true_grade_curve_hint">Три точки: 25%, 50% и 75%. Линейные отрезки совпадают с результатом шейдера.</string>
+    <string name="true_grade_curve_hint" formatted="false">Три точки: 25%, 50% и 75%. Линейные отрезки совпадают с результатом шейдера.</string>
     <string name="true_grade_curve_point">Вход %1$d%%</string>
     <string name="true_grade_hue">Оттенок</string>
     <string name="true_grade_saturation">Насыщенность</string>

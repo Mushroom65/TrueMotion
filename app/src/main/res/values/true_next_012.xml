@@ -1,0 +1,10 @@
+<resources>
+    <string name="true_alight_import">Import .alight / XML</string>
+    <string name="true_alight_package">True Motion project (.alight)</string>
+    <string name="true_alight_package_hint">Includes media and editable vector animation. For True Motion and compatible tools.</string>
+    <string name="true_package_format">Project format</string>
+    <string name="true_media_select_many">Select multiple</string>
+    <string name="true_media_add_selected">Add (%1$d)</string>
+    <string name="true_camera_frame">Camera frame</string>
+    <string name="true_vector_open_failed">Could not open the vector document. Its saved drawing was kept.</string>
+</resources>

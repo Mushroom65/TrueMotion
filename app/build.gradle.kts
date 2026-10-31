@@ -20,7 +20,6 @@ android {
         testInstrumentationRunner = "app.truemotion.port.PortInstrumentation"
         versionCode = appVersion.getProperty("versionCode").toInt()
         versionName = appVersion.getProperty("versionName")
-        ndk { abiFilters += "arm64-v8a" }
         buildConfigField("boolean", "COMPATIBLE", "false")
         externalNativeBuild {
             cmake { arguments += listOf("-DANDROID_STL=c++_static") }
@@ -53,7 +52,7 @@ android {
             signingConfig = signingConfigs.findByName("release")
             vcsInfo.include = false
             isMinifyEnabled = true
-            proguardFiles(file("proguard-rules.pro"))
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), file("proguard-rules.pro"))
         }
     }
 
@@ -82,11 +81,29 @@ android {
 
     flavorDimensions += "distribution"
     productFlavors {
-        create("play") { dimension = "distribution" }
-        create("foss") { dimension = "distribution" }
+        create("play") {
+            dimension = "distribution"
+            manifestPlaceholders["variant"] = "play"
+            ndk { abiFilters += "arm64-v8a" }
+        }
+        create("foss") {
+            dimension = "distribution"
+            manifestPlaceholders["variant"] = "foss"
+            ndk { abiFilters += "arm64-v8a" }
+        }
         create("compat") {
             dimension = "distribution"
-            minSdk = 28
+            manifestPlaceholders["variant"] = "compat"
+            minSdk = 26
+            ndk { abiFilters += "arm64-v8a" }
+            buildConfigField("boolean", "COMPATIBLE", "true")
+            externalNativeBuild { cmake { arguments += "-DAM_COMPAT=ON" } }
+        }
+        create("compat32") {
+            dimension = "distribution"
+            manifestPlaceholders["variant"] = "compat32"
+            minSdk = 26
+            ndk { abiFilters += "armeabi-v7a" }
             buildConfigField("boolean", "COMPATIBLE", "true")
             externalNativeBuild { cmake { arguments += "-DAM_COMPAT=ON" } }
         }
@@ -99,11 +116,24 @@ android {
             assets.directories += "src/foss/assets"
         }
         named("testCompat") { kotlin.directories += "src/testFoss/kotlin" }
+        named("compat32") {
+            kotlin.directories += "src/foss/kotlin"
+            assets.directories += "src/foss/assets"
+            res.directories += "src/compat/res"
+            manifest.srcFile("src/compat/AndroidManifest.xml")
+        }
+        named("testCompat32") { kotlin.directories += "src/testFoss/kotlin" }
     }
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     if (!name.contains("Test")) compilerOptions.allWarningsAsErrors.set(true)
+}
+
+tasks.withType<Test>().configureEach {
+    inputs.dir("src/main/assets").withPropertyName("mainAssets").withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir("src/main/res").withPropertyName("mainRes").withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir("../testdata").withPropertyName("testData").withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 dependencies {

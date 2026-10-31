@@ -27,7 +27,7 @@ class EffectPackTest {
         val declared = Regex("""(layout\s*\(\s*color\s*\)\s*)?uniform\s+(\w+)\s+(\w+)\s*;""")
         for (effect in catalog.definitions.filter { it.dialect != "afterz" }) {
             if (effect.native) {
-                assertTrue("${effect.key} is not a built-in", effect.category in setOf("move", "repeat", "text") || effect.id in setOf("absent.blur", "absent.glow", "absent.motionblur", "absent.smear", "absent.backdrop", "absent.drawingprogress", "absent.stroketaper", "lab.true.audioMotion", "lab.true.particles"))
+                assertTrue("${effect.key} is not a built-in", effect.category in setOf("move", "repeat", "text") || effect.id in setOf("absent.blur", "absent.glow", "absent.motionblur", "absent.smear", "absent.backdrop", "absent.drawingprogress", "absent.stroketaper", "absent.puppet", "lab.true.audioMotion", "lab.true.particles"))
                 assertNull(effect.sksl)
                 continue
             }
@@ -40,8 +40,10 @@ class EffectPackTest {
                 listOf("backdrop", "below").filter { it in uniforms }.associateWith { "shader" to false } +
                 (if ("screen" in uniforms) mapOf("screen" to ("float4" to false)) else emptyMap()) +
                 (if ("layer" in uniforms) mapOf("layer" to ("float2" to false)) else emptyMap()) +
-                listOf("toLayer", "fromLayer").filter { it in uniforms }.associateWith { "float3x3" to false } +
-                effect.params.associate { p ->
+                listOf("toLayer", "fromLayer", "orient").filter { it in uniforms }.associateWith { "float3x3" to false } +
+                listOf("palette", "thresholds").filter { it in uniforms }.associateWith { "shader" to false } +
+                listOf("paletteSize", "paletteSpread").filter { it in uniforms }.associateWith { "float" to false } +
+                effect.params.filter { it.kind != "text" }.associate { p ->
                     p.id to when (p.kind) { "point" -> "float2" to false; "color" -> "half4" to true; else -> "float" to false }
                 }
             assertEquals(effect.key, expected, uniforms)
@@ -106,15 +108,19 @@ class EffectPackTest {
         assertEquals("0.000000", phase.default)
     }
 
-    @Test fun theNewCategoryShowsEffectsFromTheLastFiveReleases() {
+    @Test fun theNewCategoryShowsOnlyEffectsFromTheLastFiveReleases() {
         val releases = JSONArray(File(pack, "releases.json").readText()).let { a -> List(a.length()) { a.getString(it) } }
         val numbers = releases.map { r -> r.split('.').map { it.toInt() } }
         assertTrue("releases are listed oldest first", numbers.zipWithNext().all { (a, b) -> a.zip(b).firstOrNull { it.first != it.second }?.let { it.first < it.second } == true })
-        assertTrue(catalog.definitions.all { it.since == null || it.since in releases })
+        val last = numbers.last()
+        assertTrue(catalog.definitions.all { d ->
+            d.since == null || d.since in releases || d.since.split('.').map { it.toInt() }.zip(last).firstOrNull { it.first != it.second }?.let { it.first > it.second } == true
+        })
         assertEquals(releases.takeLast(5).toSet(), catalog.newest)
         val fresh = catalog.listed("new").map { it.key }.toSet()
-        assertTrue(fresh.containsAll(listOf("vhs", "oscillate", "timequant", "unsharpmask", "flicker")))
-        assertTrue("blur" !in fresh && "glow" !in fresh)
+        assertTrue(fresh.containsAll(listOf("textpath", "puppet")))
+        assertTrue(listOf("blur", "glow", "vhs", "oscillate", "timequant").none { it in fresh })
+        assertEquals("4.3.0", releases.last())
         val categories = EffectCatalog.Categories.keys.filter { !it.startsWith("amz-") || catalog.listed(it).isNotEmpty() }
         assertEquals(listOf("new") + categories + "ai", catalog.categories.map { it.first })
         val old = EffectCatalog(catalog.definitions.map { it.copy(since = null) }, newest = catalog.newest)

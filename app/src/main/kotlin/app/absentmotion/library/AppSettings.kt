@@ -25,6 +25,8 @@ class AppSettings(private val context: Context) {
     private var loopingPlayState by mutableStateOf(prefs.getBoolean("loopingPlay", false))
     private var xmlUploadState by mutableStateOf(prefs.getBoolean("xmlUpload", false))
     private var vibrationState by mutableStateOf(prefs.getBoolean("trimLimitVibration", true))
+    private var basicTransformState by mutableStateOf(prefs.getBoolean("basicTransform", false))
+    private var openGlState by mutableStateOf(prefs.getBoolean("graphicsOpenGl", false))
 
     private var themeState by mutableStateOf(prefs.getString("theme", Themes.DEFAULT)!!)
     private var customThemeState by mutableStateOf(Themes.custom(context)?.let { it.name ?: "" })
@@ -59,9 +61,23 @@ class AppSettings(private val context: Context) {
         get() = xmlUploadState
         set(value) { xmlUploadState = value; prefs.edit().putBoolean("xmlUpload", value).apply() }
 
+    var basicTransform: Boolean
+        get() = basicTransformState
+        set(value) { basicTransformState = value; prefs.edit().putBoolean("basicTransform", value).apply() }
+
+    var openGl: Boolean
+        get() = openGlState
+        set(value) { openGlState = value; prefs.edit().putBoolean("graphicsOpenGl", value).apply() }
+
     var vibration: Boolean
         get() = vibrationState
         set(value) { vibrationState = value; prefs.edit().putBoolean("trimLimitVibration", value).apply() }
+
+    private var transitionInPreviewState by mutableStateOf(prefs.getBoolean("transitionInPreview", false))
+
+    var transitionInPreview: Boolean
+        get() = transitionInPreviewState
+        set(value) { transitionInPreviewState = value; prefs.edit().putBoolean("transitionInPreview", value).apply() }
 
     private var androidEmojiState by mutableStateOf(prefs.getBoolean(app.absentmotion.fonts.FontLibrary.ANDROID_EMOJI, false))
 
@@ -75,7 +91,7 @@ class AppSettings(private val context: Context) {
         get() = previewCopiesState
         set(value) {
             previewCopiesState = value
-            prefs.edit().putBoolean(app.absentmotion.media.VideoProxies.SETTING, value).commit()
+            prefs.edit().putBoolean(app.absentmotion.media.VideoProxies.SETTING, value).apply()
             app.absentmotion.media.VideoProxies.settingChanged()
         }
 
@@ -85,11 +101,7 @@ class AppSettings(private val context: Context) {
         get() = fullMotionBlurState
         set(value) { fullMotionBlurState = value; prefs.edit().putBoolean("fullMotionBlur", value).apply() }
 
-    private var previewCacheHintState by mutableStateOf(prefs.getBoolean("previewCacheHint", true))
 
-    var previewCacheHint: Boolean
-        get() = previewCacheHintState
-        set(value) { previewCacheHintState = value; prefs.edit().putBoolean("previewCacheHint", value).apply() }
 
     private var keepMediaCopiesState by mutableStateOf(prefs.getBoolean("keepMediaCopies", true))
 
@@ -180,6 +192,10 @@ class AppSettings(private val context: Context) {
     var onboarding: Int
         get() = prefs.getInt("onboarding", 0)
         set(value) { prefs.edit().putInt("onboarding", value).apply() }
+
+    fun playNoticeDue(flavour: String) = flavour == "play" && prefs.getInt("playNotice", 0) < 2
+
+    fun playNoticeSeen() = prefs.edit().putInt("playNotice", prefs.getInt("playNotice", 0) + 1).apply()
 
     private var tutorialStepState by mutableStateOf(prefs.getString("tutorialStep", null))
 

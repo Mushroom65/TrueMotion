@@ -2,13 +2,17 @@
 
 # True Motion Next
 
-An experimental Android motion graphics editor based on [AbsentMotion 4.0.0](https://github.com/Comett1225/AbsentMotion/tree/v4.0.0), with tools being ported from the earlier True Motion mod.
+An experimental Android motion graphics editor based on [AbsentMotion 4.3.0](https://github.com/Comett1225/AbsentMotion/tree/v4.3.0), with tools being ported from the earlier True Motion mod.
 
 [Русская инструкция](README_TRUE_MOTION_RU.md) · [Port status](docs/TRUE_MOTION_MIGRATION_RU.md) · [Telegram](https://t.me/TrueMoti0n)
 
-## Included in 0.11.0
+## Included in 0.12.0
 
-- 575 freshly adapted AfterMotionZ+ effects in 11 separate categories, including Deep Glow AE and Saber AE; 198 existing definitions preserved. [Scope and validation](docs/AFTERZ_EFFECTS_RU.md).
+- Upstream stable v4.3.0 merged, including its OpenGL backend and new editor tools.
+- `.alight` / XML import directly from Projects and `.alight` / `.absproj` package export.
+- Full effect color picker, multiple media selection and direct reopening of vector animation layers.
+- Native XYZ camera rotation and an optional viewport-only camera frame matte.
+- 575 freshly adapted AfterMotionZ+ effects in 11 separate categories, including Deep Glow AE and Saber AE; 575 donor definitions preserved across the update; 210 core/tool definitions. [Scope and validation](docs/AFTERZ_EFFECTS_RU.md).
 - Native color grading with wheels, curves and HSL controls.
 - Live audio-driven animation referencing an audio layer, beat markers and Bop.
 - Native particle simulation, lifetime controls and layer textures.
@@ -18,11 +22,11 @@ An experimental Android motion graphics editor based on [AbsentMotion 4.0.0](htt
 - Manual viewport prerender, green timeline cache indicators and a 2 GiB disk cache.
 - Animated GIF import and the supplied True Motion launcher/in-app logo.
 
-The port is **not complete**. The remaining donor effects, full 3D/rigging tools, automatic caching of every viewed frame and the new Windows renderer remain incomplete. Consult the [feature status](docs/TRUE_MOTION_MIGRATION.json) before relying on a feature. Unknown legacy effects are preserved on import, but exact rendering compatibility is not guaranteed.
+The port is **not complete**. The remaining donor effects, advanced rigging tools, automatic caching of every viewed frame and the new Windows renderer remain incomplete. Consult the [feature status](docs/TRUE_MOTION_MIGRATION.json) before relying on a feature. Unknown legacy effects are preserved on import, but exact rendering compatibility is not guaranteed.
 
 ## Build the compatible Android app
 
-Requirements: JDK 21, Android SDK platform `android-37.0`, build-tools `37.0.0` and the checked-in Gradle wrapper. The compatible app supports Android 9+ on ARM64. Set `ANDROID_HOME` or create your own untracked `local.properties`.
+Requirements: JDK 21, Android SDK platform `android-37.0`, build-tools `37.0.0` and the checked-in Gradle wrapper. This compatible build is intended for Android 9+ on ARM64; its declared minSdk follows upstream (26). Older devices have not been tested. Set `ANDROID_HOME` or create your own untracked `local.properties`.
 
 ```sh
 git clone https://github.com/Mushroom65/TrueMotion.git
@@ -37,6 +41,8 @@ The fast build uses the included native libraries. The renderer core was rebuilt
 GitHub Actions builds the compatible debug APK and runs JVM tests. It does not publish releases or deploy the upstream website. CI-produced debug APKs are development artifacts.
 
 ## Artwork and validation
+
+0.12.0: 1,610 JVM tests passed locally (30 environment skips). Android native checks cover all 575 donor effects, the existing tools, editable `.alight` roundtrips and XYZ camera projection in Vulkan/OpenGL. Import/export and the new controls were reviewed through the app UI. [Validation details](docs/RELEASE_0_12_RU.md).
 
 The exact user-provided logo is retained in `branding/true-motion-source.png`. With Pillow installed, run `python tools/icon/package_true_motion.py` to reproduce the app and adaptive/themed launcher assets.
 

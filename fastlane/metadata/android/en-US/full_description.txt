@@ -5,7 +5,7 @@ AbsentMotion is a free, open-source alternative to CapCut and Alight Motion: a m
 <ul>
 <li>Build scenes from layers on a timeline: shapes, text, images, video, audio, freehand drawings, groups, reusable elements and 3D models.</li>
 <li>Animate any value with keyframes and easing curves (cubic Bezier, bounce, elastic, cyclic, random and steps), edited on a graph.</li>
-<li>181 effects: shake, oscillate, spin and other Move effects, Repeat, 3D objects, text animators, VHS, datamosh, glass, blurs, glows, distortions and colour effects, with animated previews.</li>
+<li>184 effects: shake, oscillate, spin and other Move effects, Repeat, 3D objects, text animators, VHS, datamosh, glass, blurs, glows, distortions and colour effects, with animated previews.</li>
 <li>One-tap transitions between clips and In, Out and Loop animations for any layer.</li>
 <li>Motion tracking, animated masks for rotoscoping, speed ramps and freeze frames, and an in-app camera.</li>
 <li>Draw vector shapes and edit their points, import SVG files, or draw freehand with pen, brush, fill and eraser.</li>
@@ -24,7 +24,7 @@ AbsentMotion can open scene XML files and .amproj packages exported from Alight 
 
 <ul>
 <li>Some Alight Motion effects are not in AbsentMotion yet; they stay in imported files but are not drawn.</li>
-<li>Requires Android 13 or newer and a 64-bit ARM device with Vulkan 1.1.</li>
+<li>Requires Android 13 or newer and a 64-bit ARM device with Vulkan 1.1 or OpenGL ES 3.0.</li>
 <li>This build contains no Google libraries. Background removal uses its own offline model.</li>
 </ul>
 

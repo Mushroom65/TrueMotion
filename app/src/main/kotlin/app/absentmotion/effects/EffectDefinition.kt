@@ -4,6 +4,7 @@ import app.absentmotion.model.Keyframe
 import app.absentmotion.model.XmlNode
 import app.absentmotion.model.withKeyframes
 import app.absentmotion.model.formatFloats
+import app.absentmotion.model.valueAt
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
@@ -28,6 +29,8 @@ data class EffectParam(
     val section: String = "",
     val componentMin: List<Float> = emptyList(),
     val componentMax: List<Float> = emptyList(),
+    val showWhen: Pair<String, Set<Int>>? = null,
+    val palette: Boolean = false,
 ) {
     val type: String get() = when (kind) { "point" -> "vec2"; "vector3" -> "vec3"; "color" -> "color"; "switch" -> "bool"; "text" -> "string"; else -> "float" }
     val missingDefault: String get() = legacyDefault ?: default
@@ -50,12 +53,17 @@ data class EffectParam(
             val id = json.getString("id")
             val kind = json.getString("type")
             require(kind in Kinds) { "$id: unknown type $kind" }
+            val palette = json.optBoolean("palette")
+            require(!palette || kind == "text") { "$id: palette needs type text" }
             val d = json.opt("default")
             val default = format(id, kind, d)
             val legacyDefault = if (json.has("legacyDefault")) format(id, kind, json.get("legacyDefault")) else null
             fun floats(name: String): List<Float> = json.optJSONArray(name)?.let { a -> List(a.length()) { a.getDouble(it).toFloat() } }.orEmpty()
             val shaderId = json.optString("shaderId", id)
             val section = json.optString("section")
+            val showWhen = json.optJSONObject("when")?.let { o ->
+                o.keys().asSequence().firstOrNull()?.let { key -> key to o.getJSONArray(key).let { a -> List(a.length()) { a.getInt(it) }.toSet() } }
+            }
             if (kind == "choice") {
                 val options = json.getJSONArray("options").let { a -> List(a.length()) { a.getString(it) } }
                 val values = floats("optionValues").ifEmpty { options.indices.map(Int::toFloat) }
@@ -63,13 +71,14 @@ data class EffectParam(
                 if (!json.has("optionValues")) require((d as Number).toInt() in options.indices) { "$id: choice $d" }
                 val initial = (d as Number).toFloat()
                 return EffectParam(id, json.optString("label", id), kind, default, minOf(values.min(), initial), maxOf(values.max(), initial), 1f,
-                    options = options, legacyDefault = legacyDefault, shaderId = shaderId, optionValues = values, section = section)
+                    options = options, legacyDefault = legacyDefault, shaderId = shaderId, optionValues = values, section = section,
+                    after = json.optString("after").takeIf { it.isNotEmpty() }, showWhen = showWhen)
             }
             return EffectParam(id, json.optString("label", id), kind, default,
                 json.optDouble("min", -Float.MAX_VALUE.toDouble()).toFloat(), json.optDouble("max", Float.MAX_VALUE.toDouble()).toFloat(),
                 json.optDouble("step", 0.01).toFloat(), percent = json.optBoolean("percent"), pixels = json.optBoolean("pixels"), unit = json.optString("unit"),
                 layerTime = json.optBoolean("layerTime"), after = json.optString("after").takeIf { it.isNotEmpty() }, legacyDefault = legacyDefault,
-                shaderId = shaderId, section = section, componentMin = floats("componentMin"), componentMax = floats("componentMax"))
+                shaderId = shaderId, section = section, componentMin = floats("componentMin"), componentMax = floats("componentMax"), showWhen = showWhen, palette = palette)
         }
     }
 }
@@ -134,6 +143,13 @@ data class EffectDefinition(
         val floor = params.firstOrNull { it.id == param.after }?.let { p -> bounded(p, seconds, value).let { b -> value(p).coerceIn(b.min, b.max) } }
         val lo = maxOf(param.min, floor ?: param.min)
         return param.copy(min = lo, max = maxOf(lo, if (param.layerTime) minOf(param.max, seconds) else param.max))
+    }
+
+    fun shown(param: EffectParam, instance: XmlNode, t: Float): Boolean {
+        val (id, values) = param.showWhen ?: return true
+        val raw = instance.children.firstOrNull { it.name == "property" && it["name"] == id }?.valueAt(t) ?: params.firstOrNull { it.id == id }?.missingDefault
+        val number = when (raw) { "true" -> 1f; "false" -> 0f; else -> raw?.toFloatOrNull() }
+        return number?.let { kotlin.math.round(it).toInt() } in values
     }
 
     fun runtimeXml(lazy: Boolean = true): String = XmlNode("effect", buildMap {

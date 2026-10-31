@@ -313,8 +313,9 @@ internal fun Scene.rebased(layer: Layer, parentId: Long?): Layer? {
 internal fun Scene.withWorldLocation(layer: Layer, timeMs: Int, change: (x: Float, y: Float) -> Pair<Float, Float>): Layer {
     val world = place(layer, timeMs)
     val (x, y) = change(world.x, world.y)
-    val local = chain(layer).getOrNull(1)?.let { decompose(world.copy(x = x, y = y), place(it, timeMs)) }
-    return layer.withTransform("location", local?.x ?: x, local?.y ?: y, layer.location[2])
+    val parent = chain(layer).getOrNull(1) ?: return layer.withTransform("location", x, y, layer.location[2])
+    val local = decompose(world.copy(x = x, y = y), place(parent, timeMs)) ?: return layer
+    return layer.withTransform("location", local.x, local.y, layer.location[2])
 }
 
 internal fun Scene.unparentChildrenOf(ids: Set<Long>): Scene =
@@ -334,6 +335,28 @@ fun EditorState.setParent(parentId: Long?) {
     }
     val next = scene.rebased(layer, parentId) ?: return
     editSelected { next }
+}
+
+internal fun Scene.parented(ids: Collection<Long>, parentId: Long?): Pair<Scene, Int> {
+    var skipped = 0
+    val chosen = ids.filter { it != parentId }.mapNotNull { layer(it) }.sortedBy { chain(it).size }
+    val next = chosen.fold(this) { acc, picked ->
+        val layer = acc.layer(picked.id) ?: return@fold acc
+        if (layer.node["parent"]?.toLongOrNull() == parentId) return@fold acc
+        if (parentId != null && acc.chain(acc.layer(parentId)).any { it.id == layer.id }) {
+            skipped++
+            return@fold acc
+        }
+        val moved = acc.rebased(layer, parentId) ?: return@fold acc
+        acc.update(layer.id) { moved }
+    }
+    return next to skipped
+}
+
+fun EditorState.setParentOfChosen(parentId: Long?): Int {
+    val (next, skipped) = scene.parented(MultiSelect.ids, parentId)
+    if (next.node !== scene.node) edit { next }
+    return skipped
 }
 
 suspend fun EditorState.alignSelection(edge: Int) {

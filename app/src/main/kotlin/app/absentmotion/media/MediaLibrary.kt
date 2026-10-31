@@ -42,6 +42,7 @@ class MediaLibrary(context: Context, private val engine: EngineThread) {
             withContext(NonCancellable) {
                 engine.setPicture(uri, null)
                 loaded.remove(uri)
+                engine.publishSource(uri, null)
             }
         }
         for (uri in models.keys - kept.flatMapTo(HashSet()) { it.node.modelUris() }) {
@@ -64,7 +65,9 @@ class MediaLibrary(context: Context, private val engine: EngineThread) {
                 withContext(Dispatchers.IO) { decodePicture(resolver, Uri.parse(uri), limit) }
                     .also { Log.i("AMMedia", "picture $uri ${it?.width}x${it?.height} limit $limit") }
             },
+            forget = { uri -> engine.setPicture(uri, null) },
         ) { uri, bitmap -> try { engine.setPicture(uri, bitmap) } finally { bitmap.recycle() } }
+        for (uri in scene.node.imageUris()) engine.publishSource(uri, pictureIdentity(loaded[uri]?.second, loaded[uri]?.third?.first, engine.instance))
         for (uri in scene.node.modelUris()) {
             val version = withContext(Dispatchers.IO) { fileVersion(resolver, Uri.parse(uri)) }
             if (models[uri]?.let { it.first == version && it.second == generation } == true) continue
@@ -79,11 +82,15 @@ class MediaLibrary(context: Context, private val engine: EngineThread) {
 
     internal companion object {
         suspend fun <K, P : Any> loadPictures(uris: Iterable<String>, loaded: MutableMap<String, K>, key: suspend (String) -> K,
-                                              decode: suspend (String) -> P?, install: suspend (String, P) -> Boolean) {
+                                              decode: suspend (String) -> P?, forget: suspend (String) -> Unit = {}, install: suspend (String, P) -> Boolean) {
             for (uri in uris) {
                 val version = key(uri)
                 if (loaded[uri] == version) continue
-                val picture = decode(uri) ?: continue
+                val picture = decode(uri)
+                if (picture == null) {
+                    if (loaded.remove(uri) != null) forget(uri)
+                    continue
+                }
                 withContext(NonCancellable) { if (install(uri, picture)) loaded[uri] = version }
             }
         }
@@ -91,6 +98,8 @@ class MediaLibrary(context: Context, private val engine: EngineThread) {
 }
 
 internal const val MIN_PICTURE_LIMIT = 4096
+
+internal fun pictureIdentity(version: String?, generation: Int?, instance: Long): String? = if (version == null || generation == null) null else "$version@$instance.$generation"
 
 internal fun pictureLimit(maxTexture: Int, canvas: Int): Int = minOf(maxTexture, maxOf(MIN_PICTURE_LIMIT, 2 * canvas))
 
@@ -106,7 +115,6 @@ internal fun decodePicture(resolver: ContentResolver, uri: Uri, limit: Int, keep
     if (bounds.outWidth <= 0 || bounds.outHeight <= 0) null else {
         val options = BitmapFactory.Options().apply {
             inPreferredConfig = Bitmap.Config.ARGB_8888
-            inPreferredColorSpace = android.graphics.ColorSpace.get(android.graphics.ColorSpace.Named.SRGB)
             inScaled = false
             inSampleSize = pictureSample(maxOf(bounds.outWidth, bounds.outHeight), limit)
         }
@@ -162,7 +170,7 @@ private fun decodeBytes(bytes: ByteArray, limit: Int): Bitmap? = try {
 
 internal fun fileVersion(resolver: ContentResolver, uri: Uri): String? = try {
     resolver.openFileDescriptor(uri, "r")?.use { fd ->
-        Os.fstat(fd.fileDescriptor).run { "$st_dev:$st_ino:$st_size:${st_mtim.tv_sec}.${st_mtim.tv_nsec}" }
+        Os.fstat(fd.fileDescriptor).run { "$st_dev:$st_ino:$st_size:" + if (android.os.Build.VERSION.SDK_INT >= 27) "${st_mtim.tv_sec}.${st_mtim.tv_nsec}" else "$st_mtime" }
     }
 } catch (_: Exception) { null }
 

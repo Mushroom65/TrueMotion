@@ -17,7 +17,7 @@
     <string name="true_grade_neutral">中性色</string>
     <string name="true_grade_master">主曲线</string>
     <string name="true_grade_curve_control">颜色曲线：垂直拖动控制点</string>
-    <string name="true_grade_curve_hint">三个控制点位于 25%、50% 和 75%，线性连接与着色器一致。</string>
+    <string name="true_grade_curve_hint" formatted="false">三个控制点位于 25%、50% 和 75%，线性连接与着色器一致。</string>
     <string name="true_grade_curve_point">输入 %1$d%%</string>
     <string name="true_grade_hue">色相</string>
     <string name="true_grade_saturation">饱和度</string>

@@ -21,6 +21,7 @@ import app.absentmotion.model.XmlNode
 import app.absentmotion.model.mapMediaUris
 import app.absentmotion.model.mediaUris
 import app.absentmotion.model.storedMediaUris
+import app.absentmotion.model.withSiblingRefs
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
@@ -29,6 +30,9 @@ import java.io.Serializable
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.zip.ZipInputStream
+
+internal fun XmlNode.mapFonts(change: Map<String, String>): XmlNode =
+    (this["font"]?.let(change::get)?.let { with("font", it) } ?: this).let { it.copy(children = it.children.map { child -> child.mapFonts(change) }) }
 
 class ImportFailed(val text: UiText) : Exception(text.toString())
 
@@ -196,7 +200,7 @@ class Importer(
             ids.forEach { store.mediaDir(it).deleteRecursively() }
             saved.forEach { store.delete(it.id) }
             fontFiles.forEach { it.delete() }
-            if (t is IOException) throw ImportFailed(txt(R.string.library_err_malformed_package, t.message.toString()))
+            if (t is IOException || t is org.json.JSONException) throw ImportFailed(txt(R.string.library_err_malformed_package, t.message.toString()))
             throw t
         }
     }
@@ -216,8 +220,9 @@ class Importer(
             val missing = scene.node.mediaUris().filterNot { access.allows(it) && exists(it) }
             for (uri in missing) scene = scene.withMedia(MediaDeclaration(XmlNode("media", mapOf("uri" to uri))))
             scene = Scene(scene.node.copy(children = scene.node.children.map { if (it.name == "media" && it["uri"] in missing) it.with("missing", "true") else it }))
+            val result = ImportReport(id, scene.title, scene.node["type"] == "element", report(scene, missing, migrated))
             store.save(id, scene)
-            return ImportReport(id, scene.title, scene.node["type"] == "element", report(scene, missing, migrated))
+            return result
         } catch (t: Throwable) {
             store.mediaDir(id).deleteRecursively()
             throw t
@@ -237,7 +242,6 @@ class Importer(
         val names = missing.map { uri -> scene.media(uri)?.filename?.takeIf { it.isNotEmpty() } ?: uri.substringAfterLast('/') }
         return listOf(
             txt(R.string.library_report_unknown) to unknown.map(::reportText), txt(R.string.library_report_cannot_run) to effects,
-            txt(R.string.library_report_converted) to migrated?.converted?.map { (what, n) -> UiText.plural(R.plurals.library_report_converted_effects, n, what, n.toString()) }.orEmpty(),
             txt(R.string.library_report_dropped) to migrated?.dropped?.map(::reportText).orEmpty(),
             txt(R.string.library_report_media) to names.map(::reportText), txt(R.string.library_report_fonts) to fonts.map(::reportText),
         ).filter { it.second.isNotEmpty() }
@@ -264,7 +268,7 @@ class Importer(
         private val KnownAttributes = setOf(
             "id", "label", "startTime", "endTime", "fillType", "fillImage", "fillVideo", "inTime", "outTime", "speed", "blending",
             "parent", "hidden", "clippingMask", "mediaFillMode", "s", "tag", "align", "font", "size", "wrapWidth", "src", "type", "link",
-            "presetId", "templatePPId", "points", "color", "stroke", "style",
+            "presetId", "templatePPId", "trueVector", "points", "color", "stroke", "style",
         )
 
         private fun uniqueLayerIds(root: XmlNode): XmlNode {
@@ -287,7 +291,7 @@ class Importer(
                 return node.copy(children = renumbered.map { child ->
                     if (child.name !in Scene.LAYER_TAGS) return@map child
                     val parent = child["parent"]?.toLongOrNull()?.let(owners::get)
-                    val linked = if (parent == null || child["parent"] == "$parent") child else child.with("parent", "$parent")
+                    val linked = (if (parent == null || child["parent"] == "$parent") child else child.with("parent", "$parent")).withSiblingRefs(owners::get)
                     if (linked.name == "embedScene") linked.child("scene")?.let { linked.withChild("scene", scene(it)) } ?: linked else linked
                 })
             }
@@ -298,9 +302,6 @@ class Importer(
             .flatMap { sequenceOf(it) + (it.child("scene")?.let(::allLayers) ?: emptySequence()) }
 
         private fun fontsOf(root: XmlNode): Set<String> = allLayers(root).filter { it.name == "text" }.mapNotNull { it["font"] }.filter { it.startsWith("imported?") }.toSet()
-
-        private fun XmlNode.mapFonts(change: Map<String, String>): XmlNode =
-            (this["font"]?.let(change::get)?.let { with("font", it) } ?: this).let { it.copy(children = it.children.map { child -> child.mapFonts(change) }) }
 
         private fun installFont(input: InputStream, font: String, dir: File, made: MutableList<File>): String? {
             val bytes = input.readAtMost(MAX_FONT_BYTES + 1).takeIf { it.size <= MAX_FONT_BYTES } ?: return null

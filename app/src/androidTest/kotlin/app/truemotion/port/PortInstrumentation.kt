@@ -20,16 +20,29 @@ import java.nio.ByteBuffer
 class PortInstrumentation : Instrumentation() {
     private var afterzOnly = false
     private var afterzFull = true
+    private var nextOnly = false
     override fun onCreate(arguments: Bundle?) {
         super.onCreate(arguments)
         afterzOnly = arguments?.getString("afterz") in setOf("true", "focused")
         afterzFull = arguments?.getString("afterz") != "focused"
+        nextOnly = arguments?.getString("next012") == "true"
         start()
     }
     override fun onStart() {
         val report = JSONObject()
         try {
             val context = targetContext
+            if (nextOnly) {
+                val directory = File(context.filesDir,"next012-validation").apply { mkdirs() }
+                NativeEngine(NativeEngine.Backend.GRAPHITE).use { engine ->
+                    check(!engine.failed) { engine.info }
+                    report.put("next012",Next012Probe.run(context,engine,directory))
+                }
+                report.put("ok",true)
+                File(directory,"report.json").writeText(report.toString(2))
+                finish(0,Bundle().apply { putString("report",report.toString()) })
+                return
+            }
             if (afterzOnly) {
                 val directory = File(context.filesDir, "afterz-validation").apply { mkdirs() }
                 NativeEngine(NativeEngine.Backend.GRAPHITE).use { engine ->
@@ -138,6 +151,7 @@ class PortInstrumentation : Instrumentation() {
                 report.put("videoTools", VideoToolsProbe.run(context, directory))
                 report.put("motionPaths", MotionPathsProbe.run(context, engine, directory))
                 report.put("upstreamV4", UpstreamV4Probe.run(context, directory))
+                report.put("next012", Next012Probe.run(context, engine, directory))
             }
             val fixture = File(context.filesDir, "port-input.alight")
             if (fixture.exists()) {
@@ -150,7 +164,7 @@ class PortInstrumentation : Instrumentation() {
             finish(0, Bundle().apply { putString("report", report.toString()) })
         } catch (error: Throwable) {
             report.put("ok", false).put("error", error.stackTraceToString())
-            val directory = File(targetContext.filesDir, if (afterzOnly) "afterz-validation" else "port-validation").apply { mkdirs() }
+            val directory = File(targetContext.filesDir, if (afterzOnly) "afterz-validation" else if(nextOnly) "next012-validation" else "port-validation").apply { mkdirs() }
             File(directory, "report.json").writeText(report.toString(2))
             finish(1, Bundle().apply { putString("error", error.stackTraceToString()) })
         }

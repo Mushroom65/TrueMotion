@@ -3,6 +3,8 @@ package app.absentmotion.ui.editor
 import app.absentmotion.platform.readAtMost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +32,7 @@ import app.absentmotion.editor.deleteChosen
 import app.absentmotion.editor.alignClipTimes
 import app.absentmotion.editor.moveClipEdges
 import app.absentmotion.model.cutBetween
+import app.absentmotion.model.shownName
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,6 +62,7 @@ import app.absentmotion.editor.distributeSelection
 import app.absentmotion.editor.groupLayers
 import app.absentmotion.editor.pasteStyle
 import app.absentmotion.editor.setParent
+import app.absentmotion.editor.setParentOfChosen
 import app.absentmotion.editor.unparentChildrenOf
 import app.absentmotion.ui.theme.Am
 import app.absentmotion.ui.theme.Swap
@@ -193,6 +197,7 @@ private suspend fun importModel(context: Context, state: EditorState, picked: Li
         val main = names.indexOfFirst { it.substringAfterLast('.').lowercase() in setOf("obj", "glb", "gltf") }
         if (main < 0) return@withContext context.getString(R.string.model_choose_file)
         val folder = File(ProjectStore(context).mediaDir(state.projectId), "model-${System.currentTimeMillis()}")
+        var added = false
         try {
             folder.mkdirs()
             var total = 0L
@@ -213,8 +218,11 @@ private suspend fun importModel(context: Context, state: EditorState, picked: Li
             val uri = File(folder, names[main]).toURI().toString()
             val (bytes, open) = modelFiles(resolver, uri)
             val count = parseModel(names[main], bytes, open).triangleCount
-            withContext(Dispatchers.Main) { state.addModel(uri, names[main]) }
+            withContext(Dispatchers.Main) { state.addModel(uri, names[main]); added = true }
             if (count > MODEL_TRIANGLE_BUDGET) context.getString(R.string.model_simplified, "$count", "$MODEL_TRIANGLE_BUDGET") else null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            if (!added) folder.deleteRecursively()
+            throw e
         } catch (_: ModelTooLarge) {
             folder.deleteRecursively()
             context.getString(R.string.model_too_large)
@@ -237,14 +245,26 @@ internal fun MultiBar(state: EditorState, modifier: Modifier) {
     transition?.let { (a, b) -> TransitionSheet(state, a, b) { transition = null } }
     Row(modifier.padding(6.dp).clip(RoundedCornerShape(3.dp)).background(Am.PanelInset), verticalAlignment = Alignment.CenterVertically) {
         val end = layers.isNotEmpty() && state.timeMs >= layers.maxOf { it.endTime }
-        BarButton(if (end) PanelIcons.TrimRight else PanelIcons.TrimLeft, stringResource(if (end) R.string.structure_extend_ends else R.string.structure_extend_starts), Modifier.width(60.dp).fillMaxHeight(), layers.isNotEmpty()) {
-            state.moveClipEdges(end, true)
+        val context = LocalContext.current
+        val copied = EffectClipboard.effects
+        var effectsMenu by remember { mutableStateOf(false) }
+        Box(Modifier.width(60.dp).fillMaxHeight()) {
+            BarButton(PanelIcons.Effects, stringResource(R.string.layer_tool_effects), Modifier.fillMaxSize(), layers.isNotEmpty()) { effectsMenu = true }
+            Presence(effectsMenu) {
+                MenuPopup(AboveLeft, { effectsMenu = false }, TransformOrigin(0f, 1f)) {
+                    val note = if (copied.isEmpty()) stringResource(R.string.effects_none_copied)
+                        else pluralStringResource(R.plurals.effects_count, copied.size, copied.size.toString())
+                    MenuRow(stringResource(R.string.effects_paste_all), enabled = copied.isNotEmpty(), subText = note) {
+                        effectsMenu = false
+                        pasteEffectsOnSelection(state, context)
+                    }
+                }
+            }
         }
         BarButton(if (end) ChromeIcons.SkipForward else ChromeIcons.SkipBack, stringResource(if (end) R.string.structure_move_ends else R.string.structure_move_starts), Modifier.width(60.dp).fillMaxHeight(), layers.isNotEmpty()) {
             state.moveClipEdges(end, false)
         }
         Spacer(Modifier.weight(1f))
-        val context = LocalContext.current
         BarButton(ChromeIcons.Transition, stringResource(R.string.transition_add_between), Modifier.width(48.dp).fillMaxHeight().alpha(if (cut != null) 1f else DimAlpha)) {
             if (cut != null) { state.playing = false; transition = cut.first.id to cut.second.id }
             else Toast.makeText(context, context.getString(when {
@@ -274,7 +294,6 @@ private val PasteLabels = mapOf(
 internal fun MultiTopBar(state: EditorState, modifier: Modifier) {
     val ids = MultiSelect.ids
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     var alignment by remember { mutableStateOf(false) }
     val tint = Am.OnAccent
     Row(modifier.background(Am.Accent), verticalAlignment = Alignment.CenterVertically) {
@@ -287,20 +306,15 @@ internal fun MultiTopBar(state: EditorState, modifier: Modifier) {
             SelectionButton(SelectionIcons.Group, stringResource(R.string.structure_group), cell, tint, ids.isNotEmpty()) { state.groupLayers(ids) }
             SelectionButton(SelectionIcons.Mask, stringResource(R.string.structure_group_mask), cell, tint, ids.size > 1) { state.groupLayers(ids, "mask") }
             SelectionButton(SelectionIcons.Exclude, stringResource(R.string.structure_group_exclude), cell, tint, ids.size > 1) { state.groupLayers(ids, "exclude") }
-            val copied = EffectClipboard.effects
-            var effectsMenu by remember { mutableStateOf(false) }
-            Box(cell) {
-                SelectionButton(PanelIcons.Effects, stringResource(R.string.layer_tool_effects), Modifier.fillMaxSize(), tint, ids.isNotEmpty()) { effectsMenu = true }
-                Presence(effectsMenu) {
-                    MenuPopup(DropOrRise, { effectsMenu = false }) {
-                        val note = if (copied.isEmpty()) stringResource(R.string.effects_none_copied)
-                            else pluralStringResource(R.plurals.effects_count, copied.size, copied.size.toString())
-                        MenuRow(stringResource(R.string.effects_paste_all), enabled = copied.isNotEmpty(), subText = note) {
-                            effectsMenu = false
-                            pasteEffectsOnSelection(state, context)
-                        }
-                    }
-                }
+            var parentMenu by remember { mutableStateOf(false) }
+            val linkLabel = stringResource(R.string.structure_link_parent)
+            Box(
+                cell.alpha(if (ids.isNotEmpty()) 1f else DimAlpha).semantics { contentDescription = linkLabel }
+                    .clickable(enabled = ids.isNotEmpty()) { parentMenu = true },
+                Alignment.Center,
+            ) {
+                LayerParentIcon(back = Am.Accent, ink = tint, dot = tint)
+                Presence(parentMenu) { MultiParentMenu(state) { parentMenu = false } }
             }
             SelectionButton(ChromeIcons.Trash, stringResource(R.string.structure_delete_selected), cell, tint, ids.isNotEmpty()) { state.deleteChosen() }
             SelectionButton(SelectionIcons.Next, stringResource(R.string.structure_alignment_options), cell, tint) { alignment = true }
@@ -357,8 +371,20 @@ internal fun ParentMenu(state: EditorState, onDismiss: () -> Unit) {
     val others = state.scene.layers.filter { it.id != layer.id }.reversed()
     val current = layer.node["parent"]?.toLongOrNull()
     ChoiceList(
-        listOf(stringResource(R.string.none)) + others.map { (if (it.id == current) "> " else "") + it.label.ifEmpty { it.kind } }, onDismiss,
+        listOf(stringResource(R.string.none)) + others.map { (if (it.id == current) "> " else "") + it.shownName() }, onDismiss,
     ) { i -> state.setParent(if (i == 0) null else others[i - 1].id) }
+}
+
+@Composable
+internal fun MultiParentMenu(state: EditorState, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val skippedText = stringResource(R.string.structure_link_parent_skipped)
+    val ids = MultiSelect.ids
+    val others = state.scene.layers.filter { it.id !in ids }.reversed()
+    ChoiceList(listOf(stringResource(R.string.none)) + others.map { it.shownName() }, onDismiss) { i ->
+        val skipped = state.setParentOfChosen(if (i == 0) null else others[i - 1].id)
+        if (skipped > 0) Toast.makeText(context, skippedText, Toast.LENGTH_LONG).show()
+    }
 }
 
 @Composable

@@ -1,0 +1,10 @@
+<resources>
+    <string name="true_alight_import">导入 .alight / XML</string>
+    <string name="true_alight_package">True Motion 项目（.alight）</string>
+    <string name="true_alight_package_hint">包含媒体和可编辑的矢量动画。供 True Motion 及兼容工具使用。</string>
+    <string name="true_package_format">项目格式</string>
+    <string name="true_media_select_many">选择多个</string>
+    <string name="true_media_add_selected">添加（%1$d）</string>
+    <string name="true_camera_frame">相机画框</string>
+    <string name="true_vector_open_failed">无法打开矢量文档。已保留保存的绘图。</string>
+</resources>

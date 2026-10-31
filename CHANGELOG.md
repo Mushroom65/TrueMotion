@@ -6,6 +6,159 @@ All notable changes to AbsentMotion are listed here, newest first. The format fo
 Versions before 2.0.0 were never published or numbered. The entry for 1.0.0 stands for the feature set as it stood on
 2026-10-12.
 
+## [4.3.0] - 2026-10-30 - Compatibility
+
+### Added
+
+- OpenGL ES 3.0 support: phones without Vulkan 1.1, or with a broken Vulkan driver, run AbsentMotion through OpenGL. It is used automatically when Vulkan cannot start, and Settings > Graphics can switch to it. Preview, export, motion blur, Smooth and Datamosh work on it; the heavy AI tools are locked on OpenGL.
+- The Compatible version runs from Android 8, and a new Compatible 32-bit file (`-compatible-32bit.apk`) covers phones with a 32-bit system.
+- Retro Dither and Pixel Tiles effects. Palette Map gets 17 preset palettes, palettes imported from pictures and from ASE, ACT, GPL, PAL, HEX and Paint.NET files, and 23 dither patterns including Floyd-Steinberg and Atkinson.
+- New effects that also open Alight Motion projects using them: Energy Beam, Grunge, Hexagon Array, Luma Stamper, Matte Fringe and Key Spill Cleaner.
+- Chromatic Zoom Blur effect. Color Wheels gains an Offset wheel and a By Brightness style; Split Tone gains shadow and highlight levels and a Gradient Map style. Halftone gains a Two Color style, Mirror a Flip style, Matte Choker an Invert switch, Flip Layer an Axis, Colorize a Saturation setting, Gradient Overlay an Offset and Exposure a Brighten See-Through Parts switch.
+- Link several selected layers to one parent at once.
+- 3D Extrude and 3D Shape follow the 3D rotation of their parent.
+- A Report issue link in the app menu for people without a GitHub account.
+
+### Changed
+
+- Alight Motion projects look much closer to Alight: photos keep their colour space, adjustment layers keep soft edges and reach past the layer, effect directions turn with rotated layers, and many colour, blur and distortion effects follow Alight's measured look. More than 30 more Alight effects import (44 effect ids), including the 3D shapes, Flip Layer, 360 Reorient, VR Player, Tunnel, Drawing Progress, Stroke Taper, Mirror, Matte Choke, Bump Map, Iridescence, Hex Tile, Colorize, Text Transform, Lift Gamma Gain and Split Tone.
+- The import report lists only what did not come over.
+- Borders in Frame & Shadow open and close smoothly, and a new border unfolds out of Add Border.
+- Export time left starts from the estimate, counts down smoothly and learns from past exports. The choppy playback prompt is gone.
+- Crop: borders, effects and Move Along Path use the cropped picture. Transform has Basic and Advanced controls. 3D models keep their textures when simplified.
+- Shutter Blur, Motion Blur, shadows, borders and blends use less memory; big photos shown small no longer shimmer; AI frame interpolation uses all fast CPU cores; dragging and sliders stay smoother on big projects.
+- The Play version stays through 4.x and ends in 5.0. A Play install shows a notice on its first two starts, and its updater moves to the foss file when a release has no Play file.
+
+### Fixed
+
+- 62 bugs, among them: a black preview after a graphics error; a broken project in a backup restored as if it were fine; deleting a project could delete media a damaged recovery still needed; replaced sped-up or looping template videos lost their length; AI video carried the whole clip's sound; decoders could hang on some files; preview copies could come out black; relinked clips stayed marked missing; a child layer jumped when its parent's scale went through zero; the Border tab went empty after its open border was removed.
+
+### Credits
+
+- Thanks to [TrueMotion](https://github.com/Mushroom65/TrueMotion) by Mushroom65, a project based on AbsentMotion, for feature ideas, including the Particles effect planned for 4.4.
+
+## [4.2.1] - 2026-10-29
+
+### Fixed
+
+- The app no longer crashes on the home screen when you come back to it after Android closed it in the background.
+- Typing both Left and Right (or Top and Bottom) in the Crop keypad keeps both values; the first one was limited by the old value of the other side.
+- An export stopped because the app was swiped away from recent apps now says "The export did not finish" instead of disappearing without a word.
+
+## [4.2.0] - 2026-10-28 - Stability & Bugs
+
+### Added
+
+- GitHub: a bug report form that asks for the version, build, device and steps.
+- GitHub: a feature and effect request form, so requests arrive in a clear shape.
+- GitHub: an issue chooser that points to private security reporting and the guide, with blank issues turned off.
+- Text Along Path, in the Text effects, sets text along an arc, a circle or the outline of the layer just beneath it (draw any path with the pen and put the text above it). Position, alignment, baseline shift, letter rotation and direction are settings that can be animated, and the arc and circle have handles on the canvas. Each letter keeps its shaping, font and colour emoji; right-to-left text keeps its order.
+- Puppet Pin, in the Distort effects, bends a layer with pins. Turn on Add Pins and tap the layer, then drag a pin on the canvas or type its position; pins you do not move hold the layer in place. Each pin can be animated with keyframes, put back or deleted, up to 32 pins, with a Falloff setting: higher values keep the bend close to the pins you move, lower values spread it smoothly over the layer.
+- Photos and videos have a Crop button: drag the corners, the edges or the whole frame on the canvas, pick Free, 1:1, 4:5, 3:4, 16:9 or 9:16, or type each side. The crop is a new Crop effect (Key), so it can be animated, rounded and feathered, works on any layer and leaves the layer where it is.
+- Transform has a Pivot tab: X and Y boxes, a grid for the corners, edges and centre of the layer, a trackpad, and a marker on the canvas that can be dragged. Moving the pivot keeps the layer where it is, its child layers stay put, and the pivot can be animated. Reset Pivot is in More, and Reset Transform also resets the pivot.
+- Updates download inside the app. When a newer version is found, the update dialog shows its version and download size, and Download update fetches the matching Latest, Play services or Compatible app file from the GitHub release with a progress bar, Cancel and Try again, instead of opening a browser.
+- Before installing, the app checks the download against the SHA-256 published with the release and checks that it is the same app, the same version type, newer than the installed one and signed with the same key. Anything else is deleted and not installed.
+- Android always asks you to confirm the update. If installing updates from AbsentMotion is not allowed yet, the app explains why and opens the Allow from this source setting as soon as you choose Download update, before anything is downloaded; the download starts when you come back with it turned on, and the setting is checked again before the install. Devices that already allow it are not asked. Your projects and settings stay as they are.
+- An update download that loses its connection tries again by itself and continues where it stopped.
+- If AbsentMotion is closed during an update download, the next start offers to continue it.
+- The update dialog says when the connection is metered, for example mobile data.
+- `tools/device_matrix.py` runs the emulator checks on a chosen emulator, or boots a matrix of Android versions, including one with 16 KB memory pages.
+
+### Changed
+
+- The small dots around a selected picture or video have a bigger grab area, so they are easier to catch. On small layers the area stays smaller so the layer can still be moved.
+- The Rotate tab always shows the 360 degree dial for turning a layer in 2D, also on tilted layers; 3D turning stays on the Tilt tab.
+- The New category in Effects only lists effects from the last five updates, so older effects no longer carry the NEW tag.
+- The Curl effect thumbnail rolls up and back down instead of jumping back to the start.
+- The Transform tabs are now Move, Rotate, Size, Tilt, Skew and Pivot: Rotate comes before Size. Each tab shows its name under the icon.
+- The corner and side handles on the canvas scale a layer around its pivot, so the pivot stays still.
+- The Size ruler keeps gliding after a flick, like the Tilt and Skew rulers.
+- Whether width and height are linked is remembered for each layer, saved with the project and undone with Undo. With the link off, width and height keep their own values, also in keyframes.
+- Cut-outs now drop faint haze and stray specks away from the subject, so less of the old background shows as a ghost.
+- Updates check free space before downloading and before installing, and first remove leftover files of other or abandoned updates.
+- Copies installed from Google Play, or signed with another key, say where their updates come from instead of downloading one in the app.
+- Release checks refuse APKs that are not signed with the release key, and the full check also checks that the native libraries are aligned for 16 KB memory pages.
+
+### Fixed
+
+- Selection dots on a full-width picture can be grabbed at the screen edge; Android's back gesture no longer takes the touch.
+- A photo, video or sound picked in the file picker is no longer lost if Android closes the app while the picker is open.
+- Restoring a backup keeps a changed template or preset as a separate copy instead of skipping it silently, and no longer swaps in a different font of the same name.
+- A backup now fails, instead of saying "saved", when a file disappeared while it was being written.
+- Importing a scene keeps Move Along Path and other layer links when layer numbers have to change.
+- The export check compares the video and the sound separately, so a short track can no longer hide behind a long one, and it also compares the first frame.
+- When the phone cannot play an export back to check it, the done screen now says so.
+- Saving an animated layer to My Elements no longer crops it, for example a long bar that rotates.
+- Adding many beat markers no longer freezes the editor for a moment.
+- Cut-outs: a memory read past the end, a result made from a grey placeholder after a low-memory moment, and a cancel that was ignored are fixed.
+- Exporting a still or GIF on a low-memory phone can no longer close the app.
+- Cancelling and restarting an update download no longer deletes the new download.
+- The speed panel's four retime buttons and the point editor's controls have names for screen readers, and the point handles are easier to hit.
+- Camera: closing or going back offers to discard a recording instead of saving it.
+- Starting an export, or going back while an AI job runs, can no longer leave the app stuck; a stalled export is stopped with a clear notice.
+- Retained media with a name ending in .part or .tmp is no longer deleted when the app starts.
+- A cancelled layer reorder no longer commits, and the preview no longer restarts on every rendered frame.
+- The first keyframe is no longer a dead zone when trimming.
+- Importing: texture names with spaces in OBJ models are kept, project numbers are reserved safely, glTF triangle strips and fans are read, and root SVG opacity is applied.
+- Damaged or oversized project files and unreadable indexes no longer block cleanup or use up memory.
+- Large font sizes no longer cut off the new-project rows.
+
+## [4.1.2] - 2026-10-27
+
+### Changed
+
+- Auto captions open as a scrolling panel over the lower part of the editor instead of covering the whole screen. While captions are being made, the panel shows only the progress, the time left and Cancel.
+- The text editor keeps the keyboard open while you type, move or resize the text, and pick a size, a colour or a font from the strip. Only the tick, Back and the full font list close it; the number keypad and the full colour picker hide it and bring it back when closed, and it comes back only if it was open before. The tick uses the app's accent colour.
+- Tapping the timeline ruler just above the Add menu closes the menu. Dragging and scrubbing there still work.
+- Version History has square, app-coloured panels with clearer rows, buttons and confirmations.
+- In the tutorial, the Add button shows one red pulse with a white flash, the white pointer glides from one control to the next, and steps that ask for a drag or a scrub finish when you lift your finger.
+- Settings show the installed version under Check for update.
+- Rays is redone: rays use the layer's own colours, reach further from the Center and follow the bright parts more closely. It has new Threshold Add and Blend controls and a Style choice. Effects already saved in projects keep their old look (Classic); new effects use Standard. Imported Alight Motion Rays use Standard and now keep their Threshold colour and Blend.
+- In host benchmarks on a Mac GPU, the new Rays costs 1.12 to 1.17 times the old one per 1080 x 1080 frame; there are no phone numbers.
+
+### Fixed
+
+- A cancelled export or export-size estimate could leave the editor preview frozen until the project was closed.
+- Preparing preview frames in the background no longer redraws the unchanged preview after every frame it prepares.
+
+## [4.1.1] - 2026-10-26
+
+### Fixed
+
+- Photo and video thumbnails on the timeline no longer fall back to stripes for a moment when rows scroll back into view or another picture or font loads. A thumbnail is only reused while its file, the engine and the fonts are unchanged.
+- During the tutorial's play and scrub step, the clip tools and the add button can no longer be used.
+
+## [4.1.0] - 2026-10-26
+
+### Added
+
+- The editor prepares preview frames by itself while it is idle, starting at the playhead. An edit only clears the frames it changes, and preparation pauses during playback, gestures, export, high temperature and while the app is in the background.
+- Captions open full screen with a choice of clip or whole project, a progress bar with the time left and a Cancel button, and Auto captions on video and audio clips. A more precise multilingual speech model (about 82 MB) is an optional download.
+- Voice filters are a category of the audio effects.
+
+### Changed
+
+- Motion Blur and Shutter Blur draw layers that do not change during the shutter once instead of once per sample; in host benchmarks of blur-heavy scenes, exports were 1.09 to 1.65 times faster.
+- Prepared preview frames follow the preview's Fast or Full motion blur choice, and exports keep the chosen quality.
+- The tutorial only lets the current step's control be used, marks it in red, and hides the other editor controls from screen readers.
+- Error messages, default layer names and effect names follow the app language and change right away after a language switch.
+- Offline Help is available in all 14 languages, and many translations were corrected.
+
+### Fixed
+
+- The preview no longer shows an empty picture while a video frame is still loading, or a frame from an older seek.
+
+## [4.0.1] - 2026-10-25
+
+### Changed
+
+- Swipe the Transition button left to hide it until the next timeline scrub; Settings can move it into the preview area.
+- Transition and animation thumbnails use the existing bundled photo images, and their grids compose visible tiles as needed.
+- Export filenames start with the project title on each visit and can be edited. Image and video settings, including current-frame PNG, offer fresh random numeric names.
+- Export no longer shows the temperature stat or a successful playback-check message; thermal protection and verification warnings remain active.
+- Release tooling checks APK signatures across supported Android versions, native-library packaging and alignment, and matching app versions and certificates. The signing helper uses pinned build tools and each APK's minimum Android version.
+- The animated GIF decoder test generates its own ImageIO fixture instead of depending on a removed documentation image.
+
 ## [4.0.0] - 2026-10-25
 
 ### Added

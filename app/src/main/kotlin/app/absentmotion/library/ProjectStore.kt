@@ -8,6 +8,7 @@ import app.absentmotion.model.Scene
 import app.absentmotion.model.XmlNode
 import app.absentmotion.model.mapMediaUris
 import app.absentmotion.model.mediaUris
+import app.absentmotion.model.storedMediaUris
 import app.absentmotion.model.withCopiedLayerIds
 import java.io.File
 import java.util.UUID
@@ -78,12 +79,15 @@ class ProjectStore(private val root: File) {
 
     private fun withLinkedElements(scene: Scene, id: String): Scene {
         val media = ArrayList<MediaDeclaration>()
+        var inlined = 0
         val byLink by lazy { projectIds().associateBy(::linkOf) }
         fun follow(layers: List<XmlNode>, open: Set<String>): List<XmlNode> = layers.map { layer ->
             val linked = layer["link"]?.let(byLink::get)?.takeIf { it !in open }
             val element = linked?.let(::read)?.takeIf { it.isElement }?.withCopiedLayerIds()
             when {
                 element != null -> {
+                    inlined += 1 + element.node.children.size
+                    check(inlined <= 100_000) { AppText.get(R.string.project_too_many_linked) }
                     media += element.media
                     val inner = element.node.copy(children = follow(element.node.children, open + linked))
                     layer.copy(children = layer.children.map { if (it.name == "scene") inner else it })
@@ -118,7 +122,10 @@ class ProjectStore(private val root: File) {
 
     fun newId(taken: Collection<String> = emptyList()): String {
         var n = System.currentTimeMillis()
-        while (sceneFile("p$n").exists() || "p$n" in taken) n++
+        synchronized(reservedIds) {
+            while (sceneFile("p$n").exists() || "p$n" in taken || "p$n" in reservedIds) n++
+            reservedIds.add("p$n")
+        }
         return "p$n"
     }
 
@@ -164,12 +171,28 @@ class ProjectStore(private val root: File) {
         val projectFiles = dir.listFiles { f -> f.extension == "xml" }.orEmpty().toList()
         val templateFiles = File(root, "templates").listFiles { f -> f.isDirectory }.orEmpty().map { File(it, "scene.xml") }.filter { it.exists() }
         val folders = owners.map { folderUri(mediaDir(it)) }
-        val history = (File(dir, "versions").listFiles { f -> f.isDirectory }.orEmpty().flatMap { it.listFiles { f -> f.extension == "xml" }.orEmpty().toList() } +
-            File(root, "recovery").listFiles { f -> f.extension == "xml" }.orEmpty())
-            .filter { f -> runCatching { f.readText() }.getOrNull().let { it == null || folders.any(it::contains) || aiDir != null && it.contains("/ai/") } }
-        val texts = (projectFiles + templateFiles + history).map { f -> runCatching { f.readText() }.getOrNull() ?: return }
         val used = HashSet<String>()
-        val damaged = texts.filter { text -> runCatching { used += Scene.parse(text).node.keptUris() }.isFailure }
+        val damaged = ArrayList<String>()
+        var unreadable = false
+        fun scan(text: String) {
+            val uris = runCatching { Scene.parse(text).node.keptUris() }.getOrNull()
+            if (uris != null) used += uris else damaged += text
+        }
+        fun scanFile(file: File): Boolean {
+            val text = try { file.readText() } catch (e: Exception) { return false } catch (e: OutOfMemoryError) { return false }
+            scan(text)
+            return true
+        }
+        for (file in projectFiles + templateFiles) if (!scanFile(file)) { unreadable = true; break }
+        if (!unreadable) {
+            val versionsAndRecovery = File(dir, "versions").listFiles { f -> f.isDirectory }.orEmpty().flatMap { it.listFiles { f -> f.extension == "xml" || f.extension == "damaged" }.orEmpty().toList() } +
+                File(root, "recovery").listFiles { f -> f.extension == "xml" }.orEmpty()
+            for (file in versionsAndRecovery) {
+                val text = try { file.readText() } catch (e: Exception) { unreadable = true; break } catch (e: OutOfMemoryError) { unreadable = true; break }
+                if (file.extension == "damaged" || folders.any(text::contains) || aiDir != null && text.contains("/ai/")) scan(text)
+            }
+        }
+        if (unreadable) return
         fun mentioned(part: String) = damaged.any { it.contains(part) || it.contains(part.replace("&", "&amp;")) }
         for (owner in owners.filter { it == id || !sceneFile(it).exists() }) {
             val folder = mediaDir(owner)
@@ -196,6 +219,7 @@ class ProjectStore(private val root: File) {
     private fun sceneFile(id: String) = dir.child("$id.xml")
 
     private companion object {
+        val reservedIds = HashSet<String>()
         val DamagedTitle = Regex("""<scene\b[^>]*?\btitle="([^"]*)"""")
     }
 }
@@ -204,13 +228,7 @@ internal fun projectScene(text: String): Scene? = runCatching { Scene.parse(text
     scene.node.name == "scene" && (scene.node["width"]?.toIntOrNull() ?: 0) > 0 && (scene.node["height"]?.toIntOrNull() ?: 0) > 0
 }
 
-internal fun XmlNode.keptUris(): Set<String> = mediaUris() + buildSet {
-    fun walk(n: XmlNode) {
-        if (n.name == "ai") listOf("original", "result").forEach { key -> n[key]?.let { add(it) } }
-        n.children.forEach(::walk)
-    }
-    walk(this@keptUris)
-}
+internal fun XmlNode.keptUris(): Set<String> = storedMediaUris()
 
 internal val ProjectId = Regex("[A-Za-z0-9_-]{1,64}")
 
@@ -221,7 +239,9 @@ internal fun File.child(name: String): File {
     return File(this, name).also { require(it.canonicalFile.parentFile == canonicalFile) { "Unsafe file name" } }
 }
 
-internal fun writeAtomically(target: File, text: String, sync: Boolean = true) {
+private val atomicWrites = Any()
+
+internal fun writeAtomically(target: File, text: String, sync: Boolean = true) = synchronized(atomicWrites) {
     target.parentFile?.mkdirs()
     val temp = File(target.parentFile, target.name + ".tmp")
     try {

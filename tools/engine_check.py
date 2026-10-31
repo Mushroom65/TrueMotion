@@ -8,11 +8,11 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw
-from sdk import adb_command
+from sdk import PACKAGE, adb_command
 
 ROOT = Path(__file__).resolve().parents[1]
 ADB = adb_command()
-PKG = "app.absentmotion"
+PKG = PACKAGE
 DEVICE_DIR = f"/sdcard/Android/data/{PKG}/files"
 TOLERANCE = 2
 BLACK, RED, GREEN, BLUE, HALF = (0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (128, 128, 128)
@@ -176,6 +176,14 @@ CASES = {
                      '<property name="offset" type="vec2" value="-50,0"/></effect>')
               + rect(4, 150, 60, 10, 10, 0xff00ff00)),
         [((60, 100), BLUE), ((20, 100), RED), ((180, 100), BLUE), ((150, 60), GREEN), ((100, 60), BLUE)]),
+    "a blur before an adjustment layer softens its edge and exposure brightens the soft part": (
+        scene(rect(1, 100, 100, 200, 200, 0xff404040)
+              + rect(2, 100, 100, 40, 40, extra='<effect id="absent.blur" hidden="false"><property name="strength" type="float" value="30"/></effect>'
+                     '<effect id="absent.backdrop" hidden="false"><property name="mix" type="float" value="0"/>'
+                     '<property name="mask" type="bool" value="true"/><property name="spill" type="bool" value="true"/></effect>'
+                     '<effect id="absent.exposure" hidden="false"><property name="stops" type="float" value="2"/>'
+                     '<property name="soft" type="bool" value="true"/></effect>')),
+        [((100, 100), (255, 255, 255)), ((125, 100), (241, 241, 241)), ((150, 100), (94, 94, 94)), ((195, 100), (64, 64, 64))]),
     "an effect can read the layer below as a map, even at zero opacity": (
         scene(rect(1, 50, 100, 50, 100, opacity=0.0)
               + rect(2, 150, 100, 50, 100, 0xff00ff00, extra='<effect id="absent.displacementmap" hidden="false">'
@@ -203,16 +211,17 @@ def adb(*args):
     return subprocess.run(ADB + [str(a) for a in args], capture_output=True, text=True).stdout
 
 
-def run(name, xml, work, hits=(), frame=0):
+def run(name, xml, work, hits=(), frame=0, bounds=()):
     local = work / f"{name}.xml"
     local.write_text(xml)
     remote = f"{DEVICE_DIR}/{name}.xml"
     adb("push", local, remote)
     adb("logcat", "-c")
     extras = ["--es", "hit", "'" + ";".join(f"{x},{y}" for x, y in hits) + "'"] if hits else []
-    adb("shell", "am", "start", "-n", f"{PKG}/.MainActivity", "--es", "xml", remote, "--es", "still", name, "--ei", "frame", frame, *extras)
+    extras += ["--es", "bounds", ";".join(str(b) for b in bounds)] if bounds else []
+    adb("shell", "am", "start", "-n", f"{PKG}/app.absentmotion.MainActivity", "--es", "xml", remote, "--es", "still", name, "--ei", "frame", frame, *extras)
     deadline, pid = time.time() + 120, None
-    while f"still {name} ok=" not in (log := adb("logcat", "-d", "-s", "AMTest")) or log.count(" hit ") < len(hits):
+    while f"still {name} ok=" not in (log := adb("logcat", "-d", "-s", "AMTest")) or log.count(" hit ") < len(hits) or log.count(" bounds ") < len(bounds):
         now = adb("shell", "pidof", PKG).strip()
         pid = pid or now
         if pid and now != pid:

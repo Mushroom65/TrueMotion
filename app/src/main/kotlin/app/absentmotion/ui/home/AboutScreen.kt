@@ -52,6 +52,7 @@ import app.absentmotion.R
 import app.absentmotion.Tier
 
 internal const val HOME_PAGE = "https://github.com/Mushroom65/TrueMotion"
+internal const val REPORT_FORM = "https://github.com/Mushroom65/TrueMotion/issues/new"
 
 internal const val LICENCES_ASSET = "licenses.txt"
 

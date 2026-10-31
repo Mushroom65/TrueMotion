@@ -52,6 +52,8 @@ fun XmlNode.mediaUris(): Set<String> = buildSet {
 fun XmlNode.storedMediaUris(): Set<String> = mediaUris() + buildSet {
     fun walk(node: XmlNode) {
         if (node.name == "ai") listOf("original", "result").forEach { key -> node[key]?.let(::add) }
+        sequenceOf(node["trueVector"], node["templatePPId"]).filterNotNull().firstOrNull { it.startsWith("truevector:v1:") }
+            ?.let { addAll(app.truemotion.vector.VectorPortable.mediaUris(it)) }
         node.children.forEach(::walk)
     }
     walk(this@storedMediaUris)
@@ -76,8 +78,8 @@ fun XmlNode.modelUris(): Set<String> = buildSet {
 fun XmlNode.mapMediaUris(change: (String) -> String): XmlNode {
     val keys = when (name) { "media" -> listOf("uri"); "ai" -> listOf("original", "result"); else -> listOf("fillImage", "fillVideo", "src") }
     var self = keys.fold(this) { node, key -> node[key]?.let { node.with(key, change(it)) } ?: node }
-    self["templatePPId"]?.takeIf { it.startsWith("truevector:v1:") }?.let { marker ->
-        self = self.with("templatePPId", app.truemotion.vector.VectorPortable.remap(marker, change))
+    for (attribute in listOf("trueVector", "templatePPId")) self[attribute]?.takeIf { it.startsWith("truevector:v1:") }?.let { marker ->
+        self = self.with(attribute, app.truemotion.vector.VectorPortable.remap(marker, change))
     }
     return self.copy(children = children.map { it.mapMediaUris(change) })
 }

@@ -1,3 +1,7 @@
+# True Motion Next 0.12.0
+
+Новая база: AbsentMotion v4.3.0. [Инструкция, изменения и проверка сборки](docs/RELEASE_0_12_RU.md).
+
 # True Motion Next 0.11.0
 
 Проверочная отдельная версия на исходниках AbsentMotion 4.0.0. Пакет `app.truemotion`: устанавливается рядом с прежним True Motion.

@@ -34,6 +34,8 @@ struct View {
     SkPoint eye, middle;
     float eyeZ = 0, rotation = 0, focal = 1;
     bool orthographic = false;
+    bool tilted = false;
+    SkM44 turn;
 };
 
 View DefaultView(int width, int height) {
@@ -51,6 +53,9 @@ View LayerView(const std::vector<Layer>& layers, const Layer& camera, int width,
     v.eye = p.location;
     v.eyeZ = p.z;
     v.rotation = p.rotation;
+    v.tilted = p.tilt != SkM44();
+    const SkM44 orientation = SkM44::Rotate({0, 0, 1}, p.rotation * 3.14159265f / 180) * p.tilt;
+    if (!orientation.invert(&v.turn)) v.turn = SkM44();
     v.focal = FocalLength(width, height, camera.camera.fov.get(0, camera.localTime(timeMs), kDefaultFov));
     v.orthographic = camera.camera.orthographic;
     return v;
@@ -66,10 +71,11 @@ struct Seen {
 
 Seen Look(const View& v, const Placement& p) {
     Seen s;
-    s.depth = p.z - v.eyeZ;
+    const SkV4 viewed = v.turn.map(p.location.fX - v.eye.fX, p.location.fY - v.eye.fY, p.z - v.eyeZ, 0);
+    s.depth = v.tilted ? viewed.z : p.z - v.eyeZ;
     s.visible = s.depth >= kNearest;
     const float k = v.focal / (v.orthographic ? std::max(-v.eyeZ, kNearest) : std::max(s.depth, kNearest));
-    s.location = v.middle + SkMatrix::RotateDeg(-v.rotation).mapVector((p.location - v.eye) * k);
+    s.location = v.middle + (v.tilted ? SkVector{viewed.x * k, viewed.y * k} : SkMatrix::RotateDeg(-v.rotation).mapVector((p.location - v.eye) * k));
     s.scale = {p.scale.fX * k, p.scale.fY * k};
     s.rotation = p.rotation - v.rotation;
     return s;
@@ -78,7 +84,7 @@ Seen Look(const View& v, const Placement& p) {
 SkM44 Space(const View& v, const Placement& p) {
     const float r = 3.14159265f / 180, mx = v.middle.fX, my = v.middle.fY, f = v.focal;
     const SkM44 world = SkM44::Translate(p.location.fX, p.location.fY, p.z) * SkM44::Rotate({0, 0, 1}, p.rotation * r) * p.tilt;
-    const SkM44 eye = SkM44::Rotate({0, 0, 1}, -v.rotation * r) * SkM44::Translate(-v.eye.fX, -v.eye.fY, -v.eyeZ);
+    const SkM44 eye = v.turn * SkM44::Translate(-v.eye.fX, -v.eye.fY, -v.eyeZ);
     const float c = std::max(-v.eyeZ, kNearest);
     const SkM44 lens = v.orthographic ? SkM44(f, 0, 0, mx * c, 0, f, 0, my * c, 0, 0, 1, 0, 0, 0, 0, c)
                                       : SkM44(f, 0, mx, 0, 0, f, my, 0, 0, 0, 1, 0, 0, 0, 1, 0);
@@ -143,6 +149,16 @@ void AddCameraEffects(const Layer& camera, double timeMs, float depth, SkPoint b
 SkMatrix PlaneMatrix(const std::vector<Layer>& layers, const Layer& layer, int width, int height, double timeMs) {
     const Layer* camera = gCameraView ? ActiveCamera(layers, timeMs) : nullptr;
     const View v = camera ? LayerView(layers, *camera, width, height, timeMs) : DefaultView(width, height);
+    if (v.tilted) {
+        Placement plane;
+        plane.z = EffectivePlacement(layers, layer, timeMs).z;
+        const SkM44 matrix = Space(v, plane);
+        SkMatrix result;
+        result.setAll(matrix.rc(0, 0), matrix.rc(0, 1), matrix.rc(0, 3),
+                      matrix.rc(1, 0), matrix.rc(1, 1), matrix.rc(1, 3),
+                      matrix.rc(3, 0), matrix.rc(3, 1), matrix.rc(3, 3));
+        return result;
+    }
     const float depth = EffectivePlacement(layers, layer, timeMs).z - v.eyeZ;
     const float k = v.focal / (v.orthographic ? std::max(-v.eyeZ, kNearest) : std::max(depth, kNearest));
     return SkMatrix::Translate(v.middle.fX, v.middle.fY).preRotate(-v.rotation).preScale(k, k).preTranslate(-v.eye.fX, -v.eye.fY);
@@ -155,6 +171,26 @@ bool CameraViewOn() { return gCameraView; }
 bool CameraFrame(const std::vector<Layer>& layers, const Layer& camera, int width, int height, double timeMs, SkPoint corners[4]) {
     if (width <= 0 || height <= 0) return false;
     const Placement p = EffectivePlacement(layers, camera, timeMs);
+    if (p.tilt != SkM44()) {
+        const View view = LayerView(layers, camera, width, height, timeMs);
+        SkM44 orientation;
+        if (!view.turn.invert(&orientation)) return false;
+        const float xs[] = {0, (float)width, (float)width, 0};
+        const float ys[] = {0, 0, (float)height, (float)height};
+        const float c = view.orthographic ? std::max(-p.z, kNearest) : 1;
+        for (int i = 0; i < 4; i++) {
+            const SkV4 offset = view.orthographic ? orientation.map((xs[i] - view.middle.fX) * c / view.focal, (ys[i] - view.middle.fY) * c / view.focal, 0, 0) : SkV4{0, 0, 0, 0};
+            const SkV4 ray = orientation.map(view.orthographic ? 0 : (xs[i] - view.middle.fX) / view.focal,
+                                             view.orthographic ? 0 : (ys[i] - view.middle.fY) / view.focal, 1, 0);
+            if (std::fabs(ray.z) < 1e-5f) return false;
+            const float distance = -(p.z + offset.z) / ray.z;
+            const float x = p.location.fX + offset.x + ray.x * distance;
+            const float y = p.location.fY + offset.y + ray.y * distance;
+            if (!(distance > 0) || !std::isfinite(x) || !std::isfinite(y)) return false;
+            corners[i] = {x, y};
+        }
+        return true;
+    }
     const float distance = camera.camera.orthographic ? std::max(-p.z, kNearest) : -p.z;
     if (!(distance > 0)) return false;
     const float reach = distance / FocalLength(width, height, camera.camera.fov.get(0, camera.localTime(timeMs), kDefaultFov));
@@ -172,7 +208,8 @@ bool SeenPlacement(const Layer& l, double timeMs, Placement* out) {
         const View v = s.camera ? LayerView(*s.layers, *s.camera, s.width, s.height, timeMs) : DefaultView(s.width, s.height);
         if (l.projected) {
             p.space = Space(v, p);
-            p.turn = SkM44::Rotate({0, 0, 1}, (p.rotation - v.rotation) * 3.14159265f / 180) * p.tilt;
+            p.turn = v.tilted ? v.turn * SkM44::Rotate({0, 0, 1}, p.rotation * 3.14159265f / 180) * p.tilt
+                              : SkM44::Rotate({0, 0, 1}, (p.rotation - v.rotation) * 3.14159265f / 180) * p.tilt;
         } else {
             const Seen seen = Look(v, p);
             p.location = seen.location;
@@ -215,7 +252,7 @@ bool SeeLayers(const std::vector<Layer>& layers, int width, int height, bool top
             const Seen s = Look(now, p);
             d = s.depth;
             drop = !s.visible;
-            copy.projected = Solid(l, p);
+            copy.projected = Solid(l, p) || now.tilted;
             if (camera) AddCameraEffects(*camera, timeMs, d, Look(before, EffectivePlacement(layers, l, beforeMs)).location, s.location, &copy);
         }
         copies.push_back(std::move(copy));

@@ -251,8 +251,12 @@ JNIEXPORT void JNICALL JNI_FN(nativeSetAccurateBlur)(JNIEnv*, jclass, jlong engi
 }
 
 JNIEXPORT jboolean JNICALL JNI_FN(nativeFastCaptionCpu)(JNIEnv*, jclass) {
+#if defined(__aarch64__)
     const unsigned long need = HWCAP_ASIMDDP | HWCAP_ASIMDHP | HWCAP_FPHP | HWCAP_ATOMICS | HWCAP_ASIMDRDM | HWCAP_CRC32;
     return (getauxval(AT_HWCAP) & need) == need;
+#else
+    return false;
+#endif
 }
 
 JNIEXPORT jfloatArray JNICALL JNI_FN(nativeEase)(JNIEnv* env, jclass, jstring easing, jfloatArray us) {
@@ -319,6 +323,19 @@ JNIEXPORT jbyteArray JNICALL JNI_FN(nativeStill)(JNIEnv* env, jclass, jlong engi
                                                  jint height) {
     std::vector<uint8_t> rgba;
     if (!engineOf(engine)->still(timeMs, width, height, &rgba)) return nullptr;
+    jbyteArray out = env->NewByteArray((jsize)rgba.size());
+    if (!out) {
+        env->ExceptionClear();
+        return nullptr;
+    }
+    env->SetByteArrayRegion(out, 0, (jsize)rgba.size(), reinterpret_cast<const jbyte*>(rgba.data()));
+    return out;
+}
+
+JNIEXPORT jbyteArray JNICALL JNI_FN(nativePreviewStill)(JNIEnv* env, jclass, jlong engine, jdouble timeMs, jint width,
+                                                 jint height, jboolean accurateBlur) {
+    std::vector<uint8_t> rgba;
+    if (!engineOf(engine)->previewStill(timeMs, width, height, accurateBlur == JNI_TRUE, &rgba)) return nullptr;
     jbyteArray out = env->NewByteArray((jsize)rgba.size());
     if (!out) {
         env->ExceptionClear();

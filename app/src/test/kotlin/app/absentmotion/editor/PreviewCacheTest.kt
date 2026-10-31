@@ -42,6 +42,15 @@ class PreviewCacheTest {
         assertEquals(50..50, renderRange(899, 50, 0))
     }
 
+    @Test fun theRenderedRangeIsTheCappedOneSoProgressCountsOnlyTheFramesThatAreRendered() {
+        val budget = 38 * mib
+        val fit = framesThatFit(budget, 620, 1100)
+        val range = previewRange(7199, 1000, budget, 620, 1100)
+        assertEquals(1000 until 1000 + fit, range)
+        assertTrue(range.last < 7199)
+        assertEquals(0..299, previewRange(299, 120, budget, 620, 1100))
+    }
+
     @Test fun theFrameEstimateLeavesRoomForEveryFrame() {
         val budget = 38 * mib
         val frames = framesThatFit(budget, 620, 1100)
@@ -88,43 +97,6 @@ class PreviewCacheTest {
     @Test fun decodedPlaybackFramesAreChargedToTheBudget() {
         assertEquals(38 * mib - 5 * 4L * 1000 * 500, storeBudget(38 * mib, 1000, 500))
         assertEquals(10 * mib / 4, storeBudget(10 * mib, 1920, 1080))
-    }
-
-    private fun play(watch: ChoppyWatch, seconds: Int, framesPerSecond: Int, rendersPerSecond: Int, start: Triple<Long, Int, Long> = Triple(0L, 0, 0L)): Pair<Boolean, Triple<Long, Int, Long>> {
-        var (now, frame, renders) = start
-        var fired = false
-        repeat(seconds * 4) {
-            now += 250_000_000L
-            frame += framesPerSecond / 4
-            renders += rendersPerSecond / 4
-            if (watch.sample(now, frame, renders)) fired = true
-        }
-        return fired to Triple(now, frame, renders)
-    }
-
-    @Test fun smoothPlaybackNeverAsksToRender() {
-        val watch = ChoppyWatch()
-        assertFalse(play(watch, 20, 32, 32).first)
-        assertFalse(play(ChoppyWatch(), 20, 32, 28).first)
-    }
-
-    @Test fun choppyPlaybackAsksAfterAFewSeconds() {
-        val watch = ChoppyWatch()
-        assertFalse(play(watch, 3, 32, 12).first)
-        assertTrue(play(ChoppyWatch(), 5, 32, 12).first)
-    }
-
-    @Test fun oneSmoothSecondOrAStalledPlayheadResetsTheCount() {
-        val watch = ChoppyWatch()
-        var (fired, at) = play(watch, 3, 32, 12)
-        assertFalse(fired)
-        play(watch, 1, 32, 32, at).let { fired = it.first; at = it.second }
-        assertFalse(fired)
-        play(watch, 2, 32, 12, at).let { fired = it.first; at = it.second }
-        assertFalse(fired)
-        assertFalse(play(ChoppyWatch(), 10, 0, 0).first)
-        watch.reset()
-        assertFalse(play(watch, 3, 32, 12, at).first)
     }
 
     @Test fun opaquePixelsStayAndTransparentOnesShowTheChecker() {
