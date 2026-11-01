@@ -1,9 +1,9 @@
-#include "../../app/src/main/cpp/particles_math.h"
+#include "../../app/src/main/cpp/true_particles_math.h"
 #include <cassert>
 #include <cstdio>
 #include <chrono>
 
-using namespace am::particles;
+using namespace am::trueparticles;
 bool near(double a,double b) { return std::abs(a-b)<1e-8; }
 bool equal(const std::vector<Particle>& a,const std::vector<Particle>& b) {
     if(a.size()!=b.size()) return false;

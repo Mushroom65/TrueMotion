@@ -26,7 +26,7 @@
 #include "include/effects/SkRuntimeEffect.h"
 #include "include/pathops/SkPathOps.h"
 #include "drawing.h"
-#include "particles.h"
+#include "true_particles.h"
 #include "scene.h"
 #include "text.h"
 
@@ -714,8 +714,8 @@ sk_sp<SkImage> ParticleImage(SkCanvas* canvas, const Layer& emitter, const Layer
 Drawn DrawBody(SkCanvas* canvas, const Layer& l, double timeMs, float t, const SkMatrix& m, const SkPath& path, float alpha,
                const MediaPictures& pictures, bool outline) {
     Drawn drawn;
-    if (HasParticles(l)) {
-        DrawParticles(canvas,l,timeMs,alpha,m,[&](const LayerEffect& effect) { return ParticleImage(canvas,l,effect,timeMs,pictures); });
+    if (TrueHasParticles(l)) {
+        TrueDrawParticles(canvas,l,timeMs,alpha,m,[&](const LayerEffect& effect) { return ParticleImage(canvas,l,effect,timeMs,pictures); });
         drawn.fill=true;
         return drawn;
     }
@@ -781,7 +781,7 @@ Drawn DrawBody(SkCanvas* canvas, const Layer& l, double timeMs, float t, const S
 }
 
 bool SelfOverlaps(const Layer& l) {
-    return HasParticles(l) || l.kind == "drawing" || l.kind == "embedScene" || l.kind == "model" || (l.stroke.present && l.stroke.enabled);
+    return TrueHasParticles(l) || l.kind == "drawing" || l.kind == "embedScene" || l.kind == "model" || (l.stroke.present && l.stroke.enabled);
 }
 
 sk_sp<SkColorFilter> CopyTint(const RepeatCopy& look) {
@@ -840,7 +840,7 @@ void DrawContent(SkCanvas* canvas, const std::vector<Layer>& siblings, const Lay
     const SkMatrix m = SiblingMatrix(siblings, l, timeMs);
     const SkPath path = BodyPath(l, t);
     Drawn drawn;
-    const SkPath scenePath = HasWorldParticles(l,timeMs) ? SkPath::Rect(ParticleSceneBounds(l,timeMs,m)) : path.makeTransform(m);
+    const SkPath scenePath = TrueHasWorldParticles(l,timeMs) ? SkPath::Rect(TrueParticleSceneBounds(l,timeMs,m)) : path.makeTransform(m);
     const bool effects = EffectsApply(siblings, l);
     const bool pixelEdged = decorate && PixelEdged(l, pictures);
     const bool bordered = decorate && std::any_of(l.borders.begin(), l.borders.end(), [&](const Edge& e) { return ShaderBorder(l, e, t, pixelEdged); });
@@ -1207,7 +1207,7 @@ void DrawOne(SkCanvas* canvas, const std::vector<Layer>& siblings, const Layer& 
     const bool centred = ShapeKind(l) && !pixelEdged && std::any_of(l.borders.begin(), l.borders.end(), [](const Edge& e) { return e.enabled && e.direction == "centered"; });
     const bool repeated = HasRepeat(l);
     const std::vector<LayerCopy> copies = repeated ? CopiesOf(siblings, l, timeMs, gScene ? gScene->width : 0, gScene ? gScene->height : 0) : std::vector<LayerCopy>();
-    const bool overlaps = HasParticles(l) || l.kind == "drawing" || l.kind == "model" || (l.stroke.present && l.stroke.enabled) || centred || repeated;
+    const bool overlaps = TrueHasParticles(l) || l.kind == "drawing" || l.kind == "model" || (l.stroke.present && l.stroke.enabled) || centred || repeated;
     auto centredBorders = [&](SkCanvas* canvas, float alpha) {
         if (!centred) return;
         const std::vector<std::pair<SkPath, float>> outlines = repeated
@@ -1422,7 +1422,7 @@ static bool CutoutContains(const Layer& l, float t, const SkPath& path, const Sk
 
 static bool ContainsOne(const std::vector<Layer>& siblings, const Layer& l, double timeMs, SkPoint p, const MediaPictures& masks) {
     const SkMatrix matrix = SiblingMatrix(siblings, l, timeMs);
-    if (HasWorldParticles(l,timeMs)) return ParticleSceneBounds(l,timeMs,matrix).contains(p.fX,p.fY);
+    if (TrueHasWorldParticles(l,timeMs)) return TrueParticleSceneBounds(l,timeMs,matrix).contains(p.fX,p.fY);
     SkMatrix inverse;
     if (!matrix.invert(&inverse)) return false;
     const SkPoint local = inverse.mapPoint(p);
@@ -1447,7 +1447,7 @@ static bool ContainsOne(const std::vector<Layer>& siblings, const Layer& l, doub
 }
 
 static bool ContentRect(const Layer& l, double timeMs, const SkMatrix& matrix, SkRect* out) {
-    if (HasWorldParticles(l,timeMs)) { *out=ParticleSceneBounds(l,timeMs,matrix); return !out->isEmpty(); }
+    if (TrueHasWorldParticles(l,timeMs)) { *out=TrueParticleSceneBounds(l,timeMs,matrix); return !out->isEmpty(); }
     const SkPath shape = ShapePath(l, l.localTime(timeMs));
     if (shape.isEmpty()) return false;
     *out = matrix.mapRect(shape.getBounds());
@@ -1471,7 +1471,7 @@ static bool ContentRect(const Layer& l, double timeMs, const SkMatrix& matrix, S
 }
 
 SkRect SelectionBounds(const Layer& layer, double timeMs, const SkMatrix& matrix) {
-    if (HasWorldParticles(layer,timeMs)) return ParticleSceneBounds(layer,timeMs,matrix);
+    if (TrueHasWorldParticles(layer,timeMs)) return TrueParticleSceneBounds(layer,timeMs,matrix);
     if (layer.kind != "embedScene") return ShapePath(layer, layer.localTime(timeMs)).makeTransform(matrix).getBounds();
     SkRect bounds = SkRect::MakeEmpty();
     ContentRect(layer, timeMs, matrix, &bounds);
@@ -1530,7 +1530,7 @@ Placement EffectivePlacement(const std::vector<Layer>& siblings, const Layer& la
 
 namespace {
 
-bool Shared(const LayerEffect& e) { return e.toChildren && !e.hidden && !MotionEffect(e.id) && !RepeatEffect(e.id) && !ParticleEffect(e.id); }
+bool Shared(const LayerEffect& e) { return e.toChildren && !e.hidden && !MotionEffect(e.id) && !RepeatEffect(e.id) && !TrueParticleEffect(e.id); }
 
 bool InheritEffects(const std::vector<Layer>& layers, std::vector<Layer>* out) {
     if (std::none_of(layers.begin(), layers.end(), [](const Layer& l) { return std::any_of(l.effects.begin(), l.effects.end(), Shared); }))

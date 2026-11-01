@@ -84,7 +84,7 @@ struct Camera {
     Anim fogColor, fogNear, fogFar;
 };
 
-struct ParticleState;
+struct TrueParticleState;
 
 struct LayerEffect {
     std::string id;
@@ -93,7 +93,7 @@ struct LayerEffect {
     std::vector<Property> props;
     std::string audioSignalKey;
     std::shared_ptr<const AudioSignal> audioSignal;
-    std::shared_ptr<ParticleState> particles;
+    std::shared_ptr<TrueParticleState> particles;
 
     float value(const char* name, float t, float fallback) const;
     const Property* prop(const char* name) const;

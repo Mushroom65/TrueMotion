@@ -9,7 +9,7 @@
 #include "include/core/SkRRect.h"
 #include "include/pathops/SkPathOps.h"
 #include "scene.h"
-#include "particles.h"
+#include "true_particles.h"
 #include "drawing.h"
 
 namespace am {
@@ -227,7 +227,7 @@ SkPath Cropped(const Layer& l, float t, const SkPath& path, size_t before) {
 }
 
 SkPath ShapePath(const Layer& layer, float t) {
-    if (HasParticles(layer)) return SkPath::Rect(ParticleBounds(layer, layer.startTime + (double)t * (layer.endTime - layer.startTime)));
+    if (TrueHasParticles(layer)) return SkPath::Rect(TrueParticleBounds(layer, layer.startTime + (double)t * (layer.endTime - layer.startTime)));
     if (layer.text) return TextPath(layer, t);
     if (layer.kind == "embedScene") return SkPath::Rect(SkRect::MakeXYWH(-layer.innerWidth / 2.0f, -layer.innerHeight / 2.0f, (float)layer.innerWidth, (float)layer.innerHeight));
     if (layer.kind == "drawing") return DrawingBounds(layer);

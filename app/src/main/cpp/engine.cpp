@@ -2,7 +2,7 @@
 #include "engine.h"
 #include "preview.h"
 #include "effects.h"
-#include "particles.h"
+#include "true_particles.h"
 #include "drawing.h"
 #include "interpolation.h"
 #include "gl_yuv.h"
@@ -1268,8 +1268,8 @@ bool EngineImpl::layerQuad(int64_t layerId, double timeMs, float xy[8]) {
     const Layer* layer = fScene.layer(layerId);
     if (!layer || !layer->activeAt(timeMs)) return false;
     SkPoint corners[4];
-    if (HasWorldParticles(*layer,timeMs)) {
-        ParticleViewBounds(fScene,*layer,timeMs).toQuad(corners);
+    if (TrueHasWorldParticles(*layer,timeMs)) {
+        TrueParticleViewBounds(fScene,*layer,timeMs).toQuad(corners);
         for(int i=0;i<4;i++) { xy[2*i]=corners[i].fX;xy[2*i+1]=corners[i].fY; }
         return true;
     }
@@ -1297,8 +1297,8 @@ bool EngineImpl::layerBounds(int64_t layerId, double timeMs, float ltrb[4]) {
     const Layer* layer = fScene.layer(layerId);
     if (!layer) return false;
     SkRect bounds;
-    if(HasWorldParticles(*layer,timeMs)) {
-        bounds=ParticleViewBounds(fScene,*layer,timeMs);
+    if(TrueHasWorldParticles(*layer,timeMs)) {
+        bounds=TrueParticleViewBounds(fScene,*layer,timeMs);
     } else bounds=SelectionBounds(*layer, timeMs, WorldMatrix(fScene, *layer, timeMs));
     ltrb[0] = bounds.left(); ltrb[1] = bounds.top();
     ltrb[2] = bounds.right(); ltrb[3] = bounds.bottom();

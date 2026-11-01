@@ -4,7 +4,7 @@
 
 #include "include/core/SkMatrix.h"
 #include "scene.h"
-#include "particles.h"
+#include "true_particles.h"
 
 namespace am {
 namespace {
@@ -92,7 +92,7 @@ SkM44 Space(const View& v, const Placement& p) {
     return lens * eye * world;
 }
 
-bool Solid(const Layer& l, const Placement& p, double timeMs) { return p.tilt != SkM44() || l.kind == "model" || HasWorldParticles(l,timeMs); }
+bool Solid(const Layer& l, const Placement& p, double timeMs) { return p.tilt != SkM44() || l.kind == "model" || TrueHasWorldParticles(l,timeMs); }
 
 LayerEffect Effect(const char* id, std::vector<std::pair<const char*, std::vector<float>>> values) {
     LayerEffect e;
@@ -253,7 +253,7 @@ bool SeeLayers(const std::vector<Layer>& layers, int width, int height, bool top
         if (l.kind != "camera") {
             const Seen s = Look(now, p);
             d = s.depth;
-            drop = !s.visible && !HasWorldParticles(l,timeMs);
+            drop = !s.visible && !TrueHasWorldParticles(l,timeMs);
             copy.projected = Solid(l, p, timeMs) || now.tilted;
             if (camera) AddCameraEffects(*camera, timeMs, d, Look(before, EffectivePlacement(layers, l, beforeMs)).location, s.location, &copy);
         }

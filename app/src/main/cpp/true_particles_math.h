@@ -7,7 +7,7 @@
 #include <vector>
 #include <tuple>
 
-namespace am::particles {
+namespace am::trueparticles {
 
 struct Vec {
     double x = 0, y = 0, z = 0;
@@ -191,4 +191,4 @@ inline Vec InverseRotate(Vec p, Vec degrees) {
     return Rotate(p, {-degrees.x,0,0});
 }
 
-} // namespace am::particles
+} // namespace am::trueparticles

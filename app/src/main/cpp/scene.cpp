@@ -1,5 +1,5 @@
 #include "scene.h"
-#include "particles.h"
+#include "true_particles.h"
 #include "motion_path_math.h"
 
 #include <algorithm>
@@ -384,7 +384,7 @@ bool ParseLayer(const XmlNode& node, int fps, Layer* out) {
         if (c->name == "effect") {
             LayerEffect effect;
             effect.id = StrAttr(*c, "id");
-            if (ParticleEffect(effect.id)) effect.particles = std::make_shared<ParticleState>();
+            if (TrueParticleEffect(effect.id)) effect.particles = std::make_shared<TrueParticleState>();
             if (effect.id == "lab.true.audioMotion") effect.audioSignalKey = StrAttr(*c, "signalKey");
             effect.hidden = StrAttr(*c, "hidden") == "true";
             effect.locallyApplied = StrAttr(*c, "locallyApplied") == "true";
