@@ -77,6 +77,10 @@ internal fun EffectsPanel(state: EditorState, modifier: Modifier) {
         androidx.compose.runtime.key(index) { ParticlePanel(state, index, definition, modifier) }
         return
     }
+    if (instance?.get("id") == app.absentmotion.truemotion.Spectrum.ID && definition?.available == true) {
+        androidx.compose.runtime.key(index) { SpectrumPanel(state,index,definition,modifier) }
+        return
+    }
     var active by remember(layer.id, index, definition?.id) { mutableStateOf(definition?.params?.firstOrNull { it.kind != "color" && it.kind != "switch" && it.kind != "choice" && it.kind != "text" }) }
     LaunchedEffect(definition) { active = definition?.params?.firstOrNull { it.id == active?.id } }
     var menu by remember { mutableStateOf(false) }
@@ -208,7 +212,7 @@ private fun CopyEffectsDialog(names: List<String>, onDismiss: () -> Unit, onCopy
 private fun EffectHeader(state: EditorState, index: Int, effect: XmlNode, definition: EffectDefinition?) {
     var menu by remember { mutableStateOf(false) }
     var help by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().height(37.dp).clickable { state.effectIndex = -1 }.padding(start = 3.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().height(37.dp).background(Am.CardHeader).clickable { state.effectIndex = -1 }.padding(start = 3.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(EffectIcons.Expanded, null, Modifier.padding(start = 8.dp).size(18.dp).alpha(0.9f), tint = Am.OnDark)
         Text(definition?.name ?: effect["id"]?.substringAfterLast('.') ?: "", Modifier.weight(1f).padding(start = 6.dp, end = 4.dp), color = Am.OnDark, fontSize = 14.sp, maxLines = 1)
         if (definition != null) Box(Modifier.size(36.dp).clickable { help = true }, contentAlignment = Alignment.Center) {

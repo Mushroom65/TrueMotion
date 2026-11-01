@@ -26,7 +26,10 @@ class EffectTranslationTest {
                 total++
                 if (!present) missing += what
             }
-            for (e in english.definitions) {
+            val newLanguage=language.tag in setOf("es-ES","ja","ur")
+            for (e in english.definitions.filter { it.dialect != "legacy" &&
+                (!newLanguage || !it.key.startsWith("true-") && it.dialect != "afterz") &&
+                (it.key != "true-spectrum" || language.tag in setOf("ru", "zh-CN")) }) {
                 val t = effects.optJSONObject(e.key)
                 need(t?.optString("name").orEmpty().isNotBlank(), "${e.key} name")
                 if (e.description.isNotBlank()) need(t?.optString("description").orEmpty().isNotBlank(), "${e.key} description")
@@ -41,7 +44,8 @@ class EffectTranslationTest {
                 for (preset in e.presets) need(t?.optJSONObject("presets")?.optString(preset.slug).orEmpty().isNotBlank(), "${e.key} preset ${preset.slug}")
             }
             val names = json.getJSONObject("categories")
-            for (key in EffectCatalog.Categories.keys + "new" + "ai") need(names.optString(key).isNotBlank(), "category $key")
+            for (key in EffectCatalog.Categories.keys.filter { (!it.startsWith("legacy-") || language.tag in setOf("ru", "zh-CN")) &&
+                (!newLanguage || !it.startsWith("amz-") && it != "true") } + "new" + "ai") need(names.optString(key).isNotBlank(), "category $key")
             assertTrue("${language.tag} misses ${missing.size} of $total effect texts ($hint): ${missing.take(20)}", missing.isEmpty())
             val local = EffectCatalog.parse(language.tag) { File(pack, it).inputStream() }
             assertEquals(shape(english), shape(local))

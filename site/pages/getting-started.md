@@ -22,7 +22,7 @@ AbsentMotion is already installed on this phone. This page walks through a first
 
 The first time you open the app it shows two screens before the home screen.
 
-1. **Choose your language.** The app has 14 languages: English, Indonesian, Hindi, Portuguese (Brazil), Spanish, Filipino, Vietnamese, Thai, Malay, Arabic, Persian, Turkish, Russian and Bengali. Your phone's own language is listed first when the app has it. You can change it later in [Settings](@settings).
+1. **Choose your language.** The app has 17 languages: English, Indonesian, Hindi, Portuguese (Brazil), Spanish (Latin America), Spanish (Spain), Filipino, Vietnamese, Thai, Malay, Arabic, Persian, Urdu, Turkish, Russian, Bengali and Japanese. Your phone's own language is listed first when the app has it. You can change it later in [Settings](@settings).
 2. **Check what this device can do.** A quick test shows which video formats and sizes your phone can export and how fast it is (Fast, Good or Basic). It runs once, takes a few seconds, and everything stays on the phone. You can tap Skip. The same screen has a switch that lets the app ask GitHub, once each time it opens, for the newest version number. It starts on and sends nothing else.
 
 The app asks for no permission at the start. Photo, video, audio, camera and microphone access are asked for the first time you use a feature that needs them.
@@ -36,6 +36,10 @@ The app asks for no permission at the start. Photo, video, audio, camera and mic
 5. Drag left or right on the timeline to move through time. To move a layer in time, press and hold its bar, then drag. To trim it, select it and drag the round grips at its ends.
 6. Press the play button to watch it.
 
+![On the home screen, tap the round + button (1) to start a project.](img/start-plus.webp)
+
+![In the editor, tap the round + button (1) to add a shape, a photo or text.](img/start-add.webp)
+
 There is no Save button. The project is saved a moment after every change.
 
 ## Animate something
@@ -48,6 +52,8 @@ Animation in AbsentMotion is made of keyframes: a keyframe stores a value (a pos
 4. Move the playhead to a later time and drag the layer to a new place. Because the property already has a keyframe, a second one is created for you.
 5. Play. Tap the easing button (the curve) to make the movement speed up, slow down or bounce. See [Keyframes and easing](@keyframes).
 
+![In a panel: the keyframe button (1), a keyframe diamond on the layer bar (2) and Easing (3).](img/kf-panel.webp)
+
 For quick results, select a layer and tap the round **Animate** button at the bottom right of the preview to pick an In, Out or Loop animation, or open **Effects** and try one of the Move effects.
 
 ## Export
@@ -56,6 +62,8 @@ For quick results, select a layer and tap the round **Animate** button at the bo
 2. The **Video** card is selected. Tap **Export**.
 3. Wait for the progress bar to finish. You can switch to another app meanwhile: a notification shows the progress.
 4. Tap **Share Video**, or find the file in Movies/AbsentMotion.
+
+![Tap the share icon in the top bar (1), then Export.](img/start-export.webp)
 
 All the options (formats, resolution, frame rate, GIF, audio only) are on the [Export](@export) page.
 

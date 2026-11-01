@@ -93,6 +93,8 @@ struct LayerEffect {
     std::vector<Property> props;
     std::string audioSignalKey;
     std::shared_ptr<const AudioSignal> audioSignal;
+    std::vector<std::shared_ptr<const AudioSignal>> spectrum;
+    float spectrumPeak = 0;
     std::shared_ptr<TrueParticleState> particles;
 
     float value(const char* name, float t, float fallback) const;
@@ -239,6 +241,7 @@ struct RepeatSpace {
 };
 
 bool RepeatEffect(const std::string& id);
+bool ParticleEffect(const std::string& id);
 bool HasRepeat(const Layer& layer);
 bool RepeatsAlongPath(const Layer& layer);
 void RepeatCopies(const Layer& layer, double timeMs, const RepeatSpace& space, std::vector<RepeatCopy>* copies);
@@ -248,6 +251,7 @@ struct Scene {
     uint32_t bgColor = 0;
     std::vector<Layer> layers;
     std::map<std::string, int> mediaOrientation;
+    std::vector<double> beats;
 
     const Layer* layer(int64_t id) const;
 };
@@ -297,6 +301,7 @@ struct LayerEffects {
     std::function<bool(SkCanvas*, const Scene&, const Layer&, double, const SkRect&, const SkMatrix&, const std::function<void(SkCanvas*)>&,
                        const std::function<void(SkCanvas*)>&)> draw;
     std::function<bool(const Layer&, float, float)> steady;
+    std::function<sk_sp<SkImage>(const sk_sp<SkImage>&, bool)> upload;
 };
 void DrawScene(SkCanvas* canvas, const Scene& scene, double timeMs, const MediaPictures& pictures,
                const LayerEffects* effects = nullptr);

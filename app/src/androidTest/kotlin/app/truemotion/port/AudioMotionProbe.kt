@@ -39,8 +39,8 @@ internal object AudioMotionProbe {
         wave.writeBytes(bytes.array())
         val uri = wave.toURI().toString()
         val scene = Scene.parse("""<scene title="True Audio UI" width="320" height="320" fps="30" totalTime="7999" bgcolor="#ff151724"><media uri="$uri" duration="8000000" filename="120bpm.wav"/><shape id="103" label="Audio square" startTime="0" endTime="7999" fillType="color"><transform><location value="160,160,0"/><scale value="1,1"/></transform><fillColor value="#ff00d9a5"/><path d="M-55,-55 L55,-55 L55,55 L-55,55 Z"/></shape><audio id="203" label="120 BPM stereo" src="$uri" startTime="0" endTime="7999" inTime="0" outTime="8000"><gain value="0.4"/></audio></scene>""")
-        val raw = analyzeAudioMotion(context, scene, 203, false) {}
-        val mixed = analyzeAudioMotion(context, scene, 203, true) {}
+        val raw = analyzeAudioMotion(context, scene, 203, false, {})
+        val mixed = analyzeAudioMotion(context, scene, 203, true, {})
         check(raw.data.count in 799..801 && raw.data.peak(AudioEnvelope.Band.Full) > .1f)
         val ratio = mixed.data.peak(AudioEnvelope.Band.Full) / raw.data.peak(AudioEnvelope.Band.Full)
         check(ratio in .38f.. .42f) { "Audio gain ratio: $ratio" }
@@ -49,12 +49,12 @@ internal object AudioMotionProbe {
         val bpm = 60_000.0 / intervals[intervals.size / 2]
         check(bpm in 110.0..130.0) { "BPM $bpm, beats=${raw.beats}" }
         val timed = scene.update(203) { Layer(it.node.with("startTime", "1000").with("endTime", "2999").with("inTime", "1000").with("outTime", "5000").with("speed", "2")) }
-        val trimmed = analyzeAudioMotion(context, timed, 203, false) {}
+        val trimmed = analyzeAudioMotion(context, timed, 203, false, {})
         check(trimmed.data.startMs == 1000 && trimmed.data.count in 199..201 && trimmed.data.peak(AudioEnvelope.Band.Full) > .1f)
         val muted = scene.update(203) { Layer(it.node.withChild("gain", XmlNode("gain", mapOf("value" to "0")))) }
-        val audible = analyzeAudioMotion(context, muted, 203, false) {}
+        val audible = analyzeAudioMotion(context, muted, 203, false, {})
         check(audible.data.peak(AudioEnvelope.Band.Full) > .1f)
-        val silent = runCatching { analyzeAudioMotion(context, muted, 203, true) {} }
+        val silent = runCatching { analyzeAudioMotion(context, muted, 203, true, {}) }
         check(silent.isFailure || silent.getOrThrow().data.peak(AudioEnvelope.Band.Full) < 1e-6f)
         check(raw.sourcesUnchanged(context))
         val previousModified = wave.lastModified()

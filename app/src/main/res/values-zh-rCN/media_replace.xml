@@ -1,0 +1,4 @@
+<resources>
+    <string name="true_replace_layer_media">替换媒体</string>
+    <string name="true_replace_layer_media_hint">仅替换此图层，保留动画、效果和位置。</string>
+</resources>

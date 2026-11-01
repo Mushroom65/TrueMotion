@@ -20,6 +20,7 @@ import app.absentmotion.media.DebugFrameInterpolation
 import app.absentmotion.model.Scene
 import app.absentmotion.model.fontNames
 import app.absentmotion.ui.editor.addPicked
+import app.absentmotion.ui.editor.importSvgFile
 import app.absentmotion.ui.home.Updates
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,7 +46,7 @@ internal object TestHooks {
 
     fun newIntent(activity: MainActivity, intent: Intent) {
         keepShared(activity, intent)
-        if (intent.hasExtra("xml") || intent.hasExtra("aaccheck") || intent.hasExtra("devicecheck") || intent.hasExtra("capcheck") || intent.hasExtra("aicheck") || intent.hasExtra("enhancecheck") || intent.hasExtra("aismoothcheck") || intent.hasExtra("aismoothtrim") || intent.hasExtra("aidownload") || intent.hasExtra("hqinstall") || intent.hasExtra("hqremove")) {
+        if (intent.hasExtra("xml") || intent.hasExtra("aaccheck") || intent.hasExtra("devicecheck") || intent.hasExtra("capcheck") || intent.hasExtra("aicheck") || intent.hasExtra("enhancecheck") || intent.hasExtra("aismoothcheck") || intent.hasExtra("aismoothtrim") || intent.hasExtra("aidownload") || intent.hasExtra("hqinstall") || intent.hasExtra("hqremove") || intent.hasExtra("dlcheck") || intent.hasExtra("dlget")) {
             activity.setIntent(intent)
             start(activity)
             return
@@ -99,6 +100,31 @@ internal object TestHooks {
         }
     }
 
+    private suspend fun checkLink(activity: MainActivity, url: String, get: Pair<app.absentmotion.tools.SaveMode, Int>?) {
+        val tools = app.absentmotion.tools.VideoDownloader
+        try {
+            val started = SystemClock.elapsedRealtime()
+            val info = tools.check(activity, url)
+            Log.i("AMDlTest", "ok $url ${SystemClock.elapsedRealtime() - started} ms title=${info.title.take(60)} items=${info.items.size} pictures=${info.pictures} thumbs=${info.thumbnails.size}")
+            for ((n, item) in info.items.withIndex().take(4)) for (mode in app.absentmotion.tools.SaveMode.entries) {
+                val options = app.absentmotion.tools.qualities(item, mode, tools.av1Hardware)
+                Log.i("AMDlTest", "  item $n $mode pictures=${item.pictures.size}: " + options.joinToString { q ->
+                    "${q.side}p${if (q.fps > 0) q.fps else ""}/${q.kbps}k ${q.plan.video?.id}+${q.plan.audio?.id}${if (q.plan.webm) " webm" else ""} ${q.plan.bytes}"
+                })
+            }
+            val (mode, picked) = get ?: return
+            val options = app.absentmotion.tools.qualities(info.items.first(), mode, tools.av1Hardware)
+            val choice = if (picked >= 0) picked else app.absentmotion.tools.defaultQuality(options, mode)
+            val begun = SystemClock.elapsedRealtime()
+            val saved = tools.download(activity, url, info, mode, choice) {}
+            Log.i("AMDlTest", "saved $url ${SystemClock.elapsedRealtime() - begun} ms " + saved.joinToString { "${it.name} ${it.mime}" })
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.i("AMDlTest", "fail $url: ${(e as? app.absentmotion.tools.DownloadProblem)?.let { activity.getString(it.text) }} ${e.message?.take(300)}")
+        }
+    }
+
     private suspend fun downloadFonts(activity: MainActivity, scene: Scene) {
         activity.engine.fonts?.let { library -> scene.fontNames().forEach { library.resolve(it, download = true) } }
     }
@@ -117,6 +143,7 @@ internal object TestHooks {
         val intent = activity.intent
         keepShared(activity, intent)
         intent.getStringExtra("failengine")?.let { app.absentmotion.engine.EngineDebug.failStart = it }
+        intent.getStringExtra("failcheck")?.let { app.absentmotion.engine.EngineDebug.failCheck = it }
         app.absentmotion.engine.EngineDebug.forceGl = intent.getBooleanExtra("gl", false)
         app.absentmotion.export.ExportDebug.refuseHardware = intent.getBooleanExtra("refusehw", false)
         app.absentmotion.export.ExportDebug.failPlayers = intent.getIntExtra("failplayers", 0)
@@ -203,6 +230,12 @@ internal object TestHooks {
                 catch (e: Throwable) { Log.e("AMAi", "videocut failed", e) }
             }
         }
+        intent.getStringExtra("dlcheck")?.let { urls ->
+            scope.launch { for (url in urls.split(' ').filter { it.isNotBlank() }) checkLink(activity, url, null) }
+        }
+        intent.getStringExtra("dlget")?.let { url ->
+            scope.launch { checkLink(activity, url, app.absentmotion.tools.SaveMode.valueOf(intent.getStringExtra("dlmode") ?: "Both") to intent.getIntExtra("dlq", -1)) }
+        }
         intent.getStringExtra("aidownload")?.let { name ->
             scope.launch {
                 try { checkDownload(activity, name, intent.getLongExtra("stopafter", 0L)) }
@@ -218,6 +251,19 @@ internal object TestHooks {
             intent.getStringExtra("hqinstall")?.let { installCutout(activity, File(it)) }
             app.absentmotion.ai.BestCutout.sideOverride = intent.getIntExtra("hqside", 0).takeIf { it > 0 }
             intent.getStringExtra("hqremove")?.let { checkBestCutout(activity, File(it)) }
+        }
+        intent.getStringExtra("exifcheck")?.let { path ->
+            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                val copy = File(activity.cacheDir, "exifcheck.jpg")
+                File(path).copyTo(copy, overwrite = true)
+                fun read() = androidx.exifinterface.media.ExifInterface(copy).let { e ->
+                    listOf(androidx.exifinterface.media.ExifInterface.TAG_DATETIME_ORIGINAL, androidx.exifinterface.media.ExifInterface.TAG_DATETIME,
+                        androidx.exifinterface.media.ExifInterface.TAG_OFFSET_TIME_ORIGINAL).joinToString(" | ") { e.getAttribute(it).toString() }
+                }
+                val before = read()
+                app.absentmotion.tools.freshDates(copy)
+                Log.i("AMTest", "exifcheck before=$before after=${read()} size=${copy.length()}")
+            }
         }
         intent.getStringExtra("batch")?.let { list ->
             scope.launch {
@@ -242,6 +288,27 @@ internal object TestHooks {
             state.frame = intent.getIntExtra("frame", 0).coerceIn(0, scene.lastFrame)
             if (intent.getBooleanExtra("openexport", false)) state.exportOpen = true
             intent.getStringExtra("clipsmooth")?.let { method -> launch { checkClipSmooth(activity, state, method, intent.getStringExtra("smoothlevel"), intent.getStringExtra("smoothblur")) } }
+            intent.getStringExtra("svgimport")?.let { svg ->
+                launch {
+                    val t0 = android.os.SystemClock.elapsedRealtime()
+                    val sampler = Thread {
+                        try {
+                            while (true) {
+                                Thread.sleep(3000)
+                                for ((thread, stack) in Thread.getAllStackTraces()) if (thread.state == Thread.State.RUNNABLE && thread.name.startsWith("DefaultDispatcher"))
+                                    Log.i("AMTest", "svgstack " + thread.name + " " + stack.take(14).joinToString(" <- "))
+                            }
+                        } catch (_: InterruptedException) {}
+                    }.also { it.start() }
+                    try { state.importSvgFile(activity, Uri.fromFile(File(svg))) } finally { sampler.interrupt() }
+                    val t1 = android.os.SystemClock.elapsedRealtime()
+                    val xml = state.scene.toXml()
+                    val t2 = android.os.SystemClock.elapsedRealtime()
+                    val pixels = engine.capturePreviewFrame(state.scene, state.timeMs, state.scene.width / 2, state.scene.height / 2, false) { true }
+                    val t3 = android.os.SystemClock.elapsedRealtime()
+                    Log.i("AMTest", "svgimport ${File(svg).name} import=${t1 - t0}ms toXml=${t2 - t1}ms chars=${xml.length} preview=${t3 - t2}ms ok=${pixels != null} layers=${state.scene.layers.size}")
+                }
+            }
             val stillName = intent.getStringExtra("still")
             intent.getStringExtra("export")?.let { exportForTest(activity, it, scene, state.frame) }
             intent.getStringExtra("verify")?.let { file ->

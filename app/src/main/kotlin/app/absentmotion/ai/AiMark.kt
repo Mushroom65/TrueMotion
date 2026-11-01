@@ -15,6 +15,7 @@ enum class AiKind(val xml: String, @StringRes val title: Int, val attribute: Str
     Video("video", R.string.ai_remove_background_video, null),
     Smooth("smooth", R.string.smooth_clip, "fillVideo", false),
     Enhance("enhance", R.string.ai_enhance, "fillVideo"),
+    Reverse("reverse", R.string.speed_reverse, null, false),
 }
 
 enum class NoiseSource(val xml: String, @StringRes val title: Int, @StringRes val hint: Int, val rumbleHz: Double, val blend: Double) {
@@ -65,6 +66,8 @@ internal fun Layer.aiStack(kind: AiKind): List<AiMark> {
 }
 
 internal fun Layer.aiBuried(kind: AiKind): Boolean = aiStack(kind).size > 1
+
+internal val Layer.backgroundMark: AiMark? get() = aiMarks.firstOrNull { it.kind == AiKind.Background }?.takeIf { aiStack(AiKind.Background).isNotEmpty() }
 
 internal fun Layer.shiftedMedia(by: Int): Layer {
     val fill = mediaFill

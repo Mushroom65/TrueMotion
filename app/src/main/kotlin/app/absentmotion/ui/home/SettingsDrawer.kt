@@ -157,6 +157,7 @@ fun SettingsDrawer(settings: AppSettings, drawer: androidx.compose.material3.Dra
                 CaptionModelRow()
                 CutoutRows()
                 AiModelRows()
+                DownloaderRow()
                 AiGpuRow()
             }
             Category(R.string.settings_group_backup, ChromeIcons.SavePreset) {
@@ -261,6 +262,32 @@ private fun CaptionModelRow() {
         title = { Text(stringResource(R.string.settings_delete_model_title, stringResource(R.string.caption_model)), color = Am.Navy) },
         text = { Text(stringResource(R.string.settings_delete_model_text), color = Am.Navy) },
         confirmButton = { TextButton({ ask = false; CaptionModel.remove(context); bytes = CaptionModel.storedBytes(context) }) { Text(stringResource(R.string.delete), color = Am.Navy) } },
+        dismissButton = { TextButton({ ask = false }) { Text(stringResource(R.string.cancel), color = Am.Navy) } },
+        containerColor = Am.Card,
+    )
+}
+
+@Composable
+private fun DownloaderRow() {
+    val context = LocalContext.current
+    var present by remember { mutableStateOf(app.absentmotion.tools.VideoDownloader.installed(context)) }
+    var bytes by remember { mutableLongStateOf(-1L) }
+    androidx.compose.runtime.LaunchedEffect(present) { if (present) bytes = withContext(Dispatchers.IO) { app.absentmotion.tools.VideoDownloader.storedBytes(context) } }
+    if (!present) return
+    var ask by remember { mutableStateOf(false) }
+    val name = stringResource(R.string.downloader_engine_name)
+    ActionRow(stringResource(R.string.ai_delete_model, name), if (bytes > 0L) formatBytes(bytes) else "", chevron = false) { ask = true }
+    if (ask) AlertDialog(
+        onDismissRequest = { ask = false },
+        title = { Text(stringResource(R.string.settings_delete_model_title, name), color = Am.Navy) },
+        text = { Text(stringResource(R.string.settings_delete_model_text), color = Am.Navy) },
+        confirmButton = {
+            TextButton({
+                ask = false
+                app.absentmotion.tools.VideoDownloader.remove(context)
+                present = false
+            }) { Text(stringResource(R.string.delete), color = Am.Navy) }
+        },
         dismissButton = { TextButton({ ask = false }) { Text(stringResource(R.string.cancel), color = Am.Navy) } },
         containerColor = Am.Card,
     )

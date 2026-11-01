@@ -31,17 +31,18 @@ data class EffectParam(
     val componentMax: List<Float> = emptyList(),
     val showWhen: Pair<String, Set<Int>>? = null,
     val palette: Boolean = false,
+    val slow: Int = 1,
 ) {
-    val type: String get() = when (kind) { "point" -> "vec2"; "vector3" -> "vec3"; "color" -> "color"; "switch" -> "bool"; "text" -> "string"; else -> "float" }
+    val type: String get() = when (kind) { "point" -> "vec2"; "vector3" -> "vec3"; "quaternion" -> "quat"; "color" -> "color"; "switch" -> "bool"; "text" -> "string"; else -> "float" }
     val missingDefault: String get() = legacyDefault ?: default
 
     fun format(value: Any?): String = format(id, kind, value)
 
     companion object {
-        val Kinds = setOf("float", "angle", "point", "vector3", "color", "switch", "choice", "text")
+        val Kinds = setOf("float", "angle", "point", "vector3", "quaternion", "color", "switch", "choice", "text")
 
         fun format(id: String, kind: String, d: Any?): String = when (kind) {
-            "point", "vector3" -> (d as JSONArray).let { a -> formatFloats(FloatArray(if (kind == "vector3") 3 else 2) { a.getDouble(it).toFloat() }) }
+            "point", "vector3", "quaternion" -> (d as JSONArray).let { a -> formatFloats(FloatArray(if (kind == "quaternion") 4 else if (kind == "vector3") 3 else 2) { a.getDouble(it).toFloat() }) }
             "color" -> (d as String).lowercase(Locale.US).let { if (it.length == 7) "#ff" + it.drop(1) else it }
                 .also { require(Regex("#[0-9a-f]{8}").matches(it)) { "$id: colour $d" } }
             "switch" -> (d == true || (d as? Number)?.toInt() == 1).toString()
@@ -78,7 +79,7 @@ data class EffectParam(
                 json.optDouble("min", -Float.MAX_VALUE.toDouble()).toFloat(), json.optDouble("max", Float.MAX_VALUE.toDouble()).toFloat(),
                 json.optDouble("step", 0.01).toFloat(), percent = json.optBoolean("percent"), pixels = json.optBoolean("pixels"), unit = json.optString("unit"),
                 layerTime = json.optBoolean("layerTime"), after = json.optString("after").takeIf { it.isNotEmpty() }, legacyDefault = legacyDefault,
-                shaderId = shaderId, section = section, componentMin = floats("componentMin"), componentMax = floats("componentMax"), showWhen = showWhen, palette = palette)
+                shaderId = shaderId, section = section, componentMin = floats("componentMin"), componentMax = floats("componentMax"), showWhen = showWhen, palette = palette, slow = json.optInt("slow", 1).coerceIn(1, 20))
         }
     }
 }
@@ -88,8 +89,8 @@ data class EffectPreset(
     val slug: String = name.lowercase(Locale.US).replace(Regex("[^a-z0-9]+"), "-").trim('-'),
 )
 
-data class EffectStage(val shader: String, val target: String = "", val downsample: Float = 1f)
-data class EffectTexture(val id: String, val source: String, val downsample: Float = 1f) {
+data class EffectStage(val shader: String, val target: String = "", val downsample: Float = 1f, val group: Int = 0, val reference: String = "", val input: String = "")
+data class EffectTexture(val id: String, val source: String, val downsample: Float = 1f, val image: String = "") {
     val uniform: String get() = when (source) { "content" -> "image"; "comp" -> "backdrop"; else -> "amzt_$id" }
 }
 
@@ -110,6 +111,8 @@ data class EffectDefinition(
     val stages: List<EffectStage> = emptyList(),
     val textures: List<EffectTexture> = emptyList(),
     val iterations: String? = null,
+    val legacyScript: String = "",
+    val sourceId: String = "",
 ) {
     val available: Boolean get() = status == "ok"
     val thumbnail: String get() = "thumb/$key.webp"
@@ -157,11 +160,12 @@ data class EffectDefinition(
         if (stages.isEmpty()) sksl?.let { put("sksl", it) }
         if (dialect.isNotEmpty()) { put("dialect", dialect); put("lazy", lazy.toString()) }
         iterations?.let { put("iterations", it) }
+        if (legacyScript.isNotEmpty()) put("legacyScript", legacyScript)
     }, params.map { p -> XmlNode("param", buildMap {
-        put("name", p.id); put("value", p.missingDefault)
+        put("name", p.id); put("value", p.missingDefault); put("type", p.type)
         if (p.shaderId != p.id) put("uniform", p.shaderId)
-    }) } + stages.map { XmlNode("stage", mapOf("sksl" to it.shader, "target" to it.target, "downsample" to it.downsample.toString())) } +
-        textures.map { XmlNode("texture", mapOf("name" to it.id, "source" to it.source, "uniform" to it.uniform, "downsample" to it.downsample.toString())) }).toXml()
+    }) } + stages.map { XmlNode("stage", mapOf("sksl" to it.shader, "target" to it.target, "downsample" to it.downsample.toString(), "group" to it.group.toString(), "reference" to it.reference, "input" to it.input)) } +
+        textures.map { XmlNode("texture", mapOf("name" to it.id, "source" to it.source, "uniform" to it.uniform, "downsample" to it.downsample.toString(), "image" to it.image)) }).toXml()
 
     companion object {
         fun parse(json: JSONObject): EffectDefinition {
@@ -171,7 +175,7 @@ data class EffectDefinition(
             val params = json.optJSONArray("params") ?: JSONArray()
             val native = json.optBoolean("native")
             val sksl = json.optString("sksl").takeIf { it.isNotBlank() }
-            require(native || sksl != null) { "$key: no shader" }
+            require(native || sksl != null || json.optJSONArray("stages")?.length()?.let { it > 0 } == true) { "$key: no shader" }
             val parsed = List(params.length()) { EffectParam.parse(params.getJSONObject(it)) }
             parsed.forEachIndexed { i, p -> require(p.after == null || parsed.take(i).any { it.id == p.after }) { "$key.${p.id}: after ${p.after} is not an earlier parameter" } }
             val presets = json.optJSONArray("presets") ?: JSONArray()
@@ -181,9 +185,9 @@ data class EffectDefinition(
                 parsed, if (native) null else sksl, native, since = json.optString("since").takeIf { it.isNotBlank() },
                 presets = List(presets.length()) { preset(key, parsed, presets.getJSONObject(it)) },
                 pluginId = json.optString("plugin").takeIf { it.isNotBlank() }, dialect = json.optString("dialect"),
-                stages = List(stages.length()) { i -> stages.getJSONObject(i).let { EffectStage(it.getString("sksl"), it.optString("target"), it.optDouble("downsample", 1.0).toFloat()) } },
-                textures = List(textures.length()) { i -> textures.getJSONObject(i).let { EffectTexture(it.getString("id"), it.getString("srcType"), it.optDouble("downsample", 1.0).toFloat()) } },
-                iterations = json.optString("iterations").takeIf { it.isNotBlank() && it != "null" })
+                stages = List(stages.length()) { i -> stages.getJSONObject(i).let { EffectStage(it.optString("sksl"), it.optString("target"), it.optDouble("downsample", 1.0).toFloat(), it.optInt("group"), it.optString("nativeEffect"), it.optString("source")) } },
+                textures = List(textures.length()) { i -> textures.getJSONObject(i).let { EffectTexture(it.getString("id"), it.optString("srcType", "content"), it.optDouble("downsample", 1.0).toFloat(), it.optString("imageBase64")) } },
+                iterations = json.optString("iterations").takeIf { it.isNotBlank() && it != "null" }, legacyScript = json.optString("legacyScript"), sourceId = json.optString("sourceId"))
         }
 
         private fun preset(key: String, params: List<EffectParam>, json: JSONObject): EffectPreset {

@@ -4,7 +4,7 @@
 
 # True Motion Next 0.12.0
 
-Новая база: AbsentMotion v4.3.0. [Инструкция, изменения и проверка сборки](docs/RELEASE_0_12_RU.md).
+Новая база: AbsentMotion v4.4.0. [Инструкция, изменения и проверка сборки](docs/RELEASE_0_12_RU.md).
 
 # True Motion Next 0.11.0
 

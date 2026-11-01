@@ -16,6 +16,8 @@ At the top of the editor:
 - The **color** swatch opens the color picker with the eyedropper.
 - The **tick** (Done) closes the editor.
 
+![The text editor: Alignment (1), the font (2), the size (3), the color (4) and Done (5).](img/text-editor.webp)
+
 Under them is the preview and then the text box, which says "Enter your text here." until you type. Drag the round handle at the edge of the text frame in the preview to change the width at which lines wrap. The name of a text layer is its text, until you rename it.
 
 To edit the text later, select the layer and tap **Edit Text**.
@@ -26,7 +28,7 @@ The other tools work on text as on any layer.
 
 - **Fill & Color** gives the letters a color, a gradient or a picture or video (**Media**).
 - **Frame & Shadow**: **Stroke** is the outline of the letters. **Border** and **Shadow** add more.
-- **Opacity & Blend Mode**, **Transform** and **Effects** work as for shapes.
+- **Opacity**, **Transform** and **Effects** work as for shapes.
 - **Convert to Outline** (layer menu) turns text into a shape you can edit point by point. It cannot be turned back into text.
 
 Emoji follow the **Emoji Style** setting: your phone's emoji or the set that comes with the app. See [Settings](@settings).

@@ -2,17 +2,20 @@
 
 # True Motion Next
 
-An experimental Android motion graphics editor based on [AbsentMotion 4.3.0](https://github.com/Comett1225/AbsentMotion/tree/v4.3.0), with tools being ported from the earlier True Motion mod.
+An experimental Android motion graphics editor based on [AbsentMotion 4.4.0](https://github.com/Comett1225/AbsentMotion/tree/v4.4.0), with tools being ported from the earlier True Motion mod.
 
 [Русская инструкция](README_TRUE_MOTION_RU.md) · [Port status](docs/TRUE_MOTION_MIGRATION_RU.md) · [Telegram](https://t.me/TrueMoti0n)
 
-## Included in 0.13.0
+## Included in 0.14.0
 
-- Upstream stable v4.3.0 merged, including its OpenGL backend and new editor tools.
+- Upstream stable v4.4.0 merged, including its OpenGL backend and new editor tools.
 - `.alight` / XML import directly from Projects and `.alight` / `.absproj` package export.
 - Full effect color picker, multiple media selection and direct reopening of vector animation layers.
 - Native XYZ camera rotation and an optional viewport-only camera frame matte.
-- 575 freshly adapted AfterMotionZ+ effects in 11 separate categories, including Deep Glow AE and Saber AE; 575 donor definitions preserved across the update; 210 core/tool definitions. [Scope and validation](docs/AFTERZ_EFFECTS_RU.md).
+- 575 freshly adapted AfterMotionZ+ effects in 11 separate categories, including Deep Glow AE and Saber AE; 575 donor definitions preserved across the update; 225 core/tool definitions. [Scope and validation](docs/AFTERZ_EFFECTS_RU.md).
+- 1,746 additional legacy shader/script definitions in separate True Motion Classic categories, plus the existing native mappings. [Coverage](docs/LEGACY_EFFECTS_014_RU.md).
+- Audio spectrum: stereo FFT, seven styles, audio/video source selection, cached analysis and keyframes.
+- Parent anchor edits and subsequent parent rotation/scale share one affine transform.
 - Native color grading with wheels, curves and HSL controls.
 - Live audio-driven animation referencing an audio layer, beat markers and Bop.
 - Native particle simulation with 2D/3D generation, scene-camera projection, lifetime controls and layer textures.
@@ -20,6 +23,7 @@ An experimental Android motion graphics editor based on [AbsentMotion 4.3.0](htt
 - Video frame/composition to image layer, playback up to 100× with audio.
 - JavaScript plugin commands, hooks and bundled effects; separate vector animation editor.
 - Manual viewport prerender, green timeline cache indicators and a 2 GiB disk cache.
+- Replace a media layer from Fill & Color, paused audio-spectrum preparation and lossless transparent preview caching. [0.14.0 notes](docs/RELEASE_0_14_RU.md).
 - Animated GIF import and the supplied True Motion launcher/in-app logo.
 
 The port is **not complete**. The remaining donor effects, advanced rigging tools, automatic caching of every viewed frame and the new Windows renderer remain incomplete. Consult the [feature status](docs/TRUE_MOTION_MIGRATION.json) before relying on a feature. Unknown legacy effects are preserved on import, but exact rendering compatibility is not guaranteed.
@@ -41,6 +45,8 @@ The fast build uses the included native libraries. The renderer core was rebuilt
 GitHub Actions builds the compatible debug APK and runs JVM tests. It does not publish releases or deploy the upstream website. CI-produced debug APKs are development artifacts.
 
 ## Artwork and validation
+
+0.14.0: 1,695 JVM tests, 0 failures, 30 environment skips. Android smoke sweeps compiled and rendered all 1,746 Classic effects in Vulkan and OpenGL, and reran the 575 AfterMotionZ+ effects. Media replacement, paused spectrum, transparent cached playback, parent anchors, Project 122 and particle exports were checked. The reported OnePlus crash remains unverified on a physical device. [Validation and limits](docs/RELEASE_0_14_RU.md).
 
 0.12.0: 1,610 JVM tests passed locally (30 environment skips). Android native checks cover all 575 donor effects, the existing tools, editable `.alight` roundtrips and XYZ camera projection in Vulkan/OpenGL. Import/export and the new controls were reviewed through the app UI. [Validation details](docs/RELEASE_0_12_RU.md).
 

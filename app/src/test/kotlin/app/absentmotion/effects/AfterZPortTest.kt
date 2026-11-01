@@ -67,7 +67,7 @@ class AfterZPortTest {
         val effect = donor.single { it.key == "afterz-718" }
         val source = JSONObject(File(assets, "${effect.key}.json").readText()).getString("sourceId")
         val xml = """<scene width="128" height="128" totalTime="999" fps="30"><shape id="1" startTime="0" endTime="999"><effect id="$source"><property name="exposure" type="float"><kf t="0" v="0"/><kf t="1" v="2" e="cubicBezier 0.2 0 0.8 1"/></property></effect></shape></scene>"""
-        val result = EffectMigration.parse(rules, catalog).migrate(Scene.parse(xml))
+        val result = EffectMigration.parse(rules, catalog.copy(definitions = catalog.definitions.filter { it.dialect != "legacy" })).migrate(Scene.parse(xml))
         assertTrue(result.changed)
         assertTrue(result.dropped.isEmpty())
         val converted = result.scene.layers.single().node.children.single { it.name == "effect" }

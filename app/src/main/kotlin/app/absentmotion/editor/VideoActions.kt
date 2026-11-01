@@ -32,8 +32,13 @@ fun Scene.videoLayer(media: MediaDeclaration, frame: Int): Layer? {
 
 fun EditorState.retimeVideo(start: Boolean) {
     val layer = selected ?: return
-    val newStart = if (start) timeMs else layer.startTime
-    val newEnd = if (start) layer.endTime else scene.frameEnd(frame)
+    var newStart = if (start) timeMs else layer.startTime
+    var newEnd = if (start) layer.endTime else scene.frameEnd(frame)
+    if (layer.node.child("speedMap")?.isKeyframed != true) {
+        val timing = VideoTiming(layer)
+        val longest = ((timing.mediaMs((layer.endTime - layer.startTime).toDouble()) - timing.mediaMs(0.0)) / SLOWEST_SPEED).toInt()
+        if (newEnd - newStart > longest) { if (start) newStart = newEnd - longest else newEnd = newStart + longest }
+    }
     val duration = newEnd - newStart
     if (duration < 1 || !scene.showsAnyFrame(newStart, newEnd)) return
     edit { it.update(layer.id) { current -> current.retimedVideo(newStart, newEnd) } }
@@ -43,6 +48,26 @@ fun EditorState.setVideoSpeed(value: Float, mediaTimeNs: Float, original: Layer)
     if (selectedId != original.id) return
     val changed = scene.withPlaybackSpeed(original, value, mediaTimeNs, sampleMs)
     edit("video-speed") { it.update(original.id) { changed } }
+}
+
+fun EditorState.setVideoSpeed(value: Float, original: Layer) {
+    if (selectedId != original.id || value.isNaN()) return
+    val speed = value.coerceIn(SLOWEST_SPEED, FASTEST_SPEED)
+    val changed = original.withNormalSpeed(speed)
+    if (!scene.showsAnyFrame(changed.startTime, changed.endTime)) return
+    edit("video-speed") { it.update(original.id) { changed } }
+}
+
+fun EditorState.applySpeedCurve(points: List<CurvePoint>?) {
+    val layer = selected ?: return
+    val media = VideoTiming(layer).mediaMs((sampleMs - layer.startTime).toDouble())
+    val inside = sampleMs in layer.startTime..layer.endTime
+    val changed = layer.withSpeedCurve(points)
+    if (!scene.showsAnyFrame(changed.startTime, changed.endTime)) return
+    edit { it.update(layer.id) { current -> current.withSpeedCurve(points) } }
+    val after = selected ?: return
+    if (inside) frame = scene.frameAt(after.startTime + VideoTiming(after).localMs(media).roundToInt())
+        .coerceIn(scene.frameAt(after.startTime), scene.frameAt(after.endTime))
 }
 
 val EditorState.keyLayer: Layer? get() = selected?.let {
@@ -57,18 +82,8 @@ internal fun EditorState.editKeyValue(key: Any? = null, change: (Layer) -> Layer
     }
 }
 
-fun EditorState.applySpeedRamp(ramp: SpeedRamp) {
-    val id = selected?.id ?: return
-    edit { it.update(id) { layer -> layer.withSpeedRamp(ramp) } }
-}
-
 fun EditorState.freezeFrame(seconds: Float) {
     val layer = selected ?: return
     val frozen = layer.withFreezeFrame(sampleMs, (seconds * 1000).toInt().coerceIn(100, 30_000), scene.fps) ?: return
     edit { it.update(layer.id) { frozen } }
-}
-
-fun EditorState.deleteSpeedKeyframes() {
-    val id = selected?.id ?: return
-    edit { it.update(id) { layer -> layer.withVideoSpeedMap(XmlNode("speedMap", mapOf("value" to "1"))) } }
 }

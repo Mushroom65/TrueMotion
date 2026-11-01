@@ -9,12 +9,19 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 
 #include "include/core/SkBBHFactory.h"
 #include "include/core/SkBlender.h"
+#include "include/core/SkBlurTypes.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColorFilter.h"
+#include "include/core/SkColorSpace.h"
+#include "include/core/SkImage.h"
+#include "include/core/SkMaskFilter.h"
 #include "include/core/SkPaint.h"
+#include "include/core/SkRRect.h"
+#include "include/core/SkRSXform.h"
 #include "include/core/SkPathBuilder.h"
 #include "include/core/SkPathMeasure.h"
 #include "include/core/SkM44.h"
@@ -22,11 +29,14 @@
 #include "include/core/SkPicture.h"
 #include "include/core/SkPictureRecorder.h"
 #include "include/core/SkSurface.h"
+#include "include/effects/SkGradient.h"
 #include "include/effects/SkImageFilters.h"
 #include "include/effects/SkRuntimeEffect.h"
 #include "include/pathops/SkPathOps.h"
 #include "drawing.h"
 #include "true_particles.h"
+#include "spectrum.h"
+#include "particles.h"
 #include "scene.h"
 #include "text.h"
 
@@ -261,7 +271,10 @@ Placement Effective(const std::vector<Layer>& siblings, const Layer& l, double t
     Placement p{};
     if (parent) {
         p = Effective(siblings, *parent, timeMs, depth + 1);
-        const bool full=own.fullTransform||p.fullTransform;
+        // A parent and its children share the same local origin and anchor matrix.
+        // Flattening rotation/scale and adding the parent's pivot again moves children
+        // around a different point as soon as the anchor is edited.
+        const bool full=true;
         const SkM44 composed=full ? (p.fullTransform?p.model:ModelOf(p,*parent,timeMs))*(own.fullTransform?own.model:ModelOf(own,l,timeMs)) : SkM44();
         const SkV4 offset = Turn(p.rotation) * p.tilt * SkV4{(own.location.fX + own.pivot.fX - p.pivot.fX) * p.scale.fX,
                                                              (own.location.fY + own.pivot.fY - p.pivot.fY) * p.scale.fY, own.z, 0};
@@ -358,7 +371,8 @@ SkPath DrawStroke(SkCanvas* canvas, const Layer& l, const SkPath& path, float t,
     const SkColor4f color = ColorAt(l.stroke.color, t, kBlack, alpha);
     SkPaint paint = StrokePaint(l, width, color);
     const bool ends = (l.stroke.start != "none" || l.stroke.end != "none") && l.stroke.endSize > 0;
-    SkPath area = outline ? skpathutils::FillPathWithPaint(path, paint) : SkPath();
+    const SkPath tapered = l.kind == "shape" && !l.text ? TaperedStroke(l, path, width, t) : SkPath();
+    SkPath area = !outline ? SkPath() : tapered.isEmpty() ? skpathutils::FillPathWithPaint(path, paint) : tapered;
     const auto add = [&](const SkPath& end) { if (outline) area = Union(area, end); };
     const bool layered = canvas && ends && color.fA < 1;
     if (layered) {
@@ -368,7 +382,12 @@ SkPath DrawStroke(SkCanvas* canvas, const Layer& l, const SkPath& path, float t,
         canvas->saveLayer(path.getBounds().makeOutset(room, room), &opacity);
         paint.setAlphaf(1);
     }
-    if (canvas) canvas->drawPath(path, paint);
+    if (canvas && tapered.isEmpty()) canvas->drawPath(path, paint);
+    if (canvas && !tapered.isEmpty()) {
+        SkPaint fill = paint;
+        fill.setStyle(SkPaint::kFill_Style);
+        canvas->drawPath(tapered, fill);
+    }
     if (ends) {
         const float r = width * l.stroke.endSize;
         SkPathMeasure contours(path, false);
@@ -558,6 +577,7 @@ struct Override {
     SkBlendMode mode = SkBlendMode::kSrcOver;
     bool unitOpacity = false;
     bool echoed = false;
+    bool feedback = false;
     bool shuttered = false;
     float alpha = 1;
 };
@@ -579,6 +599,14 @@ void DrawGroup(SkCanvas* canvas, const Layer& l, double timeMs, const MediaPictu
             scene.width = group.innerWidth;
             scene.height = group.innerHeight;
             scene.fps = std::max(1, (int)group.retiming.fps);
+            if (previous) {
+                for (const double beat : previous->beats) {
+                    const double inner = NestedTime(group, beat * 1000);
+                    if (inner >= 0) scene.beats.push_back(inner / 1000);
+                }
+                std::sort(scene.beats.begin(), scene.beats.end());
+                scene.beats.erase(std::unique(scene.beats.begin(), scene.beats.end()), scene.beats.end());
+            }
             gScene = &scene;
         }
         ~Context() { gScene = previous; }
@@ -714,6 +742,10 @@ sk_sp<SkImage> ParticleImage(SkCanvas* canvas, const Layer& emitter, const Layer
 Drawn DrawBody(SkCanvas* canvas, const Layer& l, double timeMs, float t, const SkMatrix& m, const SkPath& path, float alpha,
                const MediaPictures& pictures, bool outline) {
     Drawn drawn;
+    if(HasSpectrum(l)) {
+        canvas->save();canvas->concat(m);DrawSpectrum(canvas,l,timeMs,alpha);canvas->restore();
+        drawn.fill=true;return drawn;
+    }
     if (TrueHasParticles(l)) {
         TrueDrawParticles(canvas,l,timeMs,alpha,m,[&](const LayerEffect& effect) { return ParticleImage(canvas,l,effect,timeMs,pictures); });
         drawn.fill=true;
@@ -781,7 +813,7 @@ Drawn DrawBody(SkCanvas* canvas, const Layer& l, double timeMs, float t, const S
 }
 
 bool SelfOverlaps(const Layer& l) {
-    return TrueHasParticles(l) || l.kind == "drawing" || l.kind == "embedScene" || l.kind == "model" || (l.stroke.present && l.stroke.enabled);
+    return TrueHasParticles(l) || HasSpectrum(l) || l.kind == "drawing" || l.kind == "embedScene" || l.kind == "model" || (l.stroke.present && l.stroke.enabled);
 }
 
 sk_sp<SkColorFilter> CopyTint(const RepeatCopy& look) {
@@ -834,6 +866,348 @@ void ReleaseLayers(SkCanvas* canvas) {
     canvas->restore();
 }
 
+const char* const kParticles = "absent.particles";
+
+bool Emits(const LayerEffect& e) { return !e.hidden && e.id == kParticles; }
+
+float Setting(const LayerEffect& e, const char* name, float t, float fallback, int i = 0) {
+    const Property* p = e.prop(name);
+    const float v = p ? p->anim.get(i, t, fallback) : fallback;
+    return std::isfinite(v) ? v : fallback;
+}
+
+float Highest(const LayerEffect& e, const char* name, float fallback) {
+    const Property* p = e.prop(name);
+    if (!p) return fallback;
+    const Anim& a = p->anim;
+    if (a.keys.empty()) return !a.value.empty() && std::isfinite(a.value[0]) ? a.value[0] : fallback;
+    float most = -1e30f;
+    for (const Keyframe& k : a.keys) {
+        if (!k.v.empty() && std::isfinite(k.v[0])) most = std::max(most, k.v[0]);
+    }
+    if (a.hasLead && !a.lead.v.empty() && std::isfinite(a.lead.v[0])) most = std::max(most, a.lead.v[0]);
+    return most > -1e30f ? most : fallback;
+}
+
+particles::Settings ParticleSettings(const LayerEffect& e, float t) {
+    particles::Settings s;
+    const auto v = [&](const char* name, float fallback) { return Setting(e, name, t, fallback); };
+    const auto pick = [&](const char* name, int most) { return std::clamp((int)std::lround(v(name, 0)), 0, most); };
+    s.kind = pick("kind", 8);
+    s.emission = pick("emission", 2);
+    s.colouring = pick("colorMode", 2);
+    s.beatEvery = 1 << pick("beats", 2);
+    s.follow = pick("orientation", 1) == 1;
+    s.prewarm = v("prewarm", 1) >= 0.5f;
+    s.depth = v("depth", 0) >= 0.5f;
+    s.zSpeed = v("zSpeed", 0);
+    s.zSpread = v("zSpread", 0);
+    s.perspective = v("perspective", 1);
+    s.rate = v("rate", 40);
+    s.count = v("count", 100);
+    s.start = v("start", 0);
+    s.every = v("every", 0);
+    s.bpm = v("bpm", 120);
+    s.lifetime = v("lifetime", 10);
+    s.lifeVariation = v("lifeVariation", 0.2f);
+    s.speed = v("speed", 30);
+    s.speedVariation = v("speedVariation", 0.5f);
+    s.direction = v("direction", 90);
+    s.spread = v("spread", 40);
+    s.gravity = v("gravity", 300);
+    s.wind = v("wind", 0);
+    s.drag = v("drag", 1.2f);
+    s.swirl = v("swirl", 18);
+    s.swirlSpeed = v("swirlSpeed", 0.25f);
+    s.size = v("size", 1);
+    s.sizeVariation = v("sizeVariation", 0.6f);
+    s.endSize = v("endSize", 1);
+    s.spin = v("spin", 0);
+    s.spinVariation = v("spinVariation", 0.5f);
+    s.randomRotation = v("randomRotation", 1);
+    s.fadeIn = v("fadeIn", 0.05f);
+    s.fadeOut = v("fadeOut", 0.15f);
+    s.twinkle = v("twinkle", 0);
+    s.colorVariation = v("colorVariation", 0);
+    const float second[3] = {0x8f / 255.0f, 0xd3 / 255.0f, 1};
+    for (int i = 0; i < 3; i++) {
+        s.color[i] = Setting(e, "color", t, 1, i + 1);
+        s.color2[i] = Setting(e, "color2", t, second[i], i + 1);
+    }
+    return s;
+}
+
+constexpr int kCell = 96, kSheetColumns = 4, kSheetRows = 3;
+constexpr float kSpriteSize[] = {18, 36, 28, 44, 16, 34, 30, 30};
+
+int SpriteCell(int kind, int frame) {
+    static const int cells[] = {0, 1, 2, 6, 7, 8, 9, 10};
+    return kind == particles::kConfetti ? 2 + std::clamp(frame, 0, 3) : cells[std::clamp(kind, 0, 7)];
+}
+
+SkRect CellRect(int cell) {
+    return SkRect::MakeXYWH((float)(cell % kSheetColumns * kCell), (float)(cell / kSheetColumns * kCell), (float)kCell, (float)kCell);
+}
+
+sk_sp<SkShader> Fade(float radius, const std::vector<std::pair<float, float>>& stops) {
+    std::vector<SkColor4f> colors;
+    std::vector<float> at;
+    for (const auto& [where, alpha] : stops) {
+        at.push_back(where);
+        colors.push_back({1, 1, 1, alpha});
+    }
+    return SkShaders::RadialGradient({0, 0}, radius, SkGradient(SkGradient::Colors(colors, at, SkTileMode::kClamp), {}));
+}
+
+sk_sp<SkImage> SpriteSheet() {
+    static const sk_sp<SkImage> sheet = [] {
+        SkPictureRecorder recorder;
+        SkCanvas* c = recorder.beginRecording(SkRect::MakeWH((float)(kSheetColumns * kCell), (float)(kSheetRows * kCell)));
+        const float r = kCell / 2.0f - 6;
+        const auto cell = [&](int i, const std::function<void(SkPaint&)>& draw) {
+            SkPaint paint;
+            paint.setAntiAlias(true);
+            paint.setColor(SK_ColorWHITE);
+            c->save();
+            c->translate((i % kSheetColumns + 0.5f) * kCell, (i / kSheetColumns + 0.5f) * kCell);
+            draw(paint);
+            c->restore();
+        };
+        cell(0, [&](SkPaint& p) {
+            p.setShader(Fade(r, {{0, 1}, {0.35f, 0.92f}, {0.7f, 0.42f}, {1, 0}}));
+            c->drawCircle(0, 0, r, p);
+        });
+        cell(1, [&](SkPaint& p) {
+            const SkPoint ends[2] = {{-r, 0}, {r, 0}};
+            const SkColor4f colors[] = {{1, 1, 1, 0}, {1, 1, 1, 0.5f}, {1, 1, 1, 1}};
+            const float at[] = {0, 0.55f, 1};
+            p.setShader(SkShaders::LinearGradient(ends, SkGradient(SkGradient::Colors(colors, at, SkTileMode::kClamp), {})));
+            p.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, r * 0.05f));
+            c->drawRRect(SkRRect::MakeRectXY(SkRect::MakeLTRB(-r, -r * 0.14f, r, r * 0.14f), r * 0.14f, r * 0.14f), p);
+        });
+        for (int f = 0; f < 4; f++) {
+            cell(2 + f, [&](SkPaint& p) {
+                const float wide[] = {1, 0.72f, 0.42f, 0.14f}, grey[] = {1, 0.86f, 0.74f, 0.62f};
+                p.setColor4f({grey[f], grey[f], grey[f], 1});
+                const float w = r * 0.72f * wide[f], h = r * 0.42f;
+                c->drawRRect(SkRRect::MakeRectXY(SkRect::MakeLTRB(-w, -h, w, h), 3, 3), p);
+            });
+        }
+        cell(6, [&](SkPaint& p) {
+            p.setShader(Fade(r, {{0, 0.05f}, {0.6f, 0.1f}, {0.84f, 0.45f}, {0.93f, 0.95f}, {1, 0}}));
+            c->drawCircle(0, 0, r, p);
+            SkPaint shine;
+            shine.setAntiAlias(true);
+            shine.setColor4f({1, 1, 1, 0.9f});
+            shine.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, r * 0.04f));
+            c->save();
+            c->translate(-r * 0.42f, -r * 0.42f);
+            c->rotate(-45);
+            c->drawOval(SkRect::MakeLTRB(-r * 0.22f, -r * 0.1f, r * 0.22f, r * 0.1f), shine);
+            c->restore();
+        });
+        cell(7, [&](SkPaint& p) {
+            p.setShader(Fade(r, {{0, 1}, {0.15f, 0.7f}, {0.45f, 0.2f}, {1, 0}}));
+            c->drawCircle(0, 0, r, p);
+        });
+        cell(8, [&](SkPaint& p) {
+            SkPathBuilder b;
+            b.moveTo(0, r * 0.85f);
+            b.cubicTo(-r * 0.2f, r * 0.62f, -r * 0.95f, r * 0.25f, -r * 0.95f, -r * 0.25f);
+            b.cubicTo(-r * 0.95f, -r * 0.75f, -r * 0.3f, -r * 0.95f, 0, -r * 0.45f);
+            b.cubicTo(r * 0.3f, -r * 0.95f, r * 0.95f, -r * 0.75f, r * 0.95f, -r * 0.25f);
+            b.cubicTo(r * 0.95f, r * 0.25f, r * 0.2f, r * 0.62f, 0, r * 0.85f);
+            b.close();
+            c->drawPath(b.detach(), p);
+        });
+        cell(9, [&](SkPaint& p) {
+            SkPathBuilder b;
+            for (int i = 0; i < 10; i++) {
+                const float a = (-90 + 36 * i) * kRadians, k = i % 2 ? r * 0.45f : r * 0.92f;
+                if (i == 0) b.moveTo(std::cos(a) * k, std::sin(a) * k);
+                else b.lineTo(std::cos(a) * k, std::sin(a) * k);
+            }
+            b.close();
+            p.setStrokeJoin(SkPaint::kRound_Join);
+            p.setStrokeWidth(r * 0.08f);
+            p.setStyle(SkPaint::kStrokeAndFill_Style);
+            c->drawPath(b.detach(), p);
+        });
+        cell(10, [&](SkPaint& p) {
+            SkPathBuilder b;
+            b.moveTo(0, r * 0.95f);
+            b.cubicTo(r * 0.78f, r * 0.42f, r * 0.72f, -r * 0.55f, r * 0.3f, -r * 0.93f);
+            b.lineTo(0, -r * 0.68f);
+            b.lineTo(-r * 0.3f, -r * 0.93f);
+            b.cubicTo(-r * 0.72f, -r * 0.55f, -r * 0.78f, r * 0.42f, 0, r * 0.95f);
+            b.close();
+            const SkPoint ends[2] = {{0, -r}, {0, r}};
+            const SkColor4f colors[] = {{1, 1, 1, 1}, {0.8f, 0.8f, 0.8f, 1}};
+            p.setShader(SkShaders::LinearGradient(ends, SkGradient(SkGradient::Colors(colors, SkTileMode::kClamp), {})));
+            c->drawPath(b.detach(), p);
+        });
+        return SkImages::DeferredFromPicture(recorder.finishRecordingAsPicture(), {kSheetColumns * kCell, kSheetRows * kCell}, nullptr, nullptr,
+                                             SkImages::BitDepth::kU8, SkColorSpace::MakeSRGB());
+    }();
+    return sheet;
+}
+
+sk_sp<SkImage> Uploaded(const sk_sp<SkImage>& image, bool mipmapped) {
+    return image && gEffects && gEffects->upload ? gEffects->upload(image, mipmapped) : image;
+}
+
+struct Sprite {
+    sk_sp<SkImage> image;
+    SkPoint anchor = {0, 0};
+    float scale = 1;
+};
+
+Sprite LayerSprite(SkCanvas* canvas, const Layer& l, double timeMs, float t, const SkMatrix& m, const SkPath& path, const MediaPictures& pictures,
+                   float largest) {
+    Sprite out;
+    const SkRect box = path.getBounds();
+    const SkPoint centre = m.mapPoint(box.center());
+    const SkMatrix shape = SkMatrix::Translate(-centre.fX, -centre.fY) * m;
+    const float room = l.stroke.present && l.stroke.enabled ? l.stroke.size.get(0, t, 0) * std::max(l.stroke.endSize, 1.0f) * 3 + 2 : 2;
+    const SkRect drawn = shape.mapRect(box.makeOutset(room, room));
+    if (drawn.isEmpty() || !drawn.isFinite()) return out;
+    float scale = std::clamp(canvas->getTotalMatrix().getMaxScale(), 1.0f, 4.0f) * std::clamp(largest, 0.05f, 2.0f);
+    const float side = std::max(drawn.width(), drawn.height()) * scale;
+    if (side > 1024) scale *= 1024 / side;
+    SkPictureRecorder recorder;
+    DrawBody(recorder.beginRecording(drawn), l, timeMs, t, shape, path, 1, pictures, false);
+    const SkMatrix place = SkMatrix::Translate(1, 1) * SkMatrix::Scale(scale, scale) * SkMatrix::Translate(-drawn.left(), -drawn.top());
+    const SkISize size = {(int)std::ceil(drawn.width() * scale) + 2, (int)std::ceil(drawn.height() * scale) + 2};
+    out.image = SkImages::DeferredFromPicture(recorder.finishRecordingAsPicture(), size, &place, nullptr, SkImages::BitDepth::kU8,
+                                              SkColorSpace::MakeSRGB());
+    out.anchor = place.mapPoint({0, 0});
+    out.scale = scale;
+    return out;
+}
+
+void DrawParticles(SkCanvas* canvas, const std::vector<Layer>& siblings, const Layer& l, const LayerEffect& e, double timeMs, float t,
+                   const SkMatrix& m, const SkPath& path, float alpha, const MediaPictures& pictures) {
+    const double length = std::max(1, l.endTime - l.startTime);
+    particles::Field field;
+    field.seed = particles::Mix(particles::Mix((uint64_t)(l.noiseId ? l.noiseId : l.id)) ^
+                                particles::Mix((uint64_t)std::llround((double)Setting(e, "seed", t, 0) * 1000) + 0x51ed27ull));
+    field.unit = gScene && gScene->width > 0 && gScene->height > 0 ? std::min(gScene->width, gScene->height) / 1080.0f : 1.0f;
+    field.rateMost = Highest(e, "rate", 40);
+    field.lifeMost = Highest(e, "lifetime", 10) * (1 + std::clamp(Highest(e, "lifeVariation", 0.2f), 0.0f, 1.0f));
+    field.animated = std::any_of(e.props.begin(), e.props.end(), [](const Property& p) { return !p.anim.keys.empty(); });
+    field.fps = Fps();
+    field.origin = l.startTime / 1000.0;
+    if (gScene) field.beats = gScene->beats;
+    field.at = [&](double s) { return ParticleSettings(e, (float)(s * 1000 / length)); };
+    const SkRect box = path.getBounds();
+    const int emitter = std::clamp((int)std::lround(Setting(e, "emitter", t, 1)), 0, 3);
+    const float reach = std::max(0.0f, Setting(e, "emitterSize", t, 1));
+    const SkPoint centre = box.center() + SkVector{Setting(e, "position", t, 0, 0), Setting(e, "position", t, 0, 1)};
+    std::vector<SkPoint> rim;
+    if (emitter == particles::kOutline) {
+        const SkPath outline = l.text ? TextGlyphPath(l, t, Fps()) : path;
+        SkPathMeasure measure(outline, false);
+        float total = 0;
+        do total += measure.getLength();
+        while (measure.nextContour());
+        SkPathMeasure walk(outline, false);
+        float done = 0, span = walk.getLength();
+        for (int i = 0; i < 512 && total > 0; i++) {
+            const float d = (i + 0.5f) * total / 512;
+            while (done + span < d && walk.nextContour()) {
+                done += span;
+                span = walk.getLength();
+            }
+            SkPoint p;
+            if (walk.getPosTan(std::clamp(d - done, 0.0f, span), &p, nullptr)) rim.push_back(p);
+        }
+    }
+    const double step = std::max(1.0 / std::max(field.fps, 1.0), field.lifeMost / 240.0);
+    std::unordered_map<int64_t, SkMatrix> placed;
+    const auto placedAt = [&](int64_t k) -> const SkMatrix& {
+        auto found = placed.find(k);
+        if (found == placed.end()) found = placed.emplace(k, SiblingMatrix(siblings, l, l.startTime + k * step * 1000)).first;
+        return found->second;
+    };
+    field.emit = [&](double born, float u, float v, float direction, float* x, float* y) {
+        SkPoint p = centre;
+        if (emitter == particles::kArea) {
+            p += SkVector{(u - 0.5f) * box.width() * reach, (v - 0.5f) * box.height() * reach};
+        } else if (emitter == particles::kOutline && !rim.empty()) {
+            p = rim[std::min(rim.size() - 1, (size_t)(u * rim.size()))];
+        } else if (emitter == particles::kLine) {
+            const float a = direction * kRadians;
+            SkMatrix inverse;
+            const bool turned = placedAt((int64_t)std::floor(born / step)).invert(&inverse);
+            SkVector d = turned ? inverse.mapVector(std::cos(a), std::sin(a)) : SkVector{std::cos(a), std::sin(a)};
+            if (!d.normalize()) d = {0, 1};
+            const SkVector across = {-d.fY, d.fX};
+            const float back = (std::fabs(d.fX) * box.width() + std::fabs(d.fY) * box.height()) / 2;
+            const float half = (std::fabs(across.fX) * box.width() + std::fabs(across.fY) * box.height()) / 2 * reach;
+            p += across * ((2 * u - 1) * half) - d * back;
+        }
+        const double at = born / step;
+        const int64_t k = (int64_t)std::floor(at);
+        const float w = (float)(at - k);
+        const SkPoint a = placedAt(k).mapPoint(p), b = w > 0 ? placedAt(k + 1).mapPoint(p) : a;
+        *x = a.fX + (b.fX - a.fX) * w;
+        *y = a.fY + (b.fY - a.fY) * w;
+    };
+    std::unordered_map<int64_t, SkM44> orientations;
+    if (Setting(e, "depth", t, 0) >= 0.5f) field.orient = [&](double born, float* out) {
+        const int64_t k = (int64_t)std::floor(born / step);
+        auto found = orientations.find(k);
+        if (found == orientations.end()) {
+            const Placement p = Effective(siblings, l, l.startTime + k * step * 1000, 0);
+            found = orientations.emplace(k, Turn(p.rotation) * p.tilt * Turn(-p.rotation)).first;
+        }
+        for (int row = 0; row < 3; row++) for (int col = 0; col < 3; col++) out[row * 3 + col] = found->second.rc(row, col);
+    };
+    std::vector<particles::Particle> list;
+    particles::Simulate(field, std::max(0.0, (l.steppedMs(timeMs) - l.startTime) / 1000.0), &list);
+    if (list.empty()) return;
+    const particles::Settings look = ParticleSettings(e, t);
+    const bool layered = look.kind == particles::kLayer;
+    Sprite sprite;
+    if (layered) {
+        sprite = LayerSprite(canvas, l, timeMs, t, m, path, pictures,
+                             Highest(e, "size", 1) * (1 + std::clamp(look.sizeVariation, 0.0f, 1.0f)) * std::max(1.0f, look.endSize));
+        sprite.image = Uploaded(sprite.image, false);
+    } else {
+        sprite.image = Uploaded(SpriteSheet(), true);
+        sprite.anchor = {kCell / 2.0f, kCell / 2.0f};
+        sprite.scale = kCell / (kSpriteSize[std::clamp(look.kind, 0, 7)] * field.unit);
+    }
+    if (!sprite.image) return;
+    const float tint = layered ? std::clamp(Setting(e, "tint", t, 0), 0.0f, 1.0f) : 1.0f;
+    const SkRect whole = SkRect::MakeIWH(sprite.image->width(), sprite.image->height());
+    const SkRect seen = canvas->getLocalClipBounds();
+    std::vector<SkRSXform> xforms;
+    std::vector<SkRect> cells;
+    std::vector<SkColor> colors;
+    xforms.reserve(list.size());
+    cells.reserve(list.size());
+    colors.reserve(list.size());
+    SkRect cull = SkRect::MakeEmpty();
+    for (const particles::Particle& p : list) {
+        const SkRect cell = layered ? whole : CellRect(SpriteCell(look.kind, p.frame));
+        const float scale = p.size / sprite.scale, r = scale * std::max(cell.width(), cell.height());
+        const SkRect around = SkRect::MakeLTRB(p.x - r, p.y - r, p.x + r, p.y + r);
+        if (!SkRect::Intersects(around, seen)) continue;
+        cull.join(around);
+        xforms.push_back(SkRSXform::MakeFromRadians(scale, p.angle, p.x, p.y, sprite.anchor.fX, sprite.anchor.fY));
+        cells.push_back(cell);
+        colors.push_back(SkColor4f{1 + (p.r - 1) * tint, 1 + (p.g - 1) * tint, 1 + (p.b - 1) * tint, std::clamp(p.alpha, 0.0f, 1.0f)}.toSkColor());
+    }
+    if (xforms.empty()) return;
+    const int blend = std::clamp((int)std::lround(Setting(e, "blend", t, 0)), 0, 2);
+    SkPaint paint;
+    paint.setAlphaf(std::clamp(alpha, 0.0f, 1.0f));
+    paint.setBlendMode(blend == 1 ? SkBlendMode::kPlus : blend == 2 ? SkBlendMode::kScreen : SkBlendMode::kSrcOver);
+    const SkSamplingOptions sampling = layered ? SkSamplingOptions(SkFilterMode::kLinear) : SkSamplingOptions(SkFilterMode::kLinear, SkMipmapMode::kLinear);
+    canvas->drawAtlas(sprite.image.get(), xforms, cells, colors, SkBlendMode::kModulate, sampling, &cull, &paint);
+}
+
 void DrawContent(SkCanvas* canvas, const std::vector<Layer>& siblings, const Layer& l, double timeMs, float alpha,
                  bool decorate, const MediaPictures& pictures, const std::vector<LayerCopy>* copies) {
     const float t = l.localTime(timeMs);
@@ -845,7 +1219,10 @@ void DrawContent(SkCanvas* canvas, const std::vector<Layer>& siblings, const Lay
     const bool pixelEdged = decorate && PixelEdged(l, pictures);
     const bool bordered = decorate && std::any_of(l.borders.begin(), l.borders.end(), [&](const Edge& e) { return ShaderBorder(l, e, t, pixelEdged); });
     const bool early = pixelEdged && bordered && SeesPrevious(siblings, l) && !gEffects->lifted(l);
-    auto body = [&](SkCanvas* canvas) {
+    const auto order = [&](const LayerEffect& e) { return std::clamp((int)std::lround(Setting(e, "layer", t, 0)), 0, 2); };
+    const bool emits = std::any_of(l.effects.begin(), l.effects.end(), Emits);
+    const bool alone = emits && std::any_of(l.effects.begin(), l.effects.end(), [&](const LayerEffect& e) { return Emits(e) && order(e) == 2; });
+    auto own = [&](SkCanvas* canvas) {
         if (!copies) {
             drawn = DrawBody(canvas, l, timeMs, t, m, path, alpha, pictures, bordered);
             return;
@@ -909,6 +1286,17 @@ void DrawContent(SkCanvas* canvas, const std::vector<Layer>& siblings, const Lay
             }
             if (now) drawn = d;
         }
+    };
+    auto body = [&](SkCanvas* canvas) {
+        if (!emits) return own(canvas);
+        const auto pass = [&](bool behind) {
+            for (const LayerEffect& e : l.effects) {
+                if (Emits(e) && (order(e) == 1) == behind) DrawParticles(canvas, siblings, l, e, timeMs, t, m, path, alpha, pictures);
+            }
+        };
+        pass(true);
+        if (!alone) own(canvas);
+        pass(false);
     };
     auto picture = [&](SkCanvas* canvas) {
         if (!early) return body(canvas);
@@ -1022,8 +1410,8 @@ float Reach(const std::vector<Layer>& siblings, const Layer& l, double timeMs, d
 
 bool Changing(const LayerEffect& e) {
     if (e.hidden) return false;
-    if (e.id == "absent.shutterblur" || e.id == "absent.motionblur" || e.id == "absent.echo") return false;
-    return MotionEffect(e.id) || RepeatEffect(e.id) || TextEffect(e.id) || DrawingEffect(e.id);
+    if (e.id == "absent.shutterblur" || e.id == "absent.motionblur" || e.id == "absent.echo" || e.id == "absent.videofeedback") return false;
+    return MotionEffect(e.id) || SpectrumEffect(e.id) || RepeatEffect(e.id) || TextEffect(e.id) || DrawingEffect(e.id) || e.id == kParticles;
 }
 
 bool SteadyPlacement(const std::vector<Layer>& siblings, const Layer& l, double from, double to, int depth) {
@@ -1173,6 +1561,69 @@ void DrawOne(SkCanvas* canvas, const std::vector<Layer>& siblings, const Layer& 
              const MediaPictures& pictures, const Override& ov) {
     if (!l.activeAt(timeMs) || l.kind == "nullobj" || l.kind == "camera") return;
     if (l.fillType == "media" && !pictures(l.mediaUri, l.id)) return;
+    if (!ov.feedback) for (const LayerEffect& e : l.effects) {
+        if (e.hidden || e.id != "absent.videofeedback") continue;
+        const float t = l.localTime(timeMs);
+        const int count = std::clamp((int)std::lround(Setting(e, "copies", t, 24)), 1, 64);
+        const float zoom = std::clamp(Setting(e, "zoom", t, 0.85f), 0.1f, 1.5f);
+        const float rotation = Setting(e, "rotation", t, 0);
+        const float fade = std::clamp(Setting(e, "fade", t, 0.9f), 0.0f, 1.0f);
+        const float hue = Setting(e, "hueShift", t, 0), delay = std::clamp(Setting(e, "delay", t, 0), 0.0f, 1.0f);
+        const int blend = std::clamp((int)std::lround(Setting(e, "blend", t, 0)), 0, 2);
+        const SkMatrix placed = SiblingMatrix(siblings, l, timeMs);
+        const SkPoint centre = placed.mapPoint({Setting(e, "center", t, 0, 0), Setting(e, "center", t, 0, 1)});
+        float sx = zoom, sy = zoom, turn = rotation;
+        SkVector offset = {Setting(e, "offset", t, 0, 0), Setting(e, "offset", t, 0, 1)};
+        if (Setting(e, "useLayerTransform", t, 1) >= 0.5f) {
+            const Placement p = Effective(siblings, l, timeMs, 0);
+            sx *= p.scale.fX;
+            sy *= p.scale.fY;
+            turn += p.rotation;
+            offset += p.location - SkPoint{gScene ? gScene->width / 2.0f : 0, gScene ? gScene->height / 2.0f : 0};
+        }
+        SkMatrix step = SkMatrix::Translate(centre.fX + offset.fX, centre.fY + offset.fY);
+        step.preRotate(turn);
+        step.preScale(sx, sy);
+        step.preTranslate(-centre.fX, -centre.fY);
+        std::vector<SkMatrix> matrices;
+        matrices.reserve(count);
+        SkMatrix current = SkMatrix::I();
+        float alpha = 1;
+        const SkRect bounds = BodyPath(l, t).getBounds();
+        const float extent = std::max(bounds.width(), bounds.height());
+        SkRect reach = placed.mapRect(bounds);
+        reach.outset(std::max(reach.width(), reach.height()) * 0.5f + 64, std::max(reach.width(), reach.height()) * 0.5f + 64);
+        const float shrink = std::max(std::fabs(sx), std::fabs(sy));
+        for (int i = 1; i <= count; i++) {
+            alpha *= fade;
+            if (alpha < 1.0f / 255 || (shrink < 1 && extent * std::pow(shrink, i) < 1)) break;
+            current = SkMatrix::Concat(step, current);
+            matrices.push_back(current);
+        }
+        Override plain = ov;
+        plain.feedback = true;
+        const bool inward = shrink < 1;
+        if (inward) DrawOne(canvas, siblings, l, timeMs, pictures, plain);
+        const int n = (int)matrices.size();
+        for (int k = 0; k < n; k++) {
+            const int i = inward ? k + 1 : n - k;
+            const float a = hue * i * kRadians, c = std::cos(a), s = std::sin(a) / std::sqrt(3.0f), q = (1 - c) / 3;
+            const float colors[20] = {c+q, q-s, q+s, 0, 0, q+s, c+q, q-s, 0, 0, q-s, q+s, c+q, 0, 0, 0, 0, 0, 1, 0};
+            SkPaint paint;
+            paint.setAlphaf(std::pow(fade, i));
+            if (hue != 0) paint.setColorFilter(SkColorFilters::Matrix(colors));
+            paint.setBlendMode(blend == 1 ? SkBlendMode::kPlus : blend == 2 ? SkBlendMode::kScreen : SkBlendMode::kSrcOver);
+            const SkRect area = matrices[i - 1].mapRect(reach);
+            canvas->saveLayer(&area, &paint);
+            canvas->concat(matrices[i - 1]);
+            const double at = std::clamp(timeMs - 1000.0 * delay * i, (double)l.startTime, (double)l.endTime);
+            DrawOne(canvas, siblings, l, at, pictures, plain);
+            canvas->restore();
+            if (gBreak) (*gBreak)();
+        }
+        if (!inward) DrawOne(canvas, siblings, l, timeMs, pictures, plain);
+        return;
+    }
     Echo echo;
     if (!ov.echoed && EchoOf(l, timeMs, &echo)) {
         Override plain = ov;
@@ -1207,7 +1658,7 @@ void DrawOne(SkCanvas* canvas, const std::vector<Layer>& siblings, const Layer& 
     const bool centred = ShapeKind(l) && !pixelEdged && std::any_of(l.borders.begin(), l.borders.end(), [](const Edge& e) { return e.enabled && e.direction == "centered"; });
     const bool repeated = HasRepeat(l);
     const std::vector<LayerCopy> copies = repeated ? CopiesOf(siblings, l, timeMs, gScene ? gScene->width : 0, gScene ? gScene->height : 0) : std::vector<LayerCopy>();
-    const bool overlaps = TrueHasParticles(l) || l.kind == "drawing" || l.kind == "model" || (l.stroke.present && l.stroke.enabled) || centred || repeated;
+    const bool overlaps = TrueHasParticles(l) || HasSpectrum(l) || l.kind == "drawing" || l.kind == "model" || (l.stroke.present && l.stroke.enabled) || centred || repeated;
     auto centredBorders = [&](SkCanvas* canvas, float alpha) {
         if (!centred) return;
         const std::vector<std::pair<SkPath, float>> outlines = repeated
@@ -1265,6 +1716,8 @@ void DrawOne(SkCanvas* canvas, const std::vector<Layer>& siblings, const Layer& 
 }
 
 void SetLayerBreak(const std::function<void()>* each) { gBreak = each; }
+
+bool ParticleEffect(const std::string& id) { return id == kParticles; }
 
 void SetLayerEffects(const LayerEffects* effects, const Scene* scene, bool world) {
     gEffects = effects;
@@ -1530,7 +1983,7 @@ Placement EffectivePlacement(const std::vector<Layer>& siblings, const Layer& la
 
 namespace {
 
-bool Shared(const LayerEffect& e) { return e.toChildren && !e.hidden && !MotionEffect(e.id) && !RepeatEffect(e.id) && !TrueParticleEffect(e.id); }
+bool Shared(const LayerEffect& e) { return e.toChildren && !e.hidden && !MotionEffect(e.id) && !RepeatEffect(e.id) && !ParticleEffect(e.id) && !TrueParticleEffect(e.id) && !SpectrumEffect(e.id); }
 
 bool InheritEffects(const std::vector<Layer>& layers, std::vector<Layer>* out) {
     if (std::none_of(layers.begin(), layers.end(), [](const Layer& l) { return std::any_of(l.effects.begin(), l.effects.end(), Shared); }))

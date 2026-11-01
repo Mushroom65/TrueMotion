@@ -43,9 +43,11 @@ import app.absentmotion.fonts.prepareText
 import app.absentmotion.model.fontNames
 import app.absentmotion.model.font
 import app.absentmotion.model.Scene
+import app.absentmotion.model.matchValues
 import app.absentmotion.model.imageUris
 import app.absentmotion.truemotion.AudioReactive
 import app.absentmotion.truemotion.AudioMotion
+import app.absentmotion.truemotion.Spectrum
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
@@ -55,11 +57,13 @@ import java.util.concurrent.atomic.AtomicReference
 object EngineDebug {
     @Volatile var failStart: String? = null
     @Volatile var forceGl = false
+    @Volatile var failCheck: String? = null
 }
 
 internal data class AudioEffectState(val pending: Boolean = false, val error: String? = null)
 
 class EngineThread(private val background: Int, context: Context? = null, private val preferOpenGl: () -> Boolean = { false }) {
+    private val gpuCheck = context?.let { GpuCheck(it.applicationContext) }
     private val thread = HandlerThread("am-engine").apply { start() }
     private val handler = Handler(thread.looper)
     private val dispatcher = handler.asCoroutineDispatcher()
@@ -213,6 +217,7 @@ class EngineThread(private val background: Int, context: Context? = null, privat
         check(!closed) { "engine closed" }
         if (engine?.failed == true || simulateGpuLoss && !capturing) {
             exportCheck(!capturing) { txt(R.string.engine_error_gpu_capture) }
+            engine?.takeIf { it.failed }?.let { gpuCheck?.failed(it) }
             simulateGpuLoss = false
             target = 0L
             engine?.close()
@@ -239,11 +244,25 @@ class EngineThread(private val background: Int, context: Context? = null, privat
 
     @Volatile private var startFailure: String? = null
 
+    private fun checked(engine: NativeEngine): NativeEngine {
+        val check = gpuCheck ?: return engine
+        if (check.drawsRight(engine)) return engine
+        val other = runCatching { NativeEngine(if (engine.openGl) NativeEngine.Backend.GRAPHITE else NativeEngine.Backend.GL) }.getOrNull() ?: return engine
+        if (!check.drawsRight(other)) {
+            other.close()
+            return engine
+        }
+        Log.w("AMEngine", "switched to ${if (other.openGl) "OpenGL" else "Vulkan"} because the check picture came out wrong")
+        engine.close()
+        return other
+    }
+
     private fun startEngine(): NativeEngine {
         startFailure?.let { throw IllegalStateException(it) }
         return try {
             EngineDebug.failStart?.let { throw IllegalStateException(it) }
-            val glFirst = EngineDebug.forceGl || preferOpenGl()
+            val guardedGl=gpuCheck?.let { (it.preferSafeBackend() || it.knownBad(gl=false)) && !it.knownBad(gl=true) } ?: false
+            val glFirst = EngineDebug.forceGl || preferOpenGl() || guardedGl
             val order = if (glFirst) listOf(NativeEngine.Backend.GL, NativeEngine.Backend.GRAPHITE) else listOf(NativeEngine.Backend.GRAPHITE, NativeEngine.Backend.GL)
             val first = runCatching { NativeEngine(order[0]) }
             (first.getOrNull() ?: run {
@@ -255,7 +274,7 @@ class EngineThread(private val background: Int, context: Context? = null, privat
                     val (vulkan, gl) = if (glFirst) second to failed else failed to second
                     throw IllegalStateException("${vulkan?.message ?: vulkan}; OpenGL: ${gl?.message ?: gl}", second)
                 }
-            }).also { app.absentmotion.Tier.openGl = it.openGl }
+            }).let(::checked).also { app.absentmotion.Tier.openGl = it.openGl }
         } catch (t: Throwable) {
             val reason = t.message ?: t.toString()
             Log.e("AMEngine", "the engine cannot start", t)
@@ -486,7 +505,7 @@ class EngineThread(private val background: Int, context: Context? = null, privat
         if (capturing || closed || audioWantedXml == xml || preparedAudio?.first == xml) return
         audioRenderJob?.cancel()
         audioWantedXml = xml
-        if (!xml.contains(AudioReactive.ID)) { preparedAudio = null; audioEffectState.value = AudioEffectState(); return }
+        if (!xml.contains(AudioReactive.ID) && !xml.contains(Spectrum.ID)) { preparedAudio = null; audioEffectState.value = AudioEffectState(); return }
         audioEffectState.value = AudioEffectState(pending = true)
         audioRenderJob = mediaScope.launch {
             try {
@@ -496,6 +515,7 @@ class EngineThread(private val background: Int, context: Context? = null, privat
                         preparedAudio = xml to prepared
                         audioEffectState.value = AudioEffectState()
                         setEngineScene(xml)
+                        pictureRevision.update { it + 1 }
                         renderNow()
                     }
                 }
@@ -560,6 +580,7 @@ class EngineThread(private val background: Int, context: Context? = null, privat
             return withContext(dispatcher) {
                 if (closed || capturing || playing || target == 0L || mediaScene != document || !accept()) return@withContext null
                 applyPending()
+                if (AudioReactive.has(document.node) && preparedAudio?.first != scene) return@withContext null
                 if (videos?.previewReady(document, timeMs, false) == false) return@withContext null
                 capturing = true
                 try {
@@ -809,7 +830,7 @@ private const val GPU_RETRY_MS = 1000L
 private val spacingEffects = Regex("<effect\\b[^>]*\"${Regex.escape(app.absentmotion.compat.ForeignEffectIds.TEXT_SPACING)}\"[^>]*?(/>|>.*?</effect>)", RegexOption.DOT_MATCHES_ALL)
 
 internal fun animatesTextSpacing(xml: String): Boolean =
-    xml.contains(app.absentmotion.compat.ForeignEffectIds.TEXT_SPACING) && spacingEffects.findAll(xml).any { it.value.contains("<kf") }
+    xml.contains(app.absentmotion.compat.ForeignEffectIds.TEXT_SPACING) && spacingEffects.matchValues(xml).any { it.contains("<kf") }
 
 internal class PendingScene {
     private val next = AtomicReference<Lazy<String>?>(null)

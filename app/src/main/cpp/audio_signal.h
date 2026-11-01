@@ -10,6 +10,7 @@ namespace am {
 struct AudioSignal {
     double startMs = 0, stepMs = 10;
     float silence = 0, releaseMs = 0;
+    float peak = 0;
     std::vector<float> levels;
 
     float at(double timeMs) const {

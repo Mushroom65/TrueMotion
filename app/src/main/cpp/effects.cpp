@@ -1,5 +1,9 @@
 #include "effects.h"
+#include "spectrum.h"
+#include "legacy.h"
 
+#include "particles.h"
+#include "pieces3d.h"
 #include "warp.h"
 #include "xml.h"
 #include "include/core/SkBBHFactory.h"
@@ -12,6 +16,7 @@
 #include "include/core/SkPaint.h"
 #include "include/core/SkPicture.h"
 #include "include/core/SkPictureRecorder.h"
+#include "include/core/SkSurface.h"
 #include "include/effects/SkImageFilters.h"
 #include "src/core/SkRuntimeEffectPriv.h"
 #include "src/core/SkCanvasPriv.h"
@@ -592,7 +597,8 @@ std::string EffectRuntime::load(const std::string& xml) {
     auto root = ParseXml(xml, &error);
     if (!root || root->name != "effect" || !root->attr("id")) return "shader error: bad definition " + error;
     Definition d;
-    d.afterz = root->attr("dialect") && std::string_view(root->attr("dialect")) == "afterz";
+    d.legacy = root->attr("dialect") && std::string_view(root->attr("dialect")) == "legacy";
+    d.afterz = d.legacy || (root->attr("dialect") && std::string_view(root->attr("dialect")) == "afterz");
     if (root->attr("iterations")) d.iterations = root->attr("iterations");
     for (const auto& c : root->children) {
         if (c->name == "param" && c->attr("name")) {
@@ -604,10 +610,21 @@ std::string EffectRuntime::load(const std::string& xml) {
             const std::string source = c->attr("source");
             d.inputs[c->attr("uniform")] = source == "buffer" ? c->attr("name") : "$" + source;
             if (source == "comp") d.backdrop = true;
+            if(source=="image" && c->attr("image")) {
+                const char* encoded=c->attr("image");std::vector<uint8_t> bytes;uint32_t bits=0;int count=0;
+                const std::string alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                for(const unsigned char ch:std::string_view(encoded)) {const size_t i=alphabet.find(ch);if(i==std::string::npos)continue;bits=(bits<<6)|(uint32_t)i;count+=6;if(count>=8){count-=8;bytes.push_back((bits>>count)&255);}}
+                auto image=SkImages::DeferredFromEncodedData(SkData::MakeWithCopy(bytes.data(),bytes.size()));
+                if(!image)return "shader error: invalid embedded texture";
+                d.images[c->attr("uniform")]=std::move(image);
+            }
         }
-        if (d.afterz && c->name == "stage" && c->attr("sksl")) {
+        if (d.afterz && c->name == "stage") {
             Stage stage;
-            stage.source = c->attr("sksl");
+            if(c->attr("sksl"))stage.source = c->attr("sksl");
+            if(c->attr("reference"))stage.reference=c->attr("reference");
+            if(c->attr("input"))stage.input=c->attr("input");
+            if(c->attr("group"))stage.group=std::atoi(c->attr("group"));
             if (c->attr("target")) stage.target = c->attr("target");
             if (c->attr("downsample")) stage.downsample = std::strtof(c->attr("downsample"), nullptr);
             if (!(stage.downsample >= 1 && stage.downsample <= 1024)) return "shader error: invalid buffer scale";
@@ -615,10 +632,15 @@ std::string EffectRuntime::load(const std::string& xml) {
         }
     }
     const std::string id = root->attr("id");
+    if(d.legacy)RegisterLegacy(id,*root);
     const char* sksl = root->attr("sksl");
     if (d.afterz) {
         if (d.stages.empty() && sksl && *sksl) d.stages.push_back(Stage{sksl, nullptr, "", 1});
-        if (d.stages.empty() || d.stages.size() > 64 || !d.stages.back().target.empty()) return "shader error: invalid effect graph";
+        if ((!d.legacy && (d.stages.empty() || !d.stages.back().target.empty())) || d.stages.size() > 128) return "shader error: invalid effect graph";
+        d.timed=LegacyScript(id) || std::any_of(d.stages.begin(),d.stages.end(),[](const Stage& s){
+            return !s.reference.empty() || Mentions(s.source.c_str(),"time")>1 || Mentions(s.source.c_str(),"amzVelocity")>1 ||
+                Mentions(s.source.c_str(),"amzAngularVelocity")>1 || Mentions(s.source.c_str(),"amzScaleVelocity")>1;
+        });
         d.pending = true;
         if (root->attr("lazy") && std::string_view(root->attr("lazy")) == "false") {
             const std::string status = compile(d);
@@ -628,8 +650,9 @@ std::string EffectRuntime::load(const std::string& xml) {
         return "ok";
     }
     if (!sksl || !*sksl) {
-        if (!BuiltIn(id) && !MotionEffect(id) && !RepeatEffect(id) && !TextEffect(id) && !DrawingEffect(id)) return "shader error: no shader and no built-in called " + id;
+        if (!BuiltIn(id) && !pieces3d::IsEffect(id) && !MotionEffect(id) && !RepeatEffect(id) && !TextEffect(id) && !DrawingEffect(id) && !ParticleEffect(id) && !SpectrumEffect(id)) return "shader error: no shader and no built-in called " + id;
         d.backdrop = id == "absent.glow";
+        if (pieces3d::IsEffect(id)) NoteOrientedEffect(id);
     } else {
         auto result = SkRuntimeEffect::MakeForShader(SkString(sksl));
         if (!result.effect) {
@@ -642,7 +665,8 @@ std::string EffectRuntime::load(const std::string& xml) {
         d.backdrop = result.effect->findChild("backdrop") != nullptr;
         d.below = result.effect->findChild("below") != nullptr;
         d.pointwise = Pointwise(sksl);
-        d.timed = result.effect->findUniform("time") && Mentions(sksl, "time") > 1;
+        d.timed = (result.effect->findUniform("time") && Mentions(sksl, "time") > 1) || result.effect->findUniform("beat") ||
+                  result.effect->findUniform("beatTime") || result.effect->findUniform("beatIndex");
         if (result.effect->findUniform("orient")) NoteOrientedEffect(id);
         d.palette = result.effect->findChild("palette") != nullptr;
         d.matrix = result.effect->findChild("thresholds") != nullptr;
@@ -655,6 +679,7 @@ std::string EffectRuntime::load(const std::string& xml) {
 std::string EffectRuntime::compile(Definition& d) {
     d.pending = false;
     for (auto& stage : d.stages) {
+        if(!stage.reference.empty())continue;
         auto result = SkRuntimeEffect::MakeForShader(SkString(stage.source), SkRuntimeEffectPriv::ES3Options());
         if (!result.effect || !result.effect->findChild("image")) {
             d.error = "shader error: " + std::string(result.errorText.c_str());
@@ -663,7 +688,7 @@ std::string EffectRuntime::compile(Definition& d) {
         }
         stage.shader = std::move(result.effect);
     }
-    d.shader = d.stages.back().shader;
+    for(const auto& stage:d.stages)if(stage.shader)d.shader=stage.shader;
     return "ok";
 }
 
@@ -718,7 +743,7 @@ bool EffectRuntime::grabs(const std::vector<Layer>& layers) const {
     return std::any_of(layers.begin(), layers.end(), [&](const Layer& l) {
         return std::any_of(l.effects.begin(), l.effects.end(), [&](const LayerEffect& e) {
             const Definition* d = e.hidden ? nullptr : find(e.id);
-            return d && d->palette && d->matrix && mayDiffuse(e, d);
+            return !e.hidden && (pieces3d::IsEffect(e.id) || (d && d->palette && d->matrix && mayDiffuse(e, d)));
         }) || grabs(l.children);
     });
 }
@@ -727,7 +752,7 @@ bool EffectRuntime::active(const Layer& layer) const {
     return std::any_of(layer.effects.begin(), layer.effects.end(), [&](const LayerEffect& e) {
         if (e.hidden) return false;
         const Definition* d = find(e.id);
-        return BuiltIn(e.id) || (d && d->shader);
+        return BuiltIn(e.id) || pieces3d::IsEffect(e.id) || (d && (d->shader || !d->stages.empty()));
     });
 }
 
@@ -799,12 +824,26 @@ sk_sp<SkImageFilter> EffectRuntime::chain(const Scene& scene, const Layer& layer
         } else if (BuiltIn(e.id)) {
             const auto value = [&](const char* name, int i, float fallback) { return Value(e, defaults, name, i, t, fallback); };
             f = e.id == "absent.glow" ? GlowFilter(value, f, withBackdrop) : BuiltInFilter(e.id, value, f);
-        } else if (d && d->shader && d->afterz) {
+        } else if (d && d->afterz && !d->stages.empty()) {
             const int iterations = d->iterations.empty() ? 1 : std::clamp((int)std::lround(Value(e, defaults, d->iterations.c_str(), 0, t, 1)), 1, 128);
             for (int iteration = 0; iteration < iterations; ++iteration) {
-                const auto source = f;
                 std::map<std::string, sk_sp<SkImageFilter>> buffers;
+                const auto groups=d->legacy?LegacyGroups(layer,e,timeMs):std::vector<int>{0};
+                for(const int group:groups) {
+                const auto source=f;
                 for (const auto& stage : d->stages) {
+                    if(stage.group!=group)continue;
+                    if(!stage.reference.empty()) {
+                        static thread_local int depth=0;
+                        if(depth>=16)continue;
+                        Layer reference=layer;LayerEffect effect=e;effect.id="tmold."+stage.reference;
+                        reference.effects={effect};auto input=source;
+                        if(!stage.input.empty()) {const auto it=buffers.find(stage.input);if(it!=buffers.end())input=it->second;}
+                        depth++;auto rendered=chain(scene,reference,timeMs,area,seen,drawn,placed,input,below,-1,0);depth--;
+                        if(stage.target.empty())f=std::move(rendered);else buffers[stage.target]=std::move(rendered);
+                        continue;
+                    }
+                    if(!stage.shader)continue;
                     SkRuntimeShaderBuilder b(stage.shader);
                     for (const auto& u : stage.shader->uniforms()) {
                         const std::string name(u.name);
@@ -818,6 +857,15 @@ sk_sp<SkImageFilter> EffectRuntime::chain(const Scene& scene, const Layer& layer
                             else for (int i = 0; i < n; ++i) v[i] = Value(e, defaults, property, i, t, 0);
                         } else if (name == "size") v = {area.width(), area.height()};
                         else if (name == "time") v = {seconds};
+                        else if (name == "amzPivot") v = {layer.pivot.get(0,t,0),layer.pivot.get(1,t,0)};
+                        else if (name == "amzScale") v = {layer.scale.get(0,t,1),layer.scale.get(1,t,1)};
+                        else if (name == "amzStartTime") v = {layer.startTime/1000.0f};
+                        else if (name == "amzEndTime") v = {layer.endTime/1000.0f};
+                        else if (name == "amzVelocity" || name == "amzAngularVelocity" || name == "amzScaleVelocity") {
+                            const float dt=layer.endTime>layer.startTime?1000.0f/(60*(layer.endTime-layer.startTime)):0;
+                            if(name=="amzVelocity")v={(layer.location.get(0,t+dt,0)-layer.location.get(0,t-dt,0))*30,(layer.location.get(1,t+dt,0)-layer.location.get(1,t-dt,0))*30};
+                            else {const Anim& a=name=="amzAngularVelocity"?layer.rotation:layer.scale;v={(a.get(0,t+dt,0)-a.get(0,t-dt,0))*30};}
+                        }
                         else if (name == "amzIteration") v = {(float)iteration};
                         else if (name == "layer") v = {std::max(own().width(), 1.0f), std::max(own().height(), 1.0f)};
                         else if (name == "fromLayer") v = columns(fromLayer());
@@ -839,6 +887,10 @@ sk_sp<SkImageFilter> EffectRuntime::chain(const Scene& scene, const Layer& layer
                         const std::string binding = found == d->inputs.end() ? "$content" : found->second;
                         if (binding == "$content") inputs.push_back(source);
                         else if (binding == "$comp") inputs.push_back(nullptr);
+                        else if(binding=="$image") {
+                            const auto image=d->images.find(std::string(child.name));
+                            inputs.push_back(image==d->images.end()?SkImageFilters::Empty():SkImageFilters::Shader(image->second->makeShader(SkTileMode::kClamp,SkTileMode::kClamp,SkSamplingOptions(SkFilterMode::kLinear))));
+                        }
                         else {
                             auto buffer = buffers.find(binding);
                             inputs.push_back(buffer == buffers.end() ? SkImageFilters::Empty() : buffer->second);
@@ -850,6 +902,7 @@ sk_sp<SkImageFilter> EffectRuntime::chain(const Scene& scene, const Layer& layer
                     rendered = SkImageFilters::Crop(target, rendered);
                     if (stage.target.empty()) f = std::move(rendered);
                     else buffers[stage.target] = std::move(rendered);
+                }
                 }
             }
         } else if (d && d->shader) {
@@ -863,6 +916,12 @@ sk_sp<SkImageFilter> EffectRuntime::chain(const Scene& scene, const Layer& layer
             if (sk_sp<SkImage> tile = d->matrix ? OnGpu(MatrixFor(method(e, d, t))) : nullptr) {
                 b.child("thresholds") = tile->makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, SkSamplingOptions());
             }
+            std::optional<particles::Beat> beat;
+            const auto beatNow = [&]() -> const particles::Beat& {
+                if (!beat) beat = particles::LastBeat(scene.beats, timeMs / 1000.0, 1 << std::clamp((int)std::lround(Value(e, defaults, "beats", 0, t, 0)), 0, 2),
+                                                      Value(e, defaults, "offset", 0, t, 0), Value(e, defaults, "bpm", 0, t, 120));
+                return *beat;
+            };
             for (const SkRuntimeEffect::Uniform& u : d->shader->uniforms()) {
                 const std::string name(u.name);
                 const int n = (int)(u.sizeInBytes() / 4);
@@ -887,6 +946,9 @@ sk_sp<SkImageFilter> EffectRuntime::chain(const Scene& scene, const Layer& layer
                     }
                 }
                 else if (automatic && name == "screen") v = {-area.left(), -area.top(), (float)scene.width, (float)scene.height};
+                else if (automatic && name == "beat") v = {particles::Envelope(beatNow().since, Value(e, defaults, "decay", 0, t, 0.4f))};
+                else if (automatic && name == "beatTime") v = {(float)beatNow().since};
+                else if (automatic && name == "beatIndex") v = {(float)beatNow().index};
                 else if (u.isColor() && n == 4) v = {Value(e, defaults, name, 1, t, 0), Value(e, defaults, name, 2, t, 0),
                                                      Value(e, defaults, name, 3, t, 0), Value(e, defaults, name, 0, t, 1)};
                 else for (int i = 0; i < n; i++) v[i] = Value(e, defaults, name, i, t, 0);
@@ -953,6 +1015,67 @@ bool EffectRuntime::draw(SkCanvas* canvas, const Scene& scene, const Layer& laye
         if (bounded) *bounded = drawn.makeOffset(at.left(), at.top());
         return SkImageFilters::Picture(std::move(picture), drawn);
     };
+    if (lift < 0 && std::any_of(layer.effects.begin(), layer.effects.end(), [](const LayerEffect& e) { return !e.hidden && pieces3d::IsEffect(e.id); })) {
+        std::function<void(SkCanvas*)> current = source;
+        int from = 0;
+        for (int k = 0; k < (int)layer.effects.size(); k++) {
+            const LayerEffect& e = layer.effects[k];
+            if (e.hidden || !pieces3d::IsEffect(e.id)) continue;
+            const Definition* d = find(e.id);
+            if (e.id == "absent.fracture3d" && Value(e, d ? &d->defaults : nullptr, "progress", 0, t, 0) <= 0 && Orientation(layer, timeMs) == SkM44()) continue;
+            float step = std::max(1.0f, std::max(at.width(), at.height()) / 2048.0f);
+            if (e.id == "absent.scatter3d") {
+                const int depth = std::clamp((int)std::round(Value(e, d ? &d->defaults : nullptr, "depth", 0, t, 1)), 1, 16);
+                step = std::max({step, std::clamp(Value(e, d ? &d->defaults : nullptr, "spacing", 0, t, 24), 1.0f, 10000.0f),
+                                 std::sqrt(at.width() * at.height() * depth / (20000 * 0.85f))});
+                while ((int64_t)std::max(1, (int)std::ceil(at.width() / step)) * std::max(1, (int)std::ceil(at.height() / step)) * depth > 20000) step *= 1.05f;
+            }
+            const int width = std::max(1, (int)std::ceil(at.width() / step)), height = std::max(1, (int)std::ceil(at.height() / step));
+            sk_sp<SkImageFilter> before = chain(scene, layer, timeMs, at, bounds, local, placed, nullptr, nullptr, k, from);
+            std::vector<uint8_t> pixels;
+            const auto capture = [&](SkCanvas* c) {
+                c->scale((float)width / at.width(), (float)height / at.height());
+                c->translate(-at.left(), -at.top());
+                if (before) {
+                    SkPaint p;
+                    p.setImageFilter(before);
+                    c->saveLayer(&bounds, &p);
+                    current(c);
+                    c->restore();
+                } else current(c);
+            };
+            bool ok = grab && grab(width, height, capture, &pixels);
+            if (!grab) {
+                const SkImageInfo info = SkImageInfo::Make(width, height, kRGBA_8888_SkColorType, kPremul_SkAlphaType, SkColorSpace::MakeSRGB());
+                sk_sp<SkSurface> surface = SkSurfaces::Raster(info);
+                if (surface) {
+                    surface->getCanvas()->clear(SK_ColorTRANSPARENT);
+                    capture(surface->getCanvas());
+                    pixels.resize((size_t)width * height * 4);
+                    ok = surface->readPixels(info.makeAlphaType(kUnpremul_SkAlphaType), pixels.data(), (size_t)width * 4, 0, 0);
+                }
+            }
+            if (!ok || pixels.size() != (size_t)width * height * 4) return false;
+            sk_sp<SkImage> image;
+            if (e.id == "absent.fracture3d") {
+                image = OnGpu(Rgba(width, height, pixels.data(), kUnpremul_SkAlphaType, SkColorSpace::MakeSRGB()));
+                if (!image) return false;
+            }
+            const auto value = [&](const char* name, int i, float fallback) { return Value(e, d ? &d->defaults : nullptr, name, i, t, fallback); };
+            SkPictureRecorder recorder;
+            SkCanvas* out = recorder.beginRecording(bounds);
+            pieces3d::Draw(out, e.id, at, Orientation(layer, timeMs), value, pixels, width, height, image.get());
+            sk_sp<SkPicture> result = recorder.finishRecordingAsPicture();
+            current = [result](SkCanvas* c) { c->drawPicture(result); };
+            from = k + 1;
+        }
+        SkPaint paint;
+        paint.setImageFilter(chain(scene, layer, timeMs, at, bounds, local, placed, nullptr, nullptr, -1, from));
+        canvas->saveLayer(&bounds, &paint);
+        current(canvas);
+        canvas->restore();
+        return true;
+    }
     const bool seesBehind = lift < 0 && behind(layer);
     SkRect drawn = SkRect::MakeEmpty();
     sk_sp<SkImageFilter> content = seesBehind ? record(source, &drawn) : nullptr;

@@ -3,6 +3,7 @@
 #include "preview.h"
 #include "effects.h"
 #include "true_particles.h"
+#include "spectrum.h"
 #include "drawing.h"
 #include "interpolation.h"
 #include "gl_yuv.h"
@@ -214,6 +215,9 @@ private:
         fx.spills = [this](const Layer& layer) { return fEffects.spills(layer); };
         fx.behind = [this](const Layer& layer) { return fEffects.behind(layer); };
         fx.steady = [this](const Layer& layer, float from, float to) { return fEffects.steady(layer, from, to); };
+        fx.upload = [this](const sk_sp<SkImage>& image, bool mipmapped) {
+            return fRecorder ? SkImages::TextureFromImage(fRecorder.get(), image.get(), {mipmapped}) : image;
+        };
         fx.draw = [this](SkCanvas* canvas, const Scene& scene, const Layer& layer, double time, const SkRect& area, const SkMatrix& placed,
                          const std::function<void(SkCanvas*)>& source, const std::function<void(SkCanvas*)>& below) {
             return fEffects.draw(canvas, scene, layer, time, area, placed, source, below,
@@ -277,6 +281,15 @@ private:
             for (LayerEffect& effect : layer.effects) {
                 auto found = fAudioSignals.find(effect.audioSignalKey);
                 effect.audioSignal = found != fAudioSignals.end() ? found->second : nullptr;
+                if(SpectrumEffect(effect.id)) {
+                    effect.spectrum.clear();effect.spectrumPeak=0;
+                    for(int i=0;i<64;i++) {
+                        auto band=fAudioSignals.find(effect.audioSignalKey+":"+std::to_string(i));
+                        auto signal=band==fAudioSignals.end()?nullptr:band->second;
+                        effect.spectrum.push_back(signal);
+                        if(signal)effect.spectrumPeak=std::max(effect.spectrumPeak,signal->peak);
+                    }
+                }
             }
             bindAudioSignals(layer.children);
         }
@@ -471,6 +484,7 @@ bool EngineImpl::initGl(std::string* error) {
     sk_sp<const GrGLInterface> gl = GrGLInterfaces::MakeEGL();
     if (!gl) { *error = "Ganesh OpenGL interface failed"; return false; }
     fGanesh = GrDirectContexts::MakeGL(gl);
+    if(fGanesh)fGanesh->setResourceCacheLimit(128u*1024u*1024u);
     if (!fGanesh) { *error = "Ganesh OpenGL context creation failed"; return false; }
     fInfo = std::string("{\"backend\":\"gl\",\"device\":\"") + Printable((const char*)glGetString(GL_RENDERER)) +
             "\",\"vendor\":\"" + Printable((const char*)glGetString(GL_VENDOR)) + "\",\"api\":\"" +
@@ -504,6 +518,7 @@ bool EngineImpl::init(std::string* error) {
             *error = "SkiaVMA::Make failed";
         } else if (fBackend == Backend::kGraphite) {
             skgpu::graphite::ContextOptions options;
+            options.fGpuBudgetInBytes=128u*1024u*1024u;
             fGraphite = skgpu::graphite::ContextFactory::MakeVulkan(bc, options);
             if (fGraphite) fRecorder = fGraphite->makeRecorder();
             ready = fRecorder != nullptr;
@@ -514,6 +529,7 @@ bool EngineImpl::init(std::string* error) {
             }
         } else {
             fGanesh = GrDirectContexts::MakeVulkan(bc);
+            if(fGanesh)fGanesh->setResourceCacheLimit(128u*1024u*1024u);
             ready = fGanesh != nullptr;
             if (!ready) *error = "Ganesh context creation failed";
         }
@@ -861,7 +877,7 @@ sk_sp<SkImage> EngineImpl::copyFrame(AHardwareBuffer* buffer, bool opaque, int c
                                      const MediaKey* key, int maxSide) {
     bool rawYuv = false;
     sk_sp<SkImage> imported;
-    if (this->gl() && (colorStandard == 1 || colorStandard == 2 || colorStandard == 4 || colorStandard == 6))
+    if (this->gl())
         imported = fYuv.convert(fGanesh.get(), buffer, colorStandard, colorRange, opaque ? kOpaque_SkAlphaType : kPremul_SkAlphaType);
     if (!imported) imported = this->importFrame(buffer, opaque, colorStandard, colorRange, &rawYuv, key);
     if (!imported) return nullptr;

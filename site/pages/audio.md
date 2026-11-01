@@ -17,11 +17,15 @@ An audio layer is named after the file and starts at the playhead. The project's
 
 On the timeline an audio layer is a violet bar with its waveform. The tools are **Speed**, trim and split, **Volume**, **Presets**, **Effects** and **AI**. Voice filters are inside **Effects**. **AI** contains **Reduce Noise** and **Auto captions** for the selected clip.
 
+![An audio layer on the timeline and its tools: Presets, Effects and AI (1).](img/audio-tools.webp)
+
 ## Volume
 
 **Volume** (the speaker icon) opens the volume panel for sound clips and videos. The slider goes from 0 % to 150 % (default 100 %) and has a value box. It can be animated with the keyframe and easing buttons, which is how you make fade-ins and fade-outs. A clip at 0 % with no keyframes is muted, and the speaker icon shows it.
 
 The first button of the panel, **Audio Effects**, opens the effects of the clip.
+
+![The volume panel: Audio Effects (1), the volume slider (2), its value (3) and the keyframe button (4).](img/audio-volume.webp)
 
 The sound of a clip follows its speed (see [Photos, video and speed](@media)). Sources with more than two channels are mixed down to stereo.
 
@@ -33,6 +37,8 @@ For a sound clip, **Effects** opens the effects library already on the **Audio**
 - Each row has a name, an eye (**Bypass** that effect) and a grip (**Reorder**: the order is the processing order).
 - **Add Audio Effect** offers the ten effects below. A clip can hold up to 16 units: every effect costs 1, **Voice Filter** costs 7.
 - The buttons in the left column **Bypass** all effects at once or **Delete all**.
+
+![Audio effects: the preset chips (1), Bypass (2) and Reorder (3) for each effect, bypass all (4) and Delete all (5).](img/audio-fx.webp)
 
 Each effect has a **Mix** slider (0 to 100 %) and its own sliders. Tap a value to type it.
 
@@ -61,7 +67,7 @@ The **AI** tool for audio clips reduces background noise on the phone: see [AI t
 
 ## Mark Beats
 
-**Mark Beats** is in the layer menu of a clip with sound. It listens to that clip alone and adds a bookmark on every beat it finds (the tempo can be between 60 and 180 beats per minute and the beats must follow a steady grid). Then cut your video on the bookmarks: they are snap points on the timeline. It says "N beats marked", "No new beats found" or "Beats could not be found".
+**Mark Beats** is in the layer menu of a clip with sound. It listens to that clip alone and adds a bookmark on every beat it finds (the tempo can be between 60 and 180 beats per minute and the beats must follow a steady grid). Then cut your video on the bookmarks: they are snap points on the timeline. The **Beat** effects (Beat Zoom, Beat Shake, Beat Flash and the others) and **Particles** set to **On Beats** move on these bookmarks; without bookmarks they follow their BPM setting. It says "N beats marked", "No new beats found" or "Beats could not be found".
 
 ## Text to Speech
 

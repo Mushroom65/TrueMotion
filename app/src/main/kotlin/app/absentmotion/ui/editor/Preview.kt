@@ -139,7 +139,8 @@ fun Preview(state: EditorState, modifier: Modifier = Modifier, reserveEnd: Dp = 
         accurateBlur = state.settings.fullMotionBlur,
     ) else null
     val cacheMatch by remember(state, mediaRevision) { derivedStateOf { cacheMatches(state, mediaRevision) } }
-    val cacheUsable = cacheMatch && app.absentmotion.editor.cacheFrameSize(scene.width, scene.height, scale, divisor).first <= (PreviewCache.player?.width ?: 0) * 1.25f
+    val cacheUsable = cacheMatch && scene.width*scale/divisor <= (PreviewCache.player?.width ?: 0)+1f &&
+        scene.height*scale/divisor <= (PreviewCache.player?.height ?: 0)+1f
     val usable = rememberUpdatedState(cacheUsable)
     val cachedPlaying = remember(state) { derivedStateOf { usable.value && state.playing && PreviewCache.covers(state.frame) } }
     val live = remember { LiveHandoff() }
@@ -211,7 +212,8 @@ fun Preview(state: EditorState, modifier: Modifier = Modifier, reserveEnd: Dp = 
 
     Box(modifier.background(Am.PreviewBg).onSizeChanged { size = it }.onGloballyPositioned { origin = it.positionInRoot() }) {
         app.absentmotion.platform.SceneSurface(state.engine, divisor, size, Modifier.fillMaxSize()) { state.previewSurface = it }
-        CachedFrame(state, cacheUsable, live, dx, dy, scene.width * scale, scene.height * scale)
+        CachedFrame(state, cacheUsable, live, dx, dy, scene.width * scale, scene.height * scale,
+            25f * if(refPx>0) refPx else size.width/1080f)
         if (state.cameraMode && state.cameraFrameGuide) CameraMatte(dx, dy, scene.width * scale, scene.height * scale)
         Box(
             Modifier.fillMaxSize().pointerInput(state) {
@@ -372,7 +374,10 @@ fun Preview(state: EditorState, modifier: Modifier = Modifier, reserveEnd: Dp = 
         )
         Presence(hint) { SwipeHint(hintLabel, Modifier.align(Alignment.Center).presence()) }
         CanvasZoomHud(state, Modifier.align(Alignment.TopStart))
-        if (state.drawing == null && !editingText) RenderPreviewNotes(state, cachedPlaying, Modifier.align(Alignment.TopCenter))
+        if (state.drawing == null && !editingText) {
+            RenderPreviewNotes(state, cachedPlaying, Modifier.align(Alignment.TopCenter))
+            PreRenderBadge(cachedPlaying, Modifier.align(Alignment.TopEnd))
+        }
         Presence(state.cameraTip && !LocalWide.current) { CameraTip(state, Modifier.align(Alignment.BottomEnd).presence()) }
         EyedropperLoupe(state, Modifier.fillMaxSize())
         GradientHandles(state, quad.takeUnless { state.playing }, scale, Offset(dx, dy))

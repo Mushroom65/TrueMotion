@@ -38,6 +38,8 @@ private:
         sk_sp<SkRuntimeEffect> shader;
         std::string target;
         float downsample = 1;
+        int group = 0;
+        std::string reference, input;
     };
     struct Definition {
         sk_sp<SkRuntimeEffect> shader;
@@ -51,6 +53,7 @@ private:
         bool matrix = false;
         std::map<std::string, Anim> defaults;
         bool afterz = false;
+        bool legacy = false;
         bool pending = false;
         std::string error;
         std::string iterations;
@@ -58,6 +61,7 @@ private:
         std::map<std::string, std::string> aliases;
         std::map<std::string, std::string> inputs;
         std::map<std::string, std::string> texts;
+        std::map<std::string, sk_sp<SkImage>> images;
     };
     static std::string compile(Definition& definition);
     const Definition* find(const std::string& id) const;

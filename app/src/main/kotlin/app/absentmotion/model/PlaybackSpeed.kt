@@ -4,7 +4,7 @@ import kotlin.math.exp
 import kotlin.math.ln
 
 internal object PlaybackSpeed {
-    const val Min = .001f
+    const val Min = SLOWEST_SPEED
     const val Max = 100f
     val presets = listOf(.25f, .5f, 1f, 2f, 4f, 10f, 25f, 50f, 100f)
     fun position(speed: Float): Float = ((ln(speed.coerceIn(Min, Max)) - ln(Min)) / (ln(Max) - ln(Min))).coerceIn(0f, 1f)

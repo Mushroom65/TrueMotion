@@ -21,6 +21,7 @@ class PreviewCacheTest {
     }
 
     @Test fun theFrameSizeFollowsThePreviewQualityAndNeverUpscales() {
+        assertEquals(416 to 416, cacheFrameSize(320,320,1.3f,1))
         assertEquals(540 to 960, cacheFrameSize(1080, 1920, 0.5f, 1))
         assertEquals(270 to 480, cacheFrameSize(1080, 1920, 0.5f, 2))
         assertEquals(135 to 240, cacheFrameSize(1080, 1920, 0.5f, 4))

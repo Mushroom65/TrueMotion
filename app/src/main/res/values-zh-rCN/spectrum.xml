@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_spectrum_shape">形状</string>
+    <string name="true_spectrum_color">颜色</string>
+    <string name="true_spectrum_audio">音频</string>
+    <string name="true_spectrum_source">来源：%1$s</string>
+    <string name="true_spectrum_mix">项目混音</string>
+    <string name="true_spectrum_hint">频谱使用缓存的立体声 FFT 分析。请选择音频或视频图层。增益和外观支持关键帧；起音与释音在分析时应用。</string>
+</resources>

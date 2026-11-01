@@ -48,7 +48,19 @@ class EffectMigration(private val rules: Map<String, Rule>, private val catalog:
         val converted = linkedMapOf<String, Int>()
         val dropped = sortedSetOf<String>()
         var renamed = false
+        val exact = catalog.definitions.filter { it.dialect == "legacy" && it.available }.associateBy { it.sourceId }
+        val origin = scene.node["am"].orEmpty()
+        val classic = origin.startsWith("com.alightcreative") && origin.substringBefore('/') != "com.alightcreative.motion" || scene.node["trueLegacyEffects"] == "true"
         fun visit(node: XmlNode, dims: FloatArray): XmlNode {
+            val source = node["id"].orEmpty()
+            // Stock Alight imports retain the tested upstream native counterparts.
+            // Old mod packages use their original shader/schema; native True tools
+            // keep their dedicated migration (not the old placeholder shader).
+            if (node.name == "effect" && (source !in rules || classic && !source.startsWith("lab."))) exact[source]?.let { own ->
+                converted.merge("${node["id"]!!.substringAfterLast('.')} → ${own.name}", 1, Int::plus)
+                // The original schema is retained: values, easing and quaternion keys are copied without approximation.
+                return node.with("id", own.id)
+            }
             val rule = if (node.name == "effect") rules[node["id"]]?.takeIf { r -> r.onlyWith == null || node.children.any { c -> c.name == "property" && c["name"] == r.onlyWith } } else null
             val own = rule?.let { catalog.definitions.firstOrNull { d -> d.key == it.to } }
             val older = own != null && node["id"] == own.id

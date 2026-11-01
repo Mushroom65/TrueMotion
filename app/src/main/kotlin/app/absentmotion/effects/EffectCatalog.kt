@@ -27,13 +27,13 @@ data class EffectCatalog(
         definitions.filter { category == null || it.category == category || (category == "new" && isNew(it)) }
 
     fun search(query: String): List<EffectDefinition> {
-        val byName = definitions.filter { matchesSearch(query, it.name) }.sortedBy { it.name.lowercase() }
+        val byName = definitions.filter { matchesSearch(query, it.name) }.sortedWith(compareBy({ searchRank(query, it.name) }, { it.name.lowercase() }))
         return byName + definitions.filter { it !in byName && matchesSearch(query, it.name, it.description) }.sortedBy { it.name.lowercase() }
     }
 
     val categories: List<Pair<String, String>> get() =
         ((if (definitions.any(::isNew)) listOf("new" to "New") else emptyList()) + EffectCategories)
-            .filter { (key, _) -> !key.startsWith("amz-") || definitions.any { it.category == key } }
+            .filter { (key, _) -> (!key.startsWith("amz-") && !key.startsWith("legacy-")) || definitions.any { it.category == key } }
             .map { (k, v) -> k to (categoryNames[k] ?: v) }
 
     fun drawable(path: String?): Drawable? = path?.let { p ->
@@ -57,13 +57,17 @@ data class EffectCatalog(
 
     companion object {
         val Categories = linkedMapOf("color" to "Color", "blur" to "Blur", "distort" to "Distort", "stylize" to "Stylize",
-            "noise" to "Noise", "repeat" to "Repeat", "key" to "Key", "move" to "Move", "3d" to "3D", "text" to "Text", "true" to "True Motion",
+            "noise" to "Noise", "repeat" to "Repeat", "key" to "Key", "move" to "Move", "beat" to "Beat", "3d" to "3D", "text" to "Text", "true" to "True Motion",
             "amz-color" to "AfterMotionZ+ · Color & Light", "amz-blur" to "AfterMotionZ+ · Blur & Glow",
             "amz-distort" to "AfterMotionZ+ · Distortion", "amz-procedural" to "AfterMotionZ+ · Procedural",
             "amz-drawing" to "AfterMotionZ+ · Drawing & Edges", "amz-transform" to "AfterMotionZ+ · Transform",
             "amz-3d" to "AfterMotionZ+ · 3D", "amz-text" to "AfterMotionZ+ · Text",
             "amz-opacity" to "AfterMotionZ+ · Opacity", "amz-matte" to "AfterMotionZ+ · Matte & Key",
-            "amz-repeat" to "AfterMotionZ+ · Repeat", "amz-other" to "AfterMotionZ+ · Other")
+            "amz-repeat" to "AfterMotionZ+ · Repeat", "amz-other" to "AfterMotionZ+ · Other").apply {
+                listOf("color" to "Color & Light", "blur" to "Blur & Glow", "distort" to "Distortion", "procedural" to "Procedural",
+                    "drawing" to "Drawing & Edges", "transform" to "Transform", "3d" to "3D", "text" to "Text", "opacity" to "Opacity",
+                    "matte" to "Matte & Key", "repeat" to "Repeat", "other" to "Other").forEach { (key, label) -> put("legacy-$key", "True Motion Classic · $label") }
+            }
 
         private var cached: Pair<String, EffectCatalog>? = null
 
@@ -121,4 +125,16 @@ private fun EffectDefinition.translated(json: JSONObject): EffectDefinition {
         },
         presets = presets.map { it.copy(name = presetNames.optString(it.slug).ifBlank { it.name }) },
     )
+}
+
+internal fun searchRank(query: String, name: String): Int {
+    val q = query.trim().lowercase()
+    val n = name.trim().lowercase()
+    return when {
+        q.isEmpty() -> 3
+        n == q -> 0
+        n.startsWith(q) -> 1
+        n.split(' ', '-', '/', '(').any { it.startsWith(q) } -> 2
+        else -> 3
+    }
 }

@@ -1,4 +1,5 @@
 #include "scene.h"
+#include "legacy.h"
 #include "include/core/SkSamplingOptions.h"
 #include "include/effects/SkImageFilters.h"
 
@@ -20,7 +21,7 @@ constexpr double kTau = 6.283185307179586;
 
 const char* const kMotionIds[] = {"absent.autoshake", "absent.randomdisplace", "absent.randomjitter", "absent.oscillate",
                                   "absent.swing", "absent.spin", "absent.pulsesize", "absent.pulseopacity",
-                                  "absent.echo", "absent.timequant", "absent.shutterblur", "absent.motionblur", "absent.movealongpath", "lab.true.audioMotion"};
+                                  "absent.echo", "absent.videofeedback", "absent.timequant", "absent.shutterblur", "absent.motionblur", "absent.movealongpath", "lab.true.audioMotion"};
 
 thread_local bool gFastShutter = false;
 
@@ -397,7 +398,7 @@ void Scatter(const Layer& l, const LayerEffect& e, float t, const RepeatSpace& s
 }
 
 bool MotionEffect(const std::string& id) {
-    return std::any_of(std::begin(kMotionIds), std::end(kMotionIds), [&](const char* m) { return id == m; });
+    return LegacyScript(id) || std::any_of(std::begin(kMotionIds), std::end(kMotionIds), [&](const char* m) { return id == m; });
 }
 
 void ApplyMotion(const Layer& l, double timeMs, Placement* p) {
@@ -406,6 +407,7 @@ void ApplyMotion(const Layer& l, double timeMs, Placement* p) {
     const double s = Seconds(l, timeMs);
     bool repeated = false;
     for (const LayerEffect& e : l.effects) {
+        if(!e.hidden && LegacyScript(e.id)) { ApplyLegacy(l,e,timeMs,p); continue; }
         if (!e.hidden && e.id == "lab.true.audioMotion" && e.audioSignal) {
             const int target = (int)std::lround(e.value("target", t, 0));
             const float signal = e.audioSignal->at(l.steppedMs(timeMs) - e.value("offsetMs", t, 0));
@@ -464,7 +466,7 @@ void ApplyMotion(const Layer& l, double timeMs, Placement* p) {
 }
 
 float MotionOpacity(const Layer& l, double timeMs) {
-    float opacity = 1;
+    float opacity = LegacyOpacity(l,timeMs);
     for (const LayerEffect& e : l.effects) {
         if (!e.hidden && e.id == "lab.true.audioMotion" && e.audioSignal) {
             const float t = l.localTime(timeMs);

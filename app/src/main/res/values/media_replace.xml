@@ -1,0 +1,4 @@
+<resources>
+    <string name="true_replace_layer_media">Replace media</string>
+    <string name="true_replace_layer_media_hint">Replaces this layer only. Keeps its animation, effects and position.</string>
+</resources>

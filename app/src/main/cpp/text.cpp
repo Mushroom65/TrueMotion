@@ -1,4 +1,5 @@
 #include "text.h"
+#include "legacy.h"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -52,6 +53,7 @@ struct TextLayout {
     SkRect ink = SkRect::MakeEmpty();
     std::map<std::string, std::unique_ptr<Paragraph>> shown;
 };
+std::string TextContent(const Layer& layer) {return layer.text?layer.text->content:std::string();}
 namespace {
 std::string attr(const XmlNode& n, const char* key, const char* fallback = "") {
     auto s = n.attr(key); return s ? s : fallback;
@@ -368,6 +370,7 @@ uint64_t Seed(const Layer& l, const LayerEffect& e, float t) {
 }
 
 std::string Shown(const Layer& l, float t, int fps, std::string text, bool* tabular) {
+    if(LegacyTextEffect(l))text=LegacyText(l,t,text);
     const double begin = textanim::FrameMs(l.startTime, fps);
     const double now = textanim::FrameMs(l.startTime + (double)t * std::max(0, l.endTime - l.startTime), fps);
     const double local = (now - (std::floor(begin) == l.startTime ? begin : l.startTime)) / 1000.0;
@@ -742,7 +745,7 @@ bool TextEffect(const std::string& id) {
     return std::any_of(std::begin(kTextIds), std::end(kTextIds), [&](const char* k) { return id == k; });
 }
 bool TextAnimated(const Layer& layer) {
-    return layer.text && std::any_of(layer.effects.begin(), layer.effects.end(), [](const LayerEffect& e) { return !e.hidden && TextEffect(e.id); });
+    return LegacyTextEffect(layer) || (layer.text && std::any_of(layer.effects.begin(), layer.effects.end(), [](const LayerEffect& e) { return !e.hidden && TextEffect(e.id); }));
 }
 SkPath TextGlyphPath(const Layer& layer, float t, int fps) {
     auto& text = *layer.text;

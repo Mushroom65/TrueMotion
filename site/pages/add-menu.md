@@ -8,7 +8,9 @@ The round **+** button at the bottom right of the timeline area opens the Add me
 
 New layers start at the playhead and last as long as the **New Layer Length** setting (2 seconds by default). Photos and shapes use that length; videos and sounds use their own length. A camera layer lasts the whole project.
 
-The menu has five tabs on the left and four quick buttons on the right. The X closes it.
+The menu has five tabs along the top (**Shape**, **Media**, **Audio**, **Object / Asset** and **Template**) and four quick buttons on the right. The X closes it.
+
+![The Add menu: the five tabs (1) and the four quick buttons (2).](img/add-shape.webp)
 
 ## Quick buttons
 
@@ -28,10 +30,13 @@ Nineteen shapes are parametric and are edited with **Shape Options**: Circle, Ro
 Your photos and videos, newest first, in a grid. Tap one to add it, sized to fit the canvas.
 
 - **View All** opens Android's own photo picker. It needs no permission.
+- **From Files**, the first tile of the grid, opens Android's file picker so you can take a photo or video from any folder. It needs no permission either.
 - The album list at the top narrows the grid (the default is **All**).
 - **Camera** opens the in-app camera. See [Creating a project](@new-project) for the camera controls.
 - **Search** looks through the grid ("Search photos and videos").
 - SVG files from your gallery also show up here.
+
+![The Media tab: View All (1), the album list (2), Camera (3) and Search (4).](img/add-media.webp)
 
 The first time, Android asks for permission to see your photos and videos. On Android 14 and newer you can allow only the ones you pick. By default the app keeps a copy of added media inside the project, so the project still works if you delete the original later.
 
@@ -40,6 +45,7 @@ The first time, Android asks for permission to see your photos and videos. On An
 Music and sounds stored on your phone. The first time, the app asks for permission to read audio files.
 
 - **View all** opens a file picker for audio files.
+- **From Files** opens Android's file picker, so you can take an audio file from any folder. It needs no permission.
 - **Text to Speech** turns typed text into a voice: see [Audio](@audio).
 - Tap a sound tile to hear it, and tap again to stop. Tap the **+** strip at the bottom of the tile to add it to the project at the playhead.
 - **Search music and sounds** matches the title, file name, album and artist.
@@ -55,6 +61,8 @@ Six tiles for other kinds of layers.
 - **Import SVG** opens a file picker for `.svg` files (up to 16 MB). One shape becomes a shape layer; several become a group. A message lists what could not be imported: text, images, embedded content, animations, clipping paths, masks, filters, markers, dashed or gradient strokes and pattern fills. Gradients keep only their first and last color.
 - **3D Model** opens a file picker for `.obj`, `.glb` and `.gltf` files. Pick the model's material and picture files with it if it has them. The files can total up to 256 MB, and a model with more than 50,000 triangles is shown in a simplified form.
 
+![The Object / Asset tab: Camera, Null, Empty Group, Asset / Project, Import SVG and 3D Model (1).](img/add-object.webp)
+
 ## Template
 
-**View All** shows a full-screen grid of your saved templates, and below it each template has a tile. Tapping one opens the screen where you swap in your own media. See [Assets, templates and presets](@assets-templates).
+**View All** shows a full-screen grid of your saved templates, and below it each template has a tile. Tapping one opens the screen where you swap in your own media. With no templates yet, the page says "There's nothing here. Projects you save as templates show up here." See [Assets, templates and presets](@assets-templates).

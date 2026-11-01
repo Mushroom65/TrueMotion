@@ -39,7 +39,12 @@ internal object UpstreamV4Probe {
             val bitmap=player.shown!!.bitmap
             val cached=ByteBuffer.allocate(bitmap.byteCount).also { bitmap.copyPixelsToBuffer(it) }.array()
             val original=engine.exportSession(source.toXml()) { still(source.frameStart(15),player.width,player.height) }!!
-            flattenOnChecker(original,player.width,player.height,8f)
+            // Cache PNG keeps alpha. Android decodes it premultiplied; compare
+            // the same representation instead of baking the viewport checker.
+            if (bitmap.isPremultiplied) for (i in original.indices step 4) {
+                val alpha=original[i+3].toInt() and 255
+                for (channel in 0..2) original[i+channel]=(((original[i+channel].toInt() and 255)*alpha+127)/255).toByte()
+            }
             val mean=original.indices.sumOf { abs((original[it].toInt() and 255)-(cached[it].toInt() and 255)).toDouble() }/original.size
             check(mean<8) { "Cached path frame differs from the engine: $mean" }
             val frames=PreviewCache.last-PreviewCache.first+1
@@ -49,7 +54,7 @@ internal object UpstreamV4Probe {
                 state.undo()
                 check(cacheMatches(state,engine.mediaRevision.value))
             }
-            result.put("renderedFrames",frames).put("cachedFrameMeanError",mean).put("editInvalidatesAndUndoReuses",true)
+            result.put("renderedFrames",frames).put("cachedFrameMeanError",mean).put("transparentCache",true).put("editInvalidatesAndUndoReuses",true)
             result.put("diskCapBytes",diskBudget(Long.MAX_VALUE))
             check(diskBudget(Long.MAX_VALUE)==2L*1024*1024*1024)
             withContext(Dispatchers.Main) { PreviewCache.clear() }

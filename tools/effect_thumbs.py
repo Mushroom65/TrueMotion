@@ -23,6 +23,7 @@ APP_DIR = "files/effect-thumbs"
 APP_PATH = f"/data/user/0/{PKG}/{APP_DIR}"
 OUT_DIR = f"/sdcard/Android/data/{PKG}/files"
 RENDER, THUMB, SAME = 384, 192, 2.0
+OPTION = 128
 ANIM_FPS, ANIM_BYTES, PRESET_FRAMES = 12, 150_000, 30
 FREE = {"cc0", "pd"}
 TYPES = {"point": "vec2", "color": "color", "switch": "bool", "text": "string"}
@@ -175,7 +176,7 @@ def scene(show, effect, preset=None):
     fx = ""
     if effect:
         params = {p["id"]: p["default"] for p in effect["params"]}
-        chosen = preset_params(preset, show["animate"] / ANIM_FPS) if preset else show.get("params", {})
+        chosen = {**preset_params(preset, show["animate"] / ANIM_FPS), **show.get("params", {})} if preset else show.get("params", {})
         unknown = set(chosen) - set(params)
         if unknown:
             sys.exit(f"{effect['id']}: no such parameter {', '.join(sorted(unknown))}")
@@ -202,7 +203,7 @@ def scene(show, effect, preset=None):
 
 class Batch:
     def __init__(self, work):
-        self.work, self.jobs, self.images = work, [], {}
+        self.work, self.jobs, self.images, self.raw = work, [], {}, {}
 
     def add(self, name, xml, frames):
         (self.work / f"{name}.xml").write_text(xml)
@@ -227,7 +228,8 @@ class Batch:
                 sys.exit(f"{out}: the app could not render the still")
             adb("pull", f"{OUT_DIR}/{out}.png", self.work / f"{out}.png")
             adb("shell", "rm", f"{OUT_DIR}/{out}.png")
-            self.images[out] = Image.open(self.work / f"{out}.png").convert("RGBA").resize((THUMB, THUMB), Image.LANCZOS)
+            self.raw[out] = Image.open(self.work / f"{out}.png").convert("RGBA")
+            self.images[out] = self.raw[out].resize((THUMB, THUMB), Image.LANCZOS)
 
     def __getitem__(self, names):
         return [self.images[n] for n in names]
@@ -277,6 +279,7 @@ def main():
     args = argparse.ArgumentParser(description="Renders the effect thumbnails on the emulator from tools/effect_showcase.json.")
     args.add_argument("--work", type=Path, required=True, help="folder for the downloaded photos and renders, outside the repository")
     args.add_argument("--sheet", type=Path, help="also write a contact sheet of the thumbnails here")
+    args.add_argument("--only-options", action="store_true", help="render only the per-option pictures of choice settings listed under \"options\"")
     args.add_argument("keys", nargs="*", help="only these effects (default: every effect in index.json)")
     opts = args.parse_args()
     index = json.loads((PACK / "index.json").read_text())
@@ -288,15 +291,17 @@ def main():
     adb("shell", "am", "force-stop", PKG)
     adb("shell", "run-as", PKG, "mkdir", "-p", APP_DIR)
     made, pushed, plain, thumbs, unchanged = {}, set(), {}, [], []
-    batch, planned = Batch(opts.work), []
-    for key in keys:
-        show = SHOWCASE["effects"][key]
-        names = ([show["photo"]] if "photo" in show else []) + backdrops(show)
-        for name in names:
+    batch, planned, options = Batch(opts.work), [], []
+    def need(show):
+        for name in ([show["photo"]] if "photo" in show else []) + backdrops(show):
             if name not in pushed:
                 photo(name, opts.work, made).save(opts.work / f"{name}.png")
                 push(opts.work / f"{name}.png", f"{name}.png")
                 pushed.add(name)
+
+    for key in keys:
+        show = SHOWCASE["effects"][key]
+        need(show)
         if "split" in show:
             name = f'{show["photo"]}-before{round(show["split"] * 100)}'
             if name not in pushed:
@@ -310,16 +315,33 @@ def main():
         if base not in plain:
             plain[base] = batch.add(f"plain{len(plain)}", scene(show, None), frames)
         effect = json.loads((PACK / f"{key}.json").read_text())
+        for pid in show.get("options", []):
+            param = next(p for p in effect["params"] if p["id"] == pid and p["type"] == "choice")
+            for i in range(len(param["options"])):
+                name = f"{key}.{pid}.{i}"
+                look = dict(show, params={**show.get("params", {}), pid: i})
+                options.append((batch.add(name, scene(look, effect), [frames[0]])[0], PACK / "thumb" / f"{name}.webp"))
+        if opts.only_options:
+            continue
         planned.append((key, show, base, batch.add(key, scene(show, effect), frames), PACK / "thumb" / f"{key}.webp"))
         for preset in effect.get("presets", []):
             name = f'{key}.{slug(preset["name"])}'
-            sample = {"layout": show["layout"], "text": show.get("presets", {}).get(slug(preset["name"]), preset["name"]), "animate": PRESET_FRAMES}
+            custom = show.get("presets", {}).get(slug(preset["name"]), preset["name"])
+            sample = {k: show[k] for k in ("layout", "photo", "half", "shape", "under") if k in show}
+            sample.update(custom if isinstance(custom, dict) else {"text": custom})
+            sample["animate"] = PRESET_FRAMES
+            need(sample)
             frames = list(range(PRESET_FRAMES))
-            base = ("preset", sample["layout"], sample["text"])
+            base = ("preset", json.dumps(sample, sort_keys=True))
             if base not in plain:
                 plain[base] = batch.add(f"plain{len(plain)}", scene(sample, None), frames)
             planned.append((name, sample, base, batch.add(name, scene(sample, effect, preset), frames), PACK / "thumb" / f"{name}.webp"))
     batch.run()
+    for out, target in options:
+        image = batch.raw[out]
+        left = (image.width - OPTION) // 2
+        Image.alpha_composite(Image.new("RGBA", image.size, (0, 0, 0, 255)), image).crop((left, left, left + OPTION, left + OPTION)).convert("RGB").save(target, lossless=True, method=6)
+        print(f"{target.name:32} {target.stat().st_size // 1024} KB", flush=True)
     for key, show, base, rendered, target in planned:
         reference, frames = batch[plain[base]], batch[rendered]
         if show.get("animate"):
@@ -341,9 +363,9 @@ def main():
         if diff < SAME or (moving is not None and moving < SAME):
             unchanged.append(key)
     adb("shell", "run-as", PKG, "rm", "-r", APP_DIR)
-    if not opts.keys:
+    if not opts.keys and not opts.only_options:
         for stale in (PACK / "thumb").iterdir():
-            if stale.name not in {entry[4].name for entry in planned}:
+            if stale.name not in {entry[4].name for entry in planned} | {target.name for _, target in options}:
                 stale.unlink()
     if opts.sheet:
         sheet(opts.sheet, thumbs)

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_spectrum_shape">Shape</string>
+    <string name="true_spectrum_color">Color</string>
+    <string name="true_spectrum_audio">Audio</string>
+    <string name="true_spectrum_source">Source: %1$s</string>
+    <string name="true_spectrum_mix">Project mix</string>
+    <string name="true_spectrum_hint">The spectrum uses cached stereo FFT analysis. Choose an audio or video layer. Gain and visual settings support keyframes; attack and release apply to the analysis.</string>
+</resources>

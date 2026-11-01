@@ -1,0 +1,4 @@
+<resources>
+    <string name="true_replace_layer_media">Заменить медиа</string>
+    <string name="true_replace_layer_media_hint">Заменяется только этот слой. Анимация, эффекты и положение сохраняются.</string>
+</resources>

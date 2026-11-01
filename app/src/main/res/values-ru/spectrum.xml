@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="true_spectrum_shape">Форма</string>
+    <string name="true_spectrum_color">Цвет</string>
+    <string name="true_spectrum_audio">Звук</string>
+    <string name="true_spectrum_source">Источник: %1$s</string>
+    <string name="true_spectrum_mix">Микс проекта</string>
+    <string name="true_spectrum_hint">Спектрум использует кэшированный частотный анализ стереозвука. Выбери аудио- или видеослой. Усиление и вид можно анимировать ключами; атака и спад применяются при анализе.</string>
+</resources>

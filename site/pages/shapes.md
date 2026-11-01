@@ -26,6 +26,8 @@ At the bottom of the editor:
 - **Contour** with arrows moves between the separate sub-paths of a shape.
 - A list of the points on the right, with small "+" cells between them for inserting a point.
 
+![The point editor: Open the path (1), Make the point sharp (2), Delete point (3), the trackpad (4), the contour arrows (5) and the list of points (6).](img/shapes-points.webp)
+
 The top has **Undo**, **Redo** and **Back**.
 
 ### Animated shapes (shape keyframes)
@@ -41,6 +43,8 @@ In the point editor, a time bar has **Previous shape keyframe**, **Next shape ke
 - **Undo** and **Redo** at the top. Each stroke is kept when you lift your finger.
 - The tool, size and color are remembered. Leaving without drawing anything deletes the new layer.
 
+![The drawing editor: the four tools (1), the size slider (2) and the color picker (3).](img/shapes-draw.webp)
+
 Drawings have no keyframes. To animate a drawing, use effects such as Drawing Progress; see the [effects library](@effects).
 
 ## SVG files
@@ -50,7 +54,7 @@ Drawings have no keyframes. To animate a drawing, use effects such as Drawing Pr
 ## Masks and clipping
 
 - **Create Clipping Mask** (layer menu) clips a layer to the shape of the layer directly below it. **Release Clipping Mask** undoes it.
-- **Group & Mask** and **Group & Exclude** (multi-select) group layers and set the top layer's blend mode to Mask or Exclude. You can also set the blend mode **Mask** or **Exclude** on any layer in **Opacity & Blend Mode**. **Mask** keeps the content below only where the layer is; **Exclude** cuts it away.
+- **Group & Mask** and **Group & Exclude** (multi-select) group layers and set the top layer's blend mode to Mask or Exclude. You can also set the blend mode **Mask** or **Exclude** on any layer in **Opacity**. **Mask** keeps the content below only where the layer is; **Exclude** cuts it away.
 - Animated masks come from shape keyframes (above).
 - **Remove Background** for photos and videos is described in [AI tools](@ai-tools).
 

@@ -42,7 +42,7 @@ internal object AudioMotion {
             }
         }
     }
-    data class Profile(val signature: String, val versions: Map<String, String?>, val data: AudioEnvelope.Data, val beats: List<Int>)
+    data class Profile(val signature: String, val versions: Map<String, String?>, val data: AudioEnvelope.Data, val beats: List<Int>, val spectrum: app.absentmotion.audio.AudioSpectrum.Data? = null)
 
     fun binding(layer: Layer, property: Property): XmlNode? = layer.node.children.firstOrNull { it.name == TAG && it["property"] == property.name && it["version"] == "1" }
     fun original(layer: Layer, property: Property): XmlNode = binding(layer, property)?.child("base")?.children?.singleOrNull()

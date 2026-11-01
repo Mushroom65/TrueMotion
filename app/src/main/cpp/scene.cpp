@@ -385,7 +385,7 @@ bool ParseLayer(const XmlNode& node, int fps, Layer* out) {
             LayerEffect effect;
             effect.id = StrAttr(*c, "id");
             if (TrueParticleEffect(effect.id)) effect.particles = std::make_shared<TrueParticleState>();
-            if (effect.id == "lab.true.audioMotion") effect.audioSignalKey = StrAttr(*c, "signalKey");
+            if (effect.id == "lab.true.audioMotion" || effect.id == "lab.true.spectrum") effect.audioSignalKey = StrAttr(*c, "signalKey");
             effect.hidden = StrAttr(*c, "hidden") == "true";
             effect.locallyApplied = StrAttr(*c, "locallyApplied") == "true";
             effect.toChildren = StrAttr(*c, "applyToChildren") == "true";
@@ -426,9 +426,15 @@ bool ParseScene(const std::string& xml, Scene* scene, std::string* error) {
             next.mediaOrientation[StrAttr(*n, "uri")] = IntAttr(*n, "orientation", 0);
             continue;
         }
+        if (n->name == "bookmark") {
+            next.beats.push_back(IntAttr(*n, "t", 0) / 1000.0);
+            continue;
+        }
         Layer l;
         if (ParseLayer(*n, next.fps, &l)) next.layers.push_back(std::move(l));
     }
+    std::sort(next.beats.begin(), next.beats.end());
+    next.beats.erase(std::unique(next.beats.begin(), next.beats.end()), next.beats.end());
     *scene = std::move(next);
     return true;
 }

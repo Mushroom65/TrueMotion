@@ -4,21 +4,29 @@ group: Interface
 order: 6
 summary: The grid of tools that appears when you select a layer, and every panel behind it.
 ---
-Tap a layer and a grid of tools opens at the bottom. The first row has five small buttons (Speed, trim and split, Volume), described in [The timeline](@timeline). Under them are large buttons whose set depends on the kind of layer.
+Tap a layer and a grid of tools opens at the bottom. The first row has five small buttons (Speed, trim and split, Volume), described in [The timeline](@timeline). A trim or extend button that cannot be used where the playhead is does not show at all. Under them are large buttons whose set depends on the kind of layer.
+
+The large buttons come in two pages. Swipe the grid sideways to go from one page to the other; two dots under it show which page you are on. A layer with only one page has no dots.
+
+![The tool grid of a selected layer: the small buttons (1), the large tool buttons (2) and the page dots (3).](img/lt-grid.webp)
 
 | Layer | Tools |
 |---|---|
-| Shape, photo, video | Fill & Color, Frame & Shadow, Opacity & Blend Mode, Transform, Shape Options, Presets, Effects |
+| Shape, photo, video | Fill & Color, Frame & Shadow, Opacity, Transform, Shape Options, Presets, Effects |
 | Path shape (pen, SVG, many shapes) | The same, with **Edit Points** instead of Shape Options |
 | Text | The same, with **Edit Text** instead of Shape Options |
 | Drawing | The same, with **Edit Drawing** instead of Shape Options |
-| Group | Transform, Presets, Effects. A group linked to an asset also has **Asset Properties**. |
-| Null | Like a shape, but nothing to draw |
+| Group | Fill & Color, Frame & Shadow, Opacity, Transform, Presets, Effects. A group linked to an asset also has **Asset Properties**; a video cut-out made by **Remove Background (video)** also has **Cut-out Edge** |
+| Null | Transform, Presets, Effects |
 | Camera | Camera Options, Transform, Effects, Presets, Camera Moves |
-| 3D model | Model Options, Opacity & Blend Mode, Transform, Presets, Effects |
+| 3D model | Model Options, Opacity, Transform, Presets, Effects |
 | Audio | Presets, Effects (including Voice filters), AI (Reduce Noise and Auto captions) |
 
 A photo or video is a rectangle with a picture fill, so it has the same tools as a shape.
+
+The table lists page 1. Page 2 holds **Crop** for every layer you can see except a 3D model: shapes, text, drawings, groups, photos and videos. A video clip has four more buttons there: **AI**, **Auto Captions**, **Reverse** and **Screenshot**. Audio, camera, null and 3D model layers have a single page.
+
+![The second page of a video's tool grid: Crop (1), AI (2), Auto Captions (3) and Reverse (4).](img/lt-grid-2.webp)
 
 ## Every panel
 
@@ -28,7 +36,7 @@ Tap any number box to open the number pad. The first tap selects the whole value
 
 ### Transform
 
-Tabs on the right: **Move**, **Rotate**, **Size**, **Tilt**, **Skew**, **Pivot**. A camera has only Move, Rotate and Size. Hold **Transform** in the tools, or open **More**, to switch between **Basic Controls** (Move, Rotate, Size and Skew) and **Advanced Controls** (all six tabs, the default).
+Tabs on the right: **Move**, **Rotate**, **Size**, **Tilt**, **Skew**, **Pivot**. A camera has only Move, Rotate and Size. Hold **Transform** in the tools, or open **More**, to switch between **Basic Controls** (Move, Rotate, Size and Skew, the default) and **Advanced Controls** (all six tabs).
 
 - **Move.** A trackpad ("Drag here to move the layer") and X and Y boxes. Tap **Z** to move the layer along the depth axis. Thin red guides show when the layer lines up with the canvas or another layer.
 - **Rotate.** A dial: drag the knob around or tap the degrees to type. When the layer is tilted in 3D, this tab becomes a 3D trackpad: one finger tilts, two fingers twist.
@@ -38,11 +46,15 @@ Tabs on the right: **Move**, **Rotate**, **Size**, **Tilt**, **Skew**, **Pivot**
 - **Pivot.** The point the layer turns and scales around, in pixels from the middle of the layer. Type **X** and **Y**, drag the trackpad, tap one of the nine squares for a corner, an edge or the center, or drag the marker on the canvas. The layer and its child layers stay where they are.
 - **More** has **Reset Location**, **Reset Rotation**, **Reset Scale**, **Reset 3D Rotation**, **Reset Skew**, **Reset Pivot** and **Reset Transform** (all six).
 
+![The Transform panel: the tabs (1), the trackpad (2) and the X, Y and Z boxes (3).](img/lt-transform.webp)
+
 Move is the position, with X, Y and Z animated together. Rotate, Size, Tilt, Skew and Pivot each have their own keyframes; width and height share the Size keyframes.
 
 ### Crop
 
-Photos and videos have a **Crop** button. It dims the part of the layer that will be cut off and shows a frame with eight handles: drag a corner or an edge to crop, or drag inside the frame to move it. Two fingers still zoom the canvas. **Free**, **1:1**, **4:5**, **3:4**, **16:9** and **9:16** fit the largest centered crop of that shape and keep the shape while you drag. Tap a side to type its value, **Reset** removes the crop and **Done** closes the panel. The keyframe button keys all four sides together. The crop is the **Crop** effect, so you can also change it in **Effects**, with **Roundness** and **Feather**; the layer stays where it is.
+Photos, videos and the other visible layers have a **Crop** button on page 2 of the tool grid. It dims the part of the layer that will be cut off and shows a frame with eight handles: drag a corner or an edge to crop, or drag inside the frame to move it. Two fingers still zoom the canvas. **Free**, **1:1**, **4:5**, **3:4**, **16:9** and **9:16** fit the largest centered crop of that shape and keep the shape while you drag. Tap a side to type its value, **Reset** removes the crop and **Done** closes the panel. The keyframe button keys all four sides together. The crop is the **Crop** effect, so you can also change it in **Effects**, with **Roundness** and **Feather**; the layer stays where it is.
+
+![The Crop panel: the crop frame on the picture (1), the aspect buttons (2), the four sides (3) and Reset and Done (4).](img/lt-crop.webp)
 
 ### Fill & Color
 
@@ -51,6 +63,8 @@ Tabs at the top: **None**, **Color**, **Gradient**, **Media**.
 - **Color.** Fourteen swatches, then your saved colors. The bar at the top shows the color as #RRGGBB and its opacity; the **+** on it saves the current color. Three buttons: **Eyedropper** (touch the preview to sample a color), **Color sliders** and **Full color picker** (a color wheel or HSV and RGB sliders with a hex field).
 - **Gradient.** Pick linear, radial or sweep, then a start and an end color. Two handles on the preview move the gradient. A gradient has exactly two colors.
 - **Media.** Fills the shape with a photo or video. It is active when the layer already has a media fill or is a text layer; for text, tapping it opens the picker to fill the letters with a picture or video.
+
+![Fill & Color: the tabs (1), the color bar (2), the swatches (3) and Eyedropper, Color sliders and Full color picker (4).](img/lt-fill.webp)
 
 Only the color in the Color tab can be keyframed.
 
@@ -62,7 +76,7 @@ Three tabs: **Stroke**, **Border** and **Shadow**.
 - **Border** lets you stack any number of borders. Each border has a size, a color and a position (**INSIDE**, **CENTER**, **OUTSIDE**). Drag the grip to change their order. **Add Border** adds one.
 - **Shadow** has a switch, **Color**, **Size**, **Alpha** and **Position** (X and Y).
 
-### Opacity & Blend Mode
+### Opacity
 
 An **opacity** slider with a percentage box, and 28 blend modes in seven groups: Normal; Darken (Multiply, Darken, Darker Color, Color Burn, Linear Burn); Lighten (Screen, Lighten, Lighter Color, Color Dodge, Linear Dodge); Contrast (Overlay, Soft Light, Hard Light, Soft Overlay, Vivid Light, Linear Light, Pin Light); Difference (Difference, Exclusion, Subtract, Divide); Color (Hue, Saturation, Color, Luminance); and Mask (Mask, Exclude). Tap a group to open it and tap a mode to apply it. **Mask** keeps what is below only where this layer is; **Exclude** removes what is below where this layer is.
 
@@ -81,6 +95,12 @@ See [Camera layers and 3D](@camera-3d).
 ### Volume
 
 For sound and for videos. See [Audio](@audio).
+
+### AI, Auto Captions, Reverse and Screenshot
+
+These four buttons are on page 2 of a video clip's grid (a GIF counts as a video). **AI** opens the AI category of the Effects Library (an audio layer has the same button on its only page). **Auto Captions** makes captions for this clip alone: see [AI tools](@ai-tools). **Reverse** plays the clip backwards: see [Media](@media).
+
+**Screenshot** saves the clip's frame under the playhead as a picture, at the clip's own full size. It is the plain footage: effects, crop, borders and the layer's position are left out, while trims, speed changes and Reverse are followed. The picture goes to the phone's gallery (Pictures/AbsentMotion) and is added to the project as a new layer above the clip. If you delete that new layer within 10 seconds, the picture is also removed from the gallery. The playhead must be on the clip.
 
 ### Effects and Presets
 

@@ -5,6 +5,12 @@ import app.absentmotion.i18n.AppText
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import app.absentmotion.model.MotionSlot
+import app.absentmotion.model.TransitionKind
+import app.absentmotion.model.canAnimate
+import app.absentmotion.model.cutBetween
+import app.absentmotion.model.withAnimation
+import app.absentmotion.model.withTransition
 import app.absentmotion.model.Layer
 import app.absentmotion.model.pathAngle
 import app.absentmotion.model.pathEnabled
@@ -196,22 +202,22 @@ private fun ownPlace(layer: Layer, timeMs: Int, fps: Int): Place {
 
 private fun compose(p: Place, q: Place?): Place {
     if (q == null) return p
-    val vx = (p.x + p.px - q.px) * q.sx
-    val vy = (p.y + p.py - q.py) * q.sy
+    val vx = (p.x - q.px) * q.sx
+    val vy = (p.y - q.py) * q.sy
     val a = Math.toRadians(q.rot.toDouble())
     val rx = (vx * cos(a) - vy * sin(a)).toFloat()
     val ry = (vx * sin(a) + vy * cos(a)).toFloat()
-    return Place(q.x + rx - p.px + q.px, q.y + ry - p.py + q.py, p.px, p.py, p.sx * q.sx, p.sy * q.sy, p.rot + q.rot, p.z + q.z)
+    return Place(q.x + rx, q.y + ry, p.px, p.py, p.sx * q.sx, p.sy * q.sy, p.rot + q.rot, p.z + q.z)
 }
 
 internal fun decompose(w: Place, q: Place): Place? {
     if (q.sx == 0f || q.sy == 0f) return null
     val a = Math.toRadians(-q.rot.toDouble())
-    val dx = w.x - q.x + w.px - q.px
-    val dy = w.y - q.y + w.py - q.py
+    val dx = w.x - q.x
+    val dy = w.y - q.y
     val vx = (dx * cos(a) - dy * sin(a)).toFloat() / q.sx
     val vy = (dx * sin(a) + dy * cos(a)).toFloat() / q.sy
-    return Place(vx - w.px + q.px, vy - w.py + q.py, w.px, w.py, w.sx / q.sx, w.sy / q.sy, w.rot - q.rot, w.z - q.z)
+    return Place(vx + q.px, vy + q.py, w.px, w.py, w.sx / q.sx, w.sy / q.sy, w.rot - q.rot, w.z - q.z)
 }
 
 private fun Scene.parentOf(layer: Layer): Layer? =
@@ -485,3 +491,17 @@ internal fun Scene.withClipEdgesAt(ids: List<Long>, frame: Int, end: Boolean, ex
         }
     }
 }
+
+internal fun Scene.selectedCuts(ids: Set<Long>): List<Pair<Long, Long>> {
+    val chosen = layers.filter { it.id in ids }.sortedWith(compareBy<Layer> { it.startTime }.thenBy { it.endTime }.thenBy { it.id })
+    val near = (1000 / fps.coerceAtLeast(1)).coerceAtLeast(1)
+    return chosen.zipWithNext().mapNotNull { (a, b) ->
+        (a.id to b.id).takeIf { b.startTime.toLong() <= a.endTime.toLong() + near && cutBetween(a.id, b.id) != null }
+    }
+}
+
+internal fun Scene.animateLayers(ids: Set<Long>, slot: MotionSlot, motionId: String?, ms: Int): Scene =
+    layers.filter { it.id in ids && it.canAnimate }.fold(this) { scene, layer -> scene.withAnimation(layer.id, slot, motionId, ms) }
+
+internal fun Scene.transitionCuts(cuts: List<Pair<Long, Long>>, kind: TransitionKind?, ms: Int): Scene =
+    cuts.fold(this) { scene, (a, b) -> scene.withTransition(a, b, kind, ms).scene }

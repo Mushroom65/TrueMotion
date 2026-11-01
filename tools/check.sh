@@ -48,6 +48,7 @@ start=$(date +%s)
 STATIC="licences|python3 tools/gen_licenses.py --check|python3 tools/gen_licenses.py
 fonts|python3 tools/gen_fonts.py --check|see tools/gen_fonts.py
 site-help|python3 tools/site_build.py --check|python3 tools/site_build.py
+alight-compat|python3 tools/alight_compat.py --check|python3 tools/alight_compat.py
 3d-effects|python3 tools/gen_3d_effects.py --check|python3 tools/gen_3d_effects.py
 translations|python3 tools/i18n_extract.py check|python3 tools/i18n_translate.py
 effect-lint|python3 tools/effect_lint.py|fix the effect JSON it lists
@@ -62,7 +63,11 @@ printf '== Native audio effects and text animation: host build and tests\n'
 sh tools/audio_dsp.sh --lib >"$dir/audio-dsp.log" 2>&1 || { tail -n 15 "$dir/audio-dsp.log" >&2; fail "the audio DSP host tests"; }
 sh tools/cutout_clean.sh >"$dir/cutout-clean.log" 2>&1 || { tail -n 15 "$dir/cutout-clean.log" >&2; fail "the cut-out clean-up host test"; }
 sh tools/textanim.sh >"$dir/textanim.log" 2>&1 || { tail -n 15 "$dir/textanim.log" >&2; fail "the text animation host tests"; }
+sh tools/particles.sh >"$dir/particles.log" 2>&1 || { tail -n 15 "$dir/particles.log" >&2; fail "the particle host tests"; }
 sh tools/warp.sh >"$dir/warp.log" 2>&1 || { tail -n 15 "$dir/warp.log" >&2; fail "the path and puppet warp host tests"; }
+if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ]; then
+    python3 tools/pieces3d_check.py >"$dir/pieces3d.log" 2>&1 || { tail -n 15 "$dir/pieces3d.log" >&2; fail "the 3D pieces host tests"; }
+fi
 python3 tools/puppet_check.py >"$dir/puppet.log" 2>&1 || { tail -n 15 "$dir/puppet.log" >&2; fail "the Puppet Pin checks against the host engine"; }
 python3 tools/crop_check.py >"$dir/crop.log" 2>&1 || { tail -n 15 "$dir/crop.log" >&2; fail "the Crop checks against the host engine"; }
 sh tools/pivot.sh --lib >"$dir/pivot.log" 2>&1 || { tail -n 15 "$dir/pivot.log" >&2; fail "the host engine library for the pivot tests"; }

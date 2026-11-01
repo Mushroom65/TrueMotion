@@ -8,7 +8,9 @@ Tap **Export & Share** (the share icon) in the editor's top bar, or **Export** i
 
 ## The screen
 
-At the top, four lines of information: **Available space**, **Estimated file size**, **Estimated export time** and **Phone temperature**. Under them are cards for each kind of export; tap a card to select it and tap its arrow to see its options. At the bottom are the switch **Also keep a copy as a Template** and the big **Export** button.
+At the top, three lines of information: **Available space**, **Estimated file size** and **Estimated export time**. Under them is the **Filename** field, then cards for each kind of export; tap a card to select it and tap its arrow to see its options. At the bottom are the switch **Also keep a copy as a Template** and the big **Export** button.
+
+![The Export Project screen: the information lines (1), the Video card (2), its options arrow (3), the Template switch (4) and the Export button (5).](img/export-screen.webp)
 
 The button turns gray with a reason when the export cannot run: **Not enough storage** or **Not supported on this phone**. A choice that this phone cannot do is dimmed, and tapping it explains why. The app remembers the settings of each kind, except that a video export starts at the project's own frame rate.
 
@@ -23,7 +25,7 @@ The button turns gray with a reason when the export cannot run: **Not enough sto
 | **GIF** | An animated GIF | Pictures/AbsentMotion |
 | **XML** | The project file only, for other tools (only from the project list) | Documents/AbsentMotion |
 
-The files are named after the project with the date and time, for example `My project 20261022_143005.mp4`. They are saved through Android's normal media storage, so other apps and the Gallery can see them. If an export fails or you cancel, the half-written file is removed.
+The **Filename** field starts as the project name and you can change it; letters, digits and the signs space, dot, dash, underscore, comma and plus are kept. In the options of Video, Current Frame, GIF and Image Sequence the switch **Random numeric filename** gives each export a random 16-digit name instead, and the field then says "Generated on export". The files are saved through Android's normal media storage, so other apps and the Gallery can see them. If an export fails or you cancel, the half-written file is removed.
 
 ## Video
 
@@ -39,6 +41,8 @@ The files are named after the project with the date and time, for example `My pr
 | **MKV** | H.264, H.265, AV1, VP9 |
 
 A codec is only offered if your phone has an encoder for it (for example "This phone has no AV1 encoder."). H.264 is the default and plays everywhere. H.265 makes smaller files for the same quality but some older players cannot open it. AV1, VP9 and APV depend on the phone. Switching the format keeps the codec if it fits, otherwise the app picks one that does.
+
+![Video options: Export Resolution (1), Format (2) and Codec (3).](img/export-video.webp)
 
 **Frame Rate.** A slider with stops at 10, 15, 24, 25, 30, 48, 50 and 60 fps, plus the project's own frame rate. The default is the project's frame rate.
 
@@ -66,6 +70,8 @@ It only acts on video clips whose frame rate (counting the clip's speed) is lowe
 
 **Audio.** A row such as "AAC · 128 kbps · 44.1 kHz · Stereo" opens the audio settings of the video:
 
+![More video options: Motion Blur (1), Quality (2) and Audio (3).](img/export-video-more.webp)
+
 - **Codec:** AAC (MP4, MOV, MKV) or Opus (WebM, MKV). The other one is dimmed with the reason.
 - **Bit Rate:** 64, 96, 128 (default), 160, 192, 256 or 320 kbps.
 - **Sample Rate:** 44.1 kHz (default) or 48 kHz. Opus always uses 48 kHz.
@@ -81,6 +87,8 @@ A project with no sound makes a video without an audio track.
 
 When the phone has only a software encoder for your choice, or its hardware encoder is rated slower than your frame rate, a card says **Slow export** and offers **Continue anyway** and a suggestion such as **Use H.264 · 1080p**. If the settings cannot be exported at all, the card says **Not supported**, with a button to switch to settings that work.
 
+![The Slow export card (1) with its Continue anyway button (2).](img/export-warning.webp)
+
 ## Audio Only
 
 - **Format:** WAV 16-bit, WAV 24-bit, FLAC, M4A (AAC, the default), OGG (Opus) or MP3. WAV and MP3 work on every phone; the others need an encoder on the phone.
@@ -95,7 +103,7 @@ Choices: **Transparent areas become** White (default) or Black, **Size** (720p, 
 
 ## Image Sequence
 
-One image per frame, saved in a folder named after the project as `frame_00001.png`, `frame_00002.png` and so on. Choices: **Format** (PNG, JPEG, WebP, WebP lossless, BMP), **Quality** (50 %, 70 %, 85 %, 95 % by default, 100 %, for JPEG and WebP), **Transparent areas become** (White or Black, for JPEG and BMP only), **Resolution**, **Frame Rate** (10 to 60) and **Frame Interpolation**. PNG and WebP lossless keep transparency.
+One image per frame, saved in a folder named like the **Filename** (the project name unless you change it) as `frame_00001.png`, `frame_00002.png` and so on. Choices: **Format** (PNG, JPEG, WebP, WebP lossless, BMP), **Quality** (50 %, 70 %, 85 %, 95 % by default, 100 %, for JPEG and WebP), **Transparent areas become** (White or Black, for JPEG and BMP only), **Resolution**, **Frame Rate** (10 to 60) and **Frame Interpolation**. PNG and WebP lossless keep transparency.
 
 ## Current Frame
 
@@ -112,8 +120,8 @@ One image per frame, saved in a folder named after the project as `frame_00001.p
 - **Estimates.** The size and time estimates improve as you export: the app learns from your last exports. Before that, it uses the speed measured by the check on first start. The time estimate also draws a few frames of your project at the chosen size (for GIFs and image sequences it also encodes them), so heavy effects such as VHS or blurs and big videos make it longer.
 - **Busy encoder.** If the phone's hardware video encoder is busy (for example another app holds it) or refuses the size and frame rate, the export first asks it to work at its own pace, then uses the slower software encoder and says so while it runs. Only if every encoder refuses does it stop, with "This phone's video encoder is busy or cannot make this size".
 - **Missing media.** If a project uses files that are not on the phone, the app lists them first ("Media Missing"). **Export Anyway** leaves those layers out.
-- **Heat.** If the phone gets warm, the export slows down on purpose by pausing a little after each frame, and the info line and a message say so. When it is very hot, it pauses between frames until it cools down.
-- **Leaving the app.** A video, audio, GIF, image sequence or project bundle export keeps going when you switch to another app: a notification shows its progress and has a **Cancel** button, and when the export finishes while you are away it says so. On Android 13 and newer the app asks once, at the first export, whether it may show notifications; if you say no, the export still continues, only the notification is not shown. Closing AbsentMotion from the recent apps list stops the export. While the app is open the screen stays on. There is no pause button; **Cancel** (or the Back button) first asks "Stop the export?", because the unfinished file is deleted.
+- **Heat.** If the phone gets warm, the export slows down on purpose by pausing a little after each frame, and a message says so. When it is very hot, it pauses between frames until it cools down.
+- **Leaving the app.** A video, audio, GIF, image sequence or project bundle export keeps going when you switch to another app: a notification shows its progress and has a **Cancel** button, and when the export finishes while you are away it says so. On Android 13 and newer the app asks once, at the first export, whether it may show notifications; if you say no, the export still continues, only the notification is not shown. Closing AbsentMotion from the recent apps list stops the export. While the app is open the screen stays on. There is no pause button; **Cancel** (or the Back button) stops the export at once and deletes the unfinished file.
 - **Check afterwards.** Finished video and audio files are opened again and checked: tracks present, length right, first and last frame readable, and a picture from the middle compared with what the project shows there, so a black or frozen video is caught. The result shows as "Checked: plays correctly". Pictures and GIFs are checked too. If something is wrong, it tells you what.
 
 ## When it is done

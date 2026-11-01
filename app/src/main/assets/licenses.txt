@@ -240,7 +240,7 @@ This list was written by hand on 2026-10-18 from the build files and the vendore
 
 Contents
 
-1. Engine libraries (C and C++): Skia and the libraries it links, whisper.cpp and ggml, RNNoise, ncnn, glslang, the RIFE warp layer, LAME
+1. Engine libraries (C and C++): Skia and the libraries it links, whisper.cpp and ggml, RNNoise, ncnn, glslang, the RIFE warp layer, LAME, and the video downloader add-on (CPython and yt-dlp, downloaded at run time)
 2. Machine learning models: OpenAI Whisper weights, RIFE and Real-ESRGAN weights and the AI background removal 2.0 model (all downloaded at run time), background removal model (foss build)
 3. Kotlin and Compose libraries
 4. Google Play services (proprietary)
@@ -430,6 +430,37 @@ LAME
 - URL: https://lame.sourceforge.io/
 - Used in: MP3 audio export. LAME is built as its own shared library, libmp3lame.so, and loaded through a small separate library, liblame_jni.so, so it can be replaced with another build of LAME.
 
+Video downloader add-on (downloaded on request, not part of the app)
+--------------------------------------------------------------------
+
+The Video Downloader in Tools needs an add-on that the user downloads once, after the app has shown its size. Nothing of it is in the APK except AbsentMotion's own small bridge library, libampy.so (Apache-2.0, The AbsentMotion authors), which loads the downloaded Python at run time, and the Python glue assets/downloader/am_dl.py (Apache-2.0). Settings can remove the add-on.
+
+CPython
+-------
+
+- Version: 3.14.10, the official Android package python-3.14.10-aarch64-linux-android.tar.gz from python.org (SHA-256 423c80b957330cf0ebb92b9b20f2294c292144a441bdb0ceb8c69d14928e569b), downloaded from https://www.python.org/ftp/python/3.14.10/ and checked against that hash. Only the run-time parts are unpacked (libpython3.14.so, the standard library, its extension modules and the OpenSSL libraries); tests, IDLE, Tk, the SQLite module and the headers are left out.
+- Licence: Python Software Foundation License Version 2 (PSF-2.0); the full text and the history of the licence ship in the package as lib/python3.14/LICENSE.txt. Components inside the package keep their own licences: OpenSSL 3.5 (Apache-2.0, in libcrypto_python.so and libssl_python.so), libffi (MIT, inside the _ctypes module), zlib (zlib licence), bzip2 (bzip2 licence), XZ Utils (0BSD), Zstandard (BSD-3-Clause), mpdecimal (BSD-2-Clause), Expat (MIT) and HACL* (MIT); see https://docs.python.org/3.14/license.html.
+- Copyright: Copyright (c) 2001 Python Software Foundation; All Rights Reserved.
+- URL: https://www.python.org/downloads/android/
+- Used in: the Video Downloader, which runs yt-dlp inside the app's own process through libampy.so.
+
+yt-dlp
+------
+
+- Version: the latest release of yt-dlp's official yt-dlp file (a zip of the Python sources), downloaded from https://github.com/yt-dlp/yt-dlp/releases and checked against the SHA2-256SUMS file of the same release. The app checks for a newer release at most once a day and uses it from the next start.
+- Licence: The Unlicense (public domain dedication).
+- Copyright: none claimed (public domain); see https://github.com/yt-dlp/yt-dlp/blob/master/LICENSE.
+- URL: https://github.com/yt-dlp/yt-dlp
+- Used in: the Video Downloader (reading links, finding the qualities a link has and downloading them). Video and sound files are joined with Android's own MediaMuxer; no FFmpeg is used.
+
+yt-dlp-ejs (inside the yt-dlp file)
+-----------------------------------
+
+- Version: the one pinned by each yt-dlp release (0.8.0 with yt-dlp 2026.10.26).
+- Licence: The Unlicense. Its solver script bundles meriyah (ISC, Copyright (c) 2019 and later, KFlash and others) and astring (MIT, Copyright (c) 2015, David Bonnet); the licence texts are in the header of the bundled script.
+- URL: https://github.com/yt-dlp/ejs
+- Used in: YouTube links. The script runs in the phone's own Android System WebView, so no JavaScript runtime is downloaded or bundled.
+
 2. MACHINE LEARNING MODELS
 --------------------------
 
@@ -463,7 +494,7 @@ AI Enhance models (Real-ESRGAN)
 AI background removal 2.0
 -------------------------
 
-- Version: absent-cutout.bin with absent-cutout-768.param and absent-cutout-1024.param (ncnn, fp16), published as assets of this repository's ai-models-2 release.
+- Version: absent-cutout.bin with absent-cutout-768.param and absent-cutout-1024.param (ncnn, fp16), published as assets of this repository's ai-models-3 release (the fourth training round, used from AbsentMotion 4.4; earlier versions download the previous round from ai-models-2).
 - Licence: Apache-2.0, including the pretrained weights it contains. The Apache-2.0 text is LICENSE in the root of this repository.
 - Copyright: The AbsentMotion authors.
 - Used in: "Remove Background" on images when AI background removal 2.0 is chosen (Latest version, foss and play builds). Downloaded once after that choice, checked against its SHA-256, and removable in Settings.
@@ -476,7 +507,7 @@ Background removal model (foss build only)
 - Copyright: The AbsentMotion authors.
 - Used in: "Remove Background" on images and videos in the foss build. It runs on the device and nothing is downloaded. The play build uses ML Kit instead (section 4) and does not contain this file.
 - Pretrained encoder: timm/mobilenetv3_large_100.ra_in1k, revision 96f46a1c52932f27492dff66c72378eb99b443a7, Apache-2.0, by Ross Wightman and timm contributors (https://huggingface.co/timm/mobilenetv3_large_100.ra_in1k, https://github.com/huggingface/pytorch-image-models); MobileNetV3: Howard et al., "Searching for MobileNetV3" (https://arxiv.org/abs/1905.02244). ImageNet-pretrained encoder only; classifier discarded; no ImageNet images fetched. The Apache-2.0 text is LICENSE in the root of this repository.
-- Training pictures: 18,615 photographs under Creative Commons Attribution licences (18,559 CC BY 2.0, https://creativecommons.org/licenses/by/2.0/, and 56 CC BY 4.0, https://creativecommons.org/licenses/by/4.0/); only explicit CC BY records were accepted, and each licence was checked at the source before use. 8,391 come from the COCO 2017 training set (https://cocodataset.org) and 10,224 from Open Images V7 (https://storage.googleapis.com/openimages/web/factsfigures_v7.html). Changes: resized; JPEG re-encoded. Image rights remain with individual creators. No picture is part of this repository or the app. The creator, title, source page and licence of every picture are listed in the file AbsentMotion-training-image-credits.txt, attached to each GitHub release that includes the model (https://github.com/Comett1225/AbsentMotion/releases/latest/download/AbsentMotion-training-image-credits.txt); it is not part of this repository.
+- Training pictures: 18,615 photographs under Creative Commons Attribution licences (18,559 CC BY 2.0, https://creativecommons.org/licenses/by/2.0/, and 56 CC BY 4.0, https://creativecommons.org/licenses/by/4.0/); only explicit CC BY records were accepted, and each licence was checked at the source before use. 8,391 come from the COCO 2017 training set (https://cocodataset.org) and 10,224 from Open Images V7 (https://storage.googleapis.com/openimages/web/factsfigures_v7.html). Changes: resized; JPEG re-encoded. Image rights remain with individual creators. No picture is part of this repository or the app. The creator, title, source page and licence of every picture are listed in the file AbsentMotion-training-image-credits.txt, attached to the ai-models-3 release of this repository (https://github.com/Comett1225/AbsentMotion/releases/download/ai-models-3/AbsentMotion-training-image-credits.txt); it is not part of this repository.
 - COCO annotations: training/ground-truth masks are based on COCO Consortium annotations under CC BY 4.0 (union of all annotated instances, resized). Citation: Tsung-Yi Lin et al., Microsoft COCO: Common Objects in Context, ECCV 2014.
 - Open Images labels and metadata: Google LLC, CC BY 4.0; Kuznetsova et al., The Open Images Dataset V4, IJCV 2020.
 - Teacher: the training masks were made by BiRefNet_lite, revision aa62cd87eafb9cc43056d08ef3615a14628b831d (https://huggingface.co/ZhengPeng7/BiRefNet_lite), MIT License, Copyright (c) 2024 ZhengPeng. The teacher only made labels: none of its weights or code are in AbsentMotion. Its card states training on DIS-TR; no DIS images were used.
@@ -633,6 +664,10 @@ Effect thumbnail photos
 -----------------------
 
 The effect thumbnails (app/src/main/assets/effects/thumb/*.webp, 192 x 192 pixels) are rendered by tools/effect_thumbs.py from the six photographs below, all from Wikimedia Commons. Each author released the photograph under CC0 1.0, a public domain dedication (https://creativecommons.org/publicdomain/zero/1.0/), so no credit is required; they are listed for the record. The licence of each was checked on 2026-10-19 on the file's Commons page and in its metadata (License: cc0, Credit: own work); the script checks it again whenever it downloads a photograph. Only the small thumbnails ship; the photographs are not in the repository or the app. Which effect uses which photograph, the crop and the effect settings are in tools/effect_showcase.json. The green and black backgrounds of the Chroma Key and Luma Key thumbnails are drawn by the script.
+
+The pictures of the help (site/assets/img/*.webp) are annotated screenshots of the app, made by tools/help_shots.py. They show four of the photographs below ("Ruby Mountain refected in Diablo Lake", "Sunset rolling waves", "Ara ararauna portrait Rhodes" and "Fleabane With Black Background"), downloaded and checked by the same code as the thumbnails, and a short video made from the sunset photograph. They are CC0 as well, so no credit is required.
+
+Two pictures of the help (the Video Downloader with a checked link) show the title and a small thumbnail of the film "Big Buck Bunny" from its YouTube page, used as the example link. The film is licensed under Creative Commons Attribution 3.0 (https://creativecommons.org/licenses/by/3.0/): "Big Buck Bunny", (c) copyright 2008, Blender Foundation, www.bigbuckbunny.org. Nothing of the film is in the repository or the app; only the small thumbnail appears inside those two screenshots.
 
 - "Fishmonger smiling" by Wilfredor, own work, CC0 1.0, https://commons.wikimedia.org/wiki/File:Fishmonger_smiling.jpg (the page records the subject's consent and carries a personality rights notice).
 - "Ruby Mountain refected in Diablo Lake" by Ron Clausen, own work, CC0 1.0, https://commons.wikimedia.org/wiki/File:Ruby_Mountain_refected_in_Diablo_Lake.jpg
@@ -2737,6 +2772,7 @@ ICON SOURCES
 Every icon in AbsentMotion is either taken from an open icon set whose licence allows redistribution, or drawn for this project. Nothing is copied or traced from another app. This file is the single list of where each icon comes from; the third-party notices file is generated from it.
 
 - Lucide (https://lucide.dev, https://github.com/lucide-icons/lucide), ISC licence, version 1.59.0 (SVG files at https://cdn.jsdelivr.net/npm/lucide-static@1.59.0/icons/<name>.svg, pages at https://lucide.dev/icons/<name>). Lucide's licence file marks a few icons as derived from Feather (https://github.com/feathericons/feather); those are also under the MIT licence below, so both notices apply to them. The Licence column says "ISC and MIT (Feather)" for those.
+- Tabler Icons (https://tabler.io/icons, https://github.com/tabler/tabler-icons), MIT licence, version 3.31.0 (SVG files at https://cdn.jsdelivr.net/npm/@tabler/icons@3.31.0/icons/outline/<name>.svg). Used the same way as the Lucide shapes.
 - Material Symbols (https://github.com/google/material-design-icons, Apache-2.0): none are used.
 - Own drawing: made for AbsentMotion from circles, lines, rectangles and arcs; Apache-2.0 like the rest of the code.
 - Effect thumbnails are not icons: they are small renders of six CC0 photographs, listed in THIRD_PARTY_NOTICES.md (section 5, "Effect thumbnail photos").
@@ -2748,9 +2784,10 @@ The launcher icon is an own drawing, made by tools/icon/make_icon.py (source of 
 COUNTS
 ------
 
-- Lucide only - 167
+- Lucide only - 174
 - Lucide shapes plus own parts - 8
-- Own drawing only - 42
+- Own drawing only - 43
+- Tabler - 2
 - Material Symbols - 0
 
 (An icon is one named member of an *Icons object, or one icon-drawing composable.)
@@ -2769,6 +2806,7 @@ ICONS
 - Back (Lucide arrow-left) - ISC and MIT (Feather) - ui/editor/ChromeIcons.kt
 - Gear (Lucide settings) - ISC - ui/editor/ChromeIcons.kt
 - Share (Lucide square-arrow-out-up-right) - ISC - ui/editor/ChromeIcons.kt
+- Fullscreen (Lucide maximize) - ISC - ui/editor/ChromeIcons.kt
 - Trash (Lucide trash-2) - ISC and MIT (Feather) - ui/editor/ChromeIcons.kt
 - More (Lucide + own drawing circle) - ISC and MIT (Feather); own part Apache-2.0 - ui/editor/ChromeIcons.kt
 - Undo (Lucide undo-2) - ISC - ui/editor/ChromeIcons.kt
@@ -2817,6 +2855,10 @@ ICONS
 - AudioMuted (Lucide volume-x) - ISC - ui/editor/PanelIcons.kt
 - Turtle (Lucide turtle) - ISC - ui/editor/PanelIcons.kt
 - Rabbit (Lucide rabbit) - ISC - ui/editor/PanelIcons.kt
+- Snail (Lucide snail) - ISC - ui/editor/PanelIcons.kt
+- Walk (Tabler walk) - MIT - ui/editor/PanelIcons.kt
+- Horse (Tabler horse) - MIT - ui/editor/PanelIcons.kt
+- Cheetah (own drawing) - Apache-2.0 (own) - ui/editor/PanelIcons.kt
 - PaintBucket (Lucide paint-bucket) - ISC - ui/editor/PanelIcons.kt
 - BorderShadow (own drawing) - Apache-2.0 (own) - ui/editor/PanelIcons.kt
 - Blending (Lucide blend) - ISC - ui/editor/PanelIcons.kt
@@ -2853,6 +2895,7 @@ ICONS
 - CheckCircle (Lucide circle-check) - ISC - ui/editor/PanelIcons.kt
 - Backspace (Lucide delete) - ISC - ui/editor/PanelIcons.kt
 - Check (Lucide check) - ISC and MIT (Feather) - ui/editor/PanelIcons.kt
+- Reverse (Lucide arrow-right-left) - ISC - ui/editor/PanelIcons.kt
 - Receive (Lucide download) - ISC and MIT (Feather) - ui/home/HomeIcons.kt
 - Menu (Lucide menu) - ISC - ui/home/HomeIcons.kt
 - ChevronDown (Lucide chevron-down) - ISC and MIT (Feather) - ui/home/HomeIcons.kt
@@ -2881,6 +2924,10 @@ ICONS
 - ProjectsTabOff (Lucide square-play) - ISC - ui/home/HomeIcons.kt
 - TemplatesTabOn (Lucide + own drawing layout-template) - ISC; own part Apache-2.0 - ui/home/HomeIcons.kt
 - TemplatesTab (Lucide layout-template) - ISC - ui/home/HomeIcons.kt
+- ToolsTab (Lucide wrench) - ISC - ui/home/HomeIcons.kt
+- ToolsTabOn (Lucide wrench) - ISC - ui/home/HomeIcons.kt
+- Compress (Lucide shrink) - ISC - ui/home/HomeIcons.kt
+- Download (Lucide download) - ISC and MIT (Feather) - ui/home/HomeIcons.kt
 - Close (Lucide x) - ISC and MIT (Feather) - ui/export/ExportIcons.kt
 - Back (Lucide arrow-left) - ISC and MIT (Feather) - ui/export/ExportIcons.kt
 - ChevronRight (Lucide chevron-right) - ISC and MIT (Feather) - ui/export/ExportIcons.kt
@@ -3040,3 +3087,28 @@ Non-engine bootstrap native libraries are unchanged binaries from the matching o
 libamengine.so is rebuilt from the combined project sources. Hashes and build provenance are in docs/TRUE_MOTION_PROVENANCE.json.
 
 AfterMotionZ+ effect data port, 2026-10-30: converted shaders and available thumbnails derive from the user-supplied AfterMotionZ+ Clone.apk. Source references include Alight Motion, NextMotion and SATRIYAID. Donor binary fingerprint and per-definition provenance: docs/AFTERZ_EFFECT_PORT.json. This attribution does not relicense third-party data under the project source licence.
+
+Tabler Icons (MIT), https://github.com/tabler/tabler-icons/blob/main/LICENSE
+----------------------------------------------------------------------------
+
+MIT License
+
+Copyright (c) 2020-2024 Paweł Kuna
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -43,6 +43,15 @@ import app.absentmotion.platform.rememberDocumentPicker
 import app.absentmotion.ui.editor.DropOrRise
 import app.absentmotion.ui.editor.MenuPopup
 import app.absentmotion.ui.editor.MenuRow
+import app.absentmotion.ui.editor.MotionSheet
+import app.absentmotion.ui.editor.Tile
+import app.absentmotion.ui.editor.TileGrid
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import app.absentmotion.ui.theme.Am
 import app.absentmotion.ui.theme.Presence
 import kotlin.math.*
@@ -92,7 +101,7 @@ internal fun EffectSettings(state: EditorState, layer: Layer, instance: XmlNode,
                 PanelSwitch(raw == "true") { if (enabled) set(it.toString()) }
             }
             "color" -> EffectColor(state, param, raw, enabled, active == param, { select(param) }) { text, drag -> set(text, drag) }
-            "choice" -> EffectChoice(param, raw, enabled) { set(it) }
+            "choice" -> EffectChoice(param, raw, enabled, definition.key) { set(it) }
             "text" -> if (param.palette) EffectPalette(param, raw, enabled, "${layer.id}:${state.effectIndex}") { set(it) } else EffectText(param, raw, enabled, state::endGesture) { set(it, true) }
             else -> {
                 val shown = definition.bounded(param, (layer.endTime - layer.startTime) / 1000f) { p ->
@@ -116,7 +125,7 @@ internal fun PropertyLabel(label: String, active: Boolean, enabled: Boolean, mod
 @Composable
 internal fun EffectNumbers(state: EditorState, param: EffectParam, raw: String, enabled: Boolean, active: Boolean,
                           select: () -> Unit, set: (String, Boolean) -> Unit) {
-    val count = when (param.kind) { "point" -> 2; "vector3" -> 3; else -> 1 }
+    val count = when (param.kind) { "point" -> 2; "vector3" -> 3; "quaternion" -> 4; else -> 1 }
     val parsed = raw.split(',').map { it.trim().finiteFloat() ?: 0f }
     fun stored(v: List<Float>) = v.joinToString(",")
     val values = List(count) { parsed.getOrElse(it) { 0f } }
@@ -128,12 +137,13 @@ internal fun EffectNumbers(state: EditorState, param: EffectParam, raw: String, 
     fun adjust(value: Float, gesture: Boolean) {
         val rounded = if (param.step > 0) round(value/param.step)*param.step else value
         val changed = latest.toMutableList().also { it[component] = rounded.coerceIn(param.componentMin.getOrElse(component) { param.min }, param.componentMax.getOrElse(component) { param.max }) }
+        if (gesture && changed == latest) return
         set(stored(changed), gesture)
     }
     val decimals = param.step.toBigDecimal().stripTrailingZeros().scale().coerceAtLeast(0).let { if (percent) (it - 2).coerceAtLeast(0) else it }
     val unit = if (percent) "%" else if (param.kind == "angle") "°" else param.unit
     fun keypad(index: Int) {
-        state.keypad = KeypadRequest(values.mapIndexed { i, v -> KeypadField(if (count == 1) param.label else listOf("X", "Y", "Z")[i], v * factor, unit,
+        state.keypad = KeypadRequest(values.mapIndexed { i, v -> KeypadField(if (count == 1) param.label else listOf("X", "Y", "Z", "W")[i], v * factor, unit,
             param.componentMin.getOrElse(i) { param.min } * factor, param.componentMax.getOrElse(i) { param.max } * factor) }, index) { next ->
             set(stored(next.mapIndexed { i, v -> (v/factor).coerceIn(param.componentMin.getOrElse(i) { param.min }, param.componentMax.getOrElse(i) { param.max }) }), false)
         }
@@ -147,7 +157,7 @@ internal fun EffectNumbers(state: EditorState, param: EffectParam, raw: String, 
         if (scalarRuler) {
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 key(param.id) {
-                    EffectRuler(values[0], param.step, param.min, param.max, enabled,
+                    EffectRuler(values[0], param.step / param.slow, param.min, param.max, enabled,
                         select, { adjust(it, true) }, state::endGesture,
                         Modifier.matchParentSize().padding(end = 45.dp, top = .5.dp, bottom = .5.dp), defaults.getOrNull(0), state.settings.vibration)
                 }
@@ -157,7 +167,7 @@ internal fun EffectNumbers(state: EditorState, param: EffectParam, raw: String, 
             return@Row
         }
         key(param.id, component) {
-            EffectRuler(values[component], param.step, param.componentMin.getOrElse(component) { param.min }, param.componentMax.getOrElse(component) { param.max }, enabled,
+            EffectRuler(values[component], param.step / param.slow, param.componentMin.getOrElse(component) { param.min }, param.componentMax.getOrElse(component) { param.max }, enabled,
                 select, { adjust(it, true) }, state::endGesture, Modifier.weight(1f).fillMaxHeight(), defaults.getOrNull(component), state.settings.vibration)
         }
         Column(Modifier.padding(horizontal = 2.dp, vertical = 4.dp).fillMaxHeight(), Arrangement.spacedBy(2.dp)) {
@@ -179,21 +189,45 @@ internal fun ValueBox(text: String, chosen: Boolean, lit: Boolean, modifier: Mod
 }
 
 @Composable
-private fun EffectChoice(param: EffectParam, raw: String, enabled: Boolean, set: (String) -> Unit) {
+private fun EffectChoice(param: EffectParam, raw: String, enabled: Boolean, effect: String, set: (String) -> Unit) {
     val chosen = param.optionValues.indexOfFirst { abs(it - (raw.finiteFloat() ?: 0f)) < 1e-5f }
     var open by remember(param.id) { mutableStateOf(false) }
+    val context = LocalContext.current
+    val pictures by produceState<List<ImageBitmap>?>(null, effect, param.id) {
+        value = withContext(Dispatchers.IO) { choicePictures(context, effect, param.id, param.options.size) }
+    }
+    val sheet = pictures != null
     Row(Modifier.fillMaxWidth().height(38.dp).padding(horizontal = 8.dp).alpha(if (enabled) 1f else 0.35f), verticalAlignment = Alignment.CenterVertically) {
         Text(param.label, Modifier.weight(1f), color = Am.OnDark, fontSize = 14.sp)
         Box {
-            Text(param.options.getOrNull(chosen) ?: raw, Modifier.clip(PanelShape).background(Color(0x33000000)).clickable(enabled = enabled) { open = true }
+            Text((param.options.getOrNull(chosen) ?: raw) + if (sheet) "  \u203A" else "", Modifier.clip(PanelShape).background(Color(0x33000000)).clickable(enabled = enabled) { open = true }
                 .padding(horizontal = 12.dp, vertical = 6.dp), color = Am.OnDark, fontSize = 14.sp, maxLines = 1)
-            Presence(open) {
+            if (!sheet) Presence(open) {
                 MenuPopup(DropOrRise, { open = false }) {
                     param.options.forEachIndexed { i, option -> MenuRow(option) { set(formatFloats(floatArrayOf(param.optionValues[i]))); open = false } }
                 }
             }
         }
     }
+    if (sheet && open) MotionSheet(param.label, { open = false }) {
+        TileGrid(param.options.indices.toList()) { i, modifier ->
+            val picture = pictures?.getOrNull(i)
+            Tile(param.options[i], i == chosen, modifier, { set(formatFloats(floatArrayOf(i.toFloat()))) }, picture?.let { p -> { drawCropped(p) } })
+        }
+        Spacer(Modifier.height(12.dp))
+    }
+}
+
+private fun choicePictures(context: Context, effect: String, param: String, count: Int): List<ImageBitmap>? = runCatching {
+    List(count) { i -> context.assets.open("effects/thumb/$effect.$param.$i.webp").use { BitmapFactory.decodeStream(it)!!.asImageBitmap() } }
+}.getOrNull()
+
+private fun DrawScope.drawCropped(image: ImageBitmap) {
+    val scale = maxOf(size.width / image.width, size.height / image.height)
+    val w = (size.width / scale).roundToInt().coerceIn(1, image.width)
+    val h = (size.height / scale).roundToInt().coerceIn(1, image.height)
+    drawImage(image, IntOffset((image.width - w) / 2, (image.height - h) / 2), IntSize(w, h),
+        dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()), filterQuality = FilterQuality.None)
 }
 
 @Composable

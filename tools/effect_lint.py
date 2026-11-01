@@ -8,15 +8,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PACK = ROOT / "app/src/main/assets/effects"
 SKIP = {"index.json", "releases.json", "foreign.json"}
-CATEGORIES = {"color", "blur", "distort", "stylize", "noise", "repeat", "key", "move", "3d", "text"}
-KINDS = {"float", "angle", "point", "color", "switch", "choice", "text"}
+CATEGORIES = {"color", "blur", "distort", "stylize", "noise", "repeat", "key", "move", "beat", "3d", "text"}
+CATEGORIES.add("true")
+for prefix in ("amz-","legacy-"):
+    CATEGORIES.update(prefix+key for key in ("color","blur","distort","procedural","drawing","transform","3d","text","opacity","matte","repeat","other"))
+KINDS = {"float", "angle", "point", "vector3", "quaternion", "color", "switch", "choice", "text"}
 UNIFORM = re.compile(r"^\s*(?:layout\([^)]*\)\s*)?uniform\s+(\w+)\s+(\w+)\s*;", re.M)
 UNIFORM_TYPES = {"float": {"float"}, "angle": {"float"}, "choice": {"float"}, "switch": {"float"}, "point": {"float2"}, "color": {"float4", "half4"}, "text": set()}
-RESERVED = {"image", "size", "time", "screen", "layer", "fromLayer", "toLayer", "duration", "orient", "paletteSize", "paletteSpread", "swatches"}
+RESERVED = {"image", "size", "time", "screen", "layer", "fromLayer", "toLayer", "duration", "orient", "paletteSize", "paletteSpread", "swatches",
+            "beat", "beatTime", "beatIndex"}
 
 
 def lint(path, problems, standard):
-    effect = json.loads(path.read_text())
+    effect = json.loads(path.read_text(encoding="utf-8"))
+    external=effect.get("dialect") in ("afterz","legacy")
     key = path.stem
     here = lambda message, severity="error": problems.append((severity, key, message))
     if effect.get("id") != key:
@@ -27,7 +32,7 @@ def lint(path, problems, standard):
         here("no name")
     description = str(effect.get("description", "")).strip()
     if not description:
-        here("no description")
+        here("no description", "warning" if external else "error")
     elif not description.endswith((".", "!", "?")):
         here("description does not end with a full stop", "warning")
     params = effect.get("params", [])
@@ -50,7 +55,7 @@ def lint(path, problems, standard):
             if low is not None and high is not None and low > high:
                 here(f"{pid}: min {low} is above max {high}")
             if low is not None and default < low or high is not None and default > high:
-                here(f"{pid}: default {default} is outside {low}..{high}")
+                here(f"{pid}: default {default} is outside {low}..{high}", "warning" if external else "error")
             if p.get("step", 0.01) <= 0:
                 here(f"{pid}: step is not positive")
             if p.get("percent") and high is not None and high > 100:
@@ -59,13 +64,18 @@ def lint(path, problems, standard):
             options = p.get("options") or []
             if not options or any(not str(o).strip() for o in options):
                 here(f"{pid}: empty or blank choice options")
+            elif "optionValues" in p:
+                values=p["optionValues"]
+                if len(values)!=len(options) or len(set(values))!=len(values):here(f"{pid}: invalid selector values")
+                elif default not in values:here(f"{pid}: donor default {default!r} is outside selector values", "warning" if external else "error")
             elif not isinstance(default, int) or not 0 <= default < len(options):
                 here(f"{pid}: default {default!r} is not an option index")
             elif len(set(options)) != len(options):
                 here(f"{pid}: duplicate option names", "warning")
-        elif kind == "point":
-            if not (isinstance(default, list) and len(default) == 2):
-                here(f"{pid}: point default {default!r} is not two numbers")
+        elif kind in ("point","vector3","quaternion"):
+            n={"point":2,"vector3":3,"quaternion":4}[kind]
+            if not (isinstance(default, list) and len(default) == n and all(isinstance(v,(int,float)) for v in default)):
+                here(f"{pid}: vector default {default!r} needs {n} numbers")
         elif kind == "color":
             if not re.fullmatch(r"#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?", str(default)):
                 here(f"{pid}: colour default {default!r} is not #rrggbb or #aarrggbb")
@@ -73,7 +83,14 @@ def lint(path, problems, standard):
         if legacy is not None and legacy == default:
             here(f"{pid}: legacyDefault equals the default", "warning")
     sksl = effect.get("sksl")
-    if effect.get("native"):
+    if external:
+        prefix="amz." if effect["dialect"]=="afterz" else "tmold."
+        if not effect.get("runtimeId","").startswith(prefix):here("foreign runtime ID is not isolated")
+        if not effect.get("native") and not effect.get("stages") and not sksl:here("no effect graph")
+        for stage in effect.get("stages",[]):
+            if not stage.get("sksl") and not stage.get("nativeEffect"):here("stage has neither shader nor reference")
+            if not 1 <= stage.get("downsample",1) <=1024:here("invalid buffer scale")
+    elif effect.get("native"):
         if sksl:
             here("native effect that also has a shader", "warning")
     elif not sksl:
@@ -101,7 +118,7 @@ def main():
     files = [p for p in sorted(PACK.glob("*.json")) if p.name not in SKIP]
     counts = Counter()
     for path in files:
-        effect = json.loads(path.read_text())
+        effect = json.loads(path.read_text(encoding="utf-8"))
         if not effect.get("native"):
             for kind, name in UNIFORM.findall(effect.get("sksl", "")):
                 counts[name] += 1
@@ -109,10 +126,10 @@ def main():
     problems = []
     for path in files:
         lint(path, problems, standard)
-    names = Counter(json.loads(p.read_text()).get("name") for p in files)
+    names = Counter(json.loads(p.read_text(encoding="utf-8")).get("name") for p in files)
     for name, count in names.items():
         if count > 1:
-            problems.append(("error", name, f"{count} effects share this name"))
+            problems.append(("warning", name, f"{count} effects share this display name; runtime IDs remain separate"))
     errors = [p for p in problems if p[0] == "error"]
     for severity, key, message in sorted(problems):
         print(f"{severity:7s} {key}: {message}")

@@ -1,5 +1,6 @@
 package app.absentmotion.library
 
+import app.absentmotion.model.withSlowestSpeeds
 import app.absentmotion.R
 import app.absentmotion.i18n.AppText
 import app.absentmotion.platform.Context
@@ -73,7 +74,7 @@ class ProjectStore(private val root: File) {
 
     private fun recoveryFile(id: String) = File(root, "recovery").child("$id.xml")
 
-    fun load(id: String): Scene? = read(id)?.let { withLinkedElements(it, id) }
+    fun load(id: String): Scene? = read(id)?.let { withLinkedElements(it, id) }?.withSlowestSpeeds()
 
     private fun read(id: String): Scene? = text(id)?.let(::projectScene)
 

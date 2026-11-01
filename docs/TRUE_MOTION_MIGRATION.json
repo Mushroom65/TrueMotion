@@ -1,11 +1,11 @@
 {
   "base": {
     "repository": "https://github.com/Comett1225/AbsentMotion",
-    "tag": "v4.3.0",
-    "commit": "7b49a26f604c7ec2a641d2ecb14b14ca878d2dbd"
+    "tag": "v4.4.0",
+    "commit": "e3d562832a0071181a08945e6927ec4c44a5cbe7"
   },
-  "date": "2026-10-31",
-  "portVersion": "0.12.0",
+  "date": "2026-11-01",
+  "portVersion": "0.14.0",
   "complete": false,
   "features": [
     {
@@ -331,6 +331,42 @@
       "name": "Полупрозрачная граница камеры",
       "status": "ported",
       "notes": "Отключаемая рамка и затемнение за областью экспорта в режиме камеры. Только UI; не попадает в PNG/видео."
+    },
+    {
+      "id": "legacy-effect-library-014",
+      "name": "Старая библиотека эффектов",
+      "status": "partial",
+      "notes": "1746 shader/script definitions in separate Classic categories; 11 original native mappings. 12 catalogue entries still require classification/native support, including two informational author entries. See LEGACY_EFFECT_PORT.json. Rendering parity is not guaranteed by the smoke sweep."
+    },
+    {
+      "id": "spectrum-014",
+      "name": "Спектрум от аудиослоя",
+      "status": "ported",
+      "notes": "Stereo power FFT, 7 styles, source selector, animation keys, cached bounded analysis; Android render and source-switch checks."
+    },
+    {
+      "id": "parent-anchor-014",
+      "name": "Якорь привязанного родителя",
+      "status": "ported",
+      "notes": "Matrix composition shared by parent and child; pivot edit keeps children in place and subsequent rotation/scale uses the same anchor."
+    },
+    {
+      "id": "media-replacement-014",
+      "name": "Замена медиа в заливке",
+      "status": "ported",
+      "notes": "Fill & Color replaces only the captured layer; preserves keys, effects, timing, geometry and fill mode. Shared-source UI undo/redo verified."
+    },
+    {
+      "id": "preview-cache-alpha-014",
+      "name": "Прозрачный кэш предпросмотра",
+      "status": "ported",
+      "notes": "Lossless RGBA PNG, viewport-size rasterization, separate live checker and quality gating. Paused spectrum preparation invalidates unfinished audio frames."
+    },
+    {
+      "id": "oneplus-gpu-014",
+      "name": "Артефакты и вылет OnePlus Nord 5",
+      "status": "partial",
+      "notes": "Conservative initial OpenGL choice for OnePlus Nord 5/SM8635, failed-backend recovery and 128 MiB reusable Skia resource budget. Physical device crash not reproduced; no crash log supplied, root cause unconfirmed."
     }
   ]
 }

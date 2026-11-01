@@ -10,7 +10,7 @@ class PlaybackSpeedTest {
     private fun speed(layer:Layer,value:Float)=scene.withPlaybackSpeed(layer,value,0f,0)
 
     @Test fun logarithmicSliderCoversTheWholeRangeAndRoundTripsPresets() {
-        assertEquals(0f,PlaybackSpeed.position(.001f),.00001f)
+        assertEquals(0f,PlaybackSpeed.position(PlaybackSpeed.Min),.00001f)
         assertEquals(1f,PlaybackSpeed.position(100f),.00001f)
         for (v in PlaybackSpeed.presets) assertEquals(v,PlaybackSpeed.value(PlaybackSpeed.position(v)),.0001f)
         val values=(0..100).map { PlaybackSpeed.value(it/100f) }
@@ -66,7 +66,7 @@ class PlaybackSpeedTest {
         val source=scene.layer(2)!!
         assertEquals(source,speed(source,Float.NaN))
         assertEquals(100f,VideoTiming(speed(source,500f)).speed(0.0),0f)
-        assertEquals(.001f,VideoTiming(speed(source,-3f)).speed(0.0),0f)
+        assertEquals(SLOWEST_SPEED,VideoTiming(speed(source,-3f)).speed(0.0),0f)
         val fast=speed(source,100f)
         assertNotNull(fast.node["trueSpeedContentEnd"])
         assertNull(fast.trimmedTo(0,65).node["trueSpeedContentEnd"])

@@ -2,6 +2,7 @@
   "categories": {
     "3d": "3D",
     "ai": "AI",
+    "beat": "Rentak",
     "blur": "Kabur",
     "color": "Warna",
     "distort": "Herotan",
@@ -73,6 +74,267 @@
         },
         "spill": {
           "label": "Kesan Menjangkau Keluar"
+        }
+      }
+    },
+    "beatblur": {
+      "description": "Setiap rentak memicu kabur zum yang hilang apabila rentak pudar. Pilih klip muzik anda, buka menunya dan ketik Tandakan Rentak dahulu; tanpa tanda rentak ia mengikut tetapan BPM.",
+      "name": "Kabur Rentak",
+      "params": {
+        "beats": {
+          "label": "Rentak",
+          "options": [
+            "Setiap Rentak",
+            "Setiap Rentak ke-2",
+            "Setiap Rentak ke-4"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Pereputan"
+        },
+        "offset": {
+          "label": "Ofset"
+        },
+        "strength": {
+          "label": "Kekuatan"
+        }
+      }
+    },
+    "beatflash": {
+      "description": "Lapisan berkelip dengan warna pada setiap rentak. Pilih klip muzik anda, buka menunya dan ketik Tandakan Rentak dahulu; tanpa tanda rentak ia mengikut tetapan BPM.",
+      "name": "Kilat Rentak",
+      "params": {
+        "beats": {
+          "label": "Rentak",
+          "options": [
+            "Setiap Rentak",
+            "Setiap Rentak ke-2",
+            "Setiap Rentak ke-4"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "color": {
+          "label": "Warna"
+        },
+        "decay": {
+          "label": "Pereputan"
+        },
+        "offset": {
+          "label": "Ofset"
+        },
+        "strength": {
+          "label": "Kekuatan"
+        }
+      }
+    },
+    "beatglitch": {
+      "description": "Memecahkan lapisan kepada hirisan beralih dengan warna berbelah pada setiap rentak. Pilih klip muzik anda, buka menunya dan ketik Tandakan Rentak dahulu; tanpa tanda rentak ia mengikut tetapan BPM.",
+      "name": "Glitch Rentak",
+      "params": {
+        "beats": {
+          "label": "Rentak",
+          "options": [
+            "Setiap Rentak",
+            "Setiap Rentak ke-2",
+            "Setiap Rentak ke-4"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Pereputan"
+        },
+        "offset": {
+          "label": "Ofset"
+        },
+        "slices": {
+          "label": "Hirisan"
+        },
+        "strength": {
+          "label": "Kekuatan"
+        }
+      }
+    },
+    "beatglow": {
+      "description": "Menjadikan bahagian cerah lapisan bersinar pada setiap rentak. Pilih klip muzik anda, buka menunya dan ketik Tandakan Rentak dahulu; tanpa tanda rentak ia mengikut tetapan BPM.",
+      "name": "Cahaya Rentak",
+      "params": {
+        "beats": {
+          "label": "Rentak",
+          "options": [
+            "Setiap rentak",
+            "Setiap rentak ke-2",
+            "Setiap rentak ke-4"
+          ]
+        },
+        "blur": {
+          "label": "Jejari"
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "color": {
+          "label": "Warna"
+        },
+        "decay": {
+          "label": "Reputan"
+        },
+        "offset": {
+          "label": "Anjakan"
+        },
+        "strength": {
+          "label": "Kekuatan"
+        },
+        "threshold": {
+          "label": "Ambang"
+        }
+      }
+    },
+    "beatpulse": {
+      "description": "Mencerahkan lapisan pada setiap rentak seperti kilatan pendedahan; kekuatan negatif menggelapkannya. Pilih klip muzik anda, buka menunya dan ketuk Tanda rentak dahulu; tanpa tanda rentak ia mengikut tetapan BPM.",
+      "name": "Denyut rentak",
+      "params": {
+        "beats": {
+          "label": "Rentak",
+          "options": [
+            "Setiap rentak",
+            "Setiap rentak ke-2",
+            "Setiap rentak ke-4"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Reputan"
+        },
+        "offset": {
+          "label": "Anjakan"
+        },
+        "strength": {
+          "label": "Kekuatan"
+        }
+      }
+    },
+    "beatrgbsplit": {
+      "description": "Memisahkan saluran merah dan biru pada setiap rentak. Pilih klip muzik anda, buka menunya dan ketuk Tanda rentak dahulu; tanpa tanda rentak ia mengikut tetapan BPM.",
+      "name": "Pisah RGB rentak",
+      "params": {
+        "angle": {
+          "label": "Sudut"
+        },
+        "beats": {
+          "label": "Rentak",
+          "options": [
+            "Setiap rentak",
+            "Setiap rentak ke-2",
+            "Setiap rentak ke-4"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Reputan"
+        },
+        "offset": {
+          "label": "Anjakan"
+        },
+        "strength": {
+          "label": "Kekuatan"
+        }
+      }
+    },
+    "beatrotate": {
+      "description": "Mencondongkan lapisan pada setiap rentak, kiri dan kanan secara bergilir, dan berayun kembali. Pilih klip muzik anda, buka menunya dan ketuk Tanda rentak dahulu; tanpa tanda rentak ia mengikut tetapan BPM.",
+      "name": "Putar rentak",
+      "params": {
+        "alternate": {
+          "label": "Bergilir"
+        },
+        "beats": {
+          "label": "Rentak",
+          "options": [
+            "Setiap rentak",
+            "Setiap rentak ke-2",
+            "Setiap rentak ke-4"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "cover": {
+          "label": "Isi bingkai"
+        },
+        "decay": {
+          "label": "Reputan"
+        },
+        "offset": {
+          "label": "Anjakan"
+        },
+        "strength": {
+          "label": "Kekuatan"
+        }
+      }
+    },
+    "beatshake": {
+      "description": "Menggoncang lapisan pada setiap rentak, dalam arah baharu setiap kali, dan reda sebelum rentak seterusnya. Pilih klip muzik anda, buka menunya dan ketuk Tanda rentak dahulu; tanpa tanda rentak ia mengikut tetapan BPM.",
+      "name": "Gegar rentak",
+      "params": {
+        "beats": {
+          "label": "Rentak",
+          "options": [
+            "Setiap rentak",
+            "Setiap rentak ke-2",
+            "Setiap rentak ke-4"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Reputan"
+        },
+        "frequency": {
+          "label": "Frekuensi"
+        },
+        "offset": {
+          "label": "Anjakan"
+        },
+        "strength": {
+          "label": "Kekuatan"
+        }
+      }
+    },
+    "beatzoom": {
+      "description": "Zum masuk pada setiap rentak dan perlahan-lahan zum keluar. Pilih klip muzik anda, buka menunya dan ketuk Tanda rentak dahulu; tanpa tanda rentak ia mengikut tetapan BPM.",
+      "name": "Zum rentak",
+      "params": {
+        "beats": {
+          "label": "Rentak",
+          "options": [
+            "Setiap rentak",
+            "Setiap rentak ke-2",
+            "Setiap rentak ke-4"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Reputan"
+        },
+        "offset": {
+          "label": "Anjakan"
+        },
+        "strength": {
+          "label": "Kekuatan"
         }
       }
     },
@@ -1683,6 +1945,54 @@
         }
       }
     },
+    "fracture3d": {
+      "description": "Memecahkan lapisan kepada serpihan 3D yang bergerak.",
+      "name": "Pecahan 3D",
+      "params": {
+        "depthPush": {
+          "label": "Tolakan kedalaman"
+        },
+        "direction": {
+          "label": "Arah"
+        },
+        "fade": {
+          "label": "Pudar keluar"
+        },
+        "force": {
+          "label": "Daya"
+        },
+        "gravity": {
+          "label": "Graviti"
+        },
+        "impact": {
+          "label": "Titik hentaman"
+        },
+        "intensity": {
+          "label": "Keamatan cahaya"
+        },
+        "light": {
+          "label": "Arah cahaya"
+        },
+        "pieces": {
+          "label": "Kepingan"
+        },
+        "progress": {
+          "label": "Kemajuan"
+        },
+        "seed": {
+          "label": "Benih"
+        },
+        "spin": {
+          "label": "Putaran"
+        },
+        "spread": {
+          "label": "Sebaran arah"
+        },
+        "thickness": {
+          "label": "Ketebalan"
+        }
+      }
+    },
     "fringeclean": {
       "description": "Menghilangkan warna pada piksel di tepi matte lapisan supaya halo berwarna pudar menjadi kelabu, manakala sehingga tiga warna yang dilindungi kekal seperti asal.",
       "name": "Pinggir Matte",
@@ -2650,6 +2960,36 @@
         }
       }
     },
+    "liquidglass": {
+      "description": "Menukar bentuk lapisan menjadi kaca jernih yang bulat seperti butang telefon: lapisan di belakangnya paling melengkung berhampiran tepi, dengan tepi terang di sisi yang disinari dan tepi yang lebih lembut di sisi bertentangan. Fros mengaburkan apa yang ada di belakangnya dan Tepi Pelangi memisahkan warna di tepi.",
+      "name": "Liquid Glass",
+      "params": {
+        "angle": {
+          "label": "Sudut Cahaya"
+        },
+        "blur": {
+          "label": "Tepi"
+        },
+        "color": {
+          "label": "Warna"
+        },
+        "dispersion": {
+          "label": "Tepi Pelangi"
+        },
+        "frost": {
+          "label": "Fros"
+        },
+        "highlight": {
+          "label": "Sorotan"
+        },
+        "refraction": {
+          "label": "Lengkungan"
+        },
+        "tint": {
+          "label": "Tona"
+        }
+      }
+    },
     "longshadow": {
       "description": "Menghasilkan bayang panjang selari daripada bahagian legap lapisan.",
       "name": "Bayang Panjang",
@@ -3171,6 +3511,208 @@
             "Palet"
           ]
         }
+      }
+    },
+    "particles": {
+      "description": "Melepaskan zarah terbang keluar dari lapisan: salji, percikan, konfeti, gelembung, habuk, hati, bintang, kelopak atau salinan kecil lapisan itu sendiri, digerakkan oleh graviti, angin dan pusaran. Mulakan dengan pratetap, kemudian ubah pemancar, jumlah dan daya. Mod Pada rentak melepaskan letusan pada setiap rentak: pilih muzik anda, buka menunya dan ketik Tandakan rentak dahulu.",
+      "name": "Zarah",
+      "params": {
+        "beats": {
+          "label": "Rentak",
+          "options": [
+            "Setiap rentak",
+            "Setiap rentak ke-2",
+            "Setiap rentak ke-4"
+          ]
+        },
+        "blend": {
+          "label": "Campuran",
+          "options": [
+            "Biasa",
+            "Tambah",
+            "Skrin"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "color": {
+          "label": "Warna"
+        },
+        "color2": {
+          "label": "Warna 2"
+        },
+        "colorMode": {
+          "label": "Mod Warna",
+          "options": [
+            "Warna Tunggal",
+            "Campuran Rawak",
+            "Sepanjang Hayat"
+          ]
+        },
+        "colorVariation": {
+          "label": "Variasi Warna"
+        },
+        "count": {
+          "label": "Bilangan"
+        },
+        "depth": {
+          "label": "Kedalaman"
+        },
+        "direction": {
+          "label": "Arah"
+        },
+        "drag": {
+          "label": "Rintangan udara"
+        },
+        "emission": {
+          "label": "Pancaran",
+          "options": [
+            "Berterusan",
+            "Letusan",
+            "Pada rentak"
+          ]
+        },
+        "emitter": {
+          "label": "Pemancar",
+          "options": [
+            "Titik",
+            "Garis",
+            "Kawasan",
+            "Garis luar"
+          ]
+        },
+        "emitterSize": {
+          "label": "Saiz pemancar"
+        },
+        "endSize": {
+          "label": "Saiz akhir"
+        },
+        "every": {
+          "label": "Ulang setiap"
+        },
+        "fadeIn": {
+          "label": "Pudar Masuk"
+        },
+        "fadeOut": {
+          "label": "Pudar Keluar"
+        },
+        "gravity": {
+          "label": "Graviti"
+        },
+        "kind": {
+          "label": "Zarah",
+          "options": [
+            "Salji",
+            "Percikan",
+            "Konfeti",
+            "Gelembung",
+            "Habuk",
+            "Hati",
+            "Bintang",
+            "Kelopak",
+            "Lapisan"
+          ]
+        },
+        "layer": {
+          "label": "Lapisan",
+          "options": [
+            "Bawah zarah",
+            "Atas zarah",
+            "Tersembunyi"
+          ]
+        },
+        "lifeVariation": {
+          "label": "Variasi jangka hayat"
+        },
+        "lifetime": {
+          "label": "Jangka hayat"
+        },
+        "more": {
+          "label": "Tetapan lain"
+        },
+        "orientation": {
+          "label": "Orientasi",
+          "options": [
+            "Bebas",
+            "Ikut Gerakan"
+          ]
+        },
+        "perspective": {
+          "label": "Perspektif"
+        },
+        "position": {
+          "label": "Kedudukan pemancar"
+        },
+        "prewarm": {
+          "label": "Mula penuh"
+        },
+        "randomRotation": {
+          "label": "Putaran Rawak"
+        },
+        "rate": {
+          "label": "Kadar"
+        },
+        "seed": {
+          "label": "Benih"
+        },
+        "size": {
+          "label": "Saiz"
+        },
+        "sizeVariation": {
+          "label": "Variasi saiz"
+        },
+        "speed": {
+          "label": "Kelajuan"
+        },
+        "speedVariation": {
+          "label": "Variasi kelajuan"
+        },
+        "spin": {
+          "label": "Putaran"
+        },
+        "spinVariation": {
+          "label": "Variasi Putaran"
+        },
+        "spread": {
+          "label": "Sebaran"
+        },
+        "start": {
+          "label": "Masa letusan"
+        },
+        "swirl": {
+          "label": "Pusaran"
+        },
+        "swirlSpeed": {
+          "label": "Kelajuan pusaran"
+        },
+        "tint": {
+          "label": "Warna ton"
+        },
+        "twinkle": {
+          "label": "Berkelip"
+        },
+        "wind": {
+          "label": "Angin"
+        },
+        "zSpeed": {
+          "label": "Kelajuan Z"
+        },
+        "zSpread": {
+          "label": "Sebaran Z"
+        }
+      },
+      "presets": {
+        "beat-confetti": "Konfeti Rentak",
+        "bubbles": "Gelembung",
+        "confetti": "Konfeti",
+        "dust": "Debu",
+        "hearts": "Hati",
+        "layer-fountain": "Pancutan Lapisan",
+        "petals": "Kelopak",
+        "snow": "Salji",
+        "sparks": "Percikan",
+        "twinkle": "Berkelip"
       }
     },
     "pixelate": {
@@ -4056,6 +4598,77 @@
         }
       }
     },
+    "scatter3d": {
+      "description": "Menukar lapisan menjadi grid kepingan 3D yang berselerak.",
+      "name": "Serakan 3D",
+      "params": {
+        "axis": {
+          "label": "Paksi putaran",
+          "options": [
+            "X",
+            "Y",
+            "Z"
+          ]
+        },
+        "depth": {
+          "label": "Kedalaman grid"
+        },
+        "depthSpacing": {
+          "label": "Jarak kedalaman"
+        },
+        "intensity": {
+          "label": "Keamatan cahaya"
+        },
+        "light": {
+          "label": "Arah cahaya"
+        },
+        "lightHeight": {
+          "label": "Ketinggian cahaya"
+        },
+        "perspective": {
+          "label": "Perspektif"
+        },
+        "rotX": {
+          "label": "Putaran X"
+        },
+        "rotY": {
+          "label": "Putaran Y"
+        },
+        "rotZ": {
+          "label": "Putaran Z"
+        },
+        "scatter": {
+          "label": "Serakan"
+        },
+        "seed": {
+          "label": "Benih"
+        },
+        "shading": {
+          "label": "Lorekan"
+        },
+        "shape": {
+          "label": "Bentuk",
+          "options": [
+            "Kubus",
+            "Sfera",
+            "Segi empat sama",
+            "Bulatan"
+          ]
+        },
+        "size": {
+          "label": "Saiz kepingan"
+        },
+        "spacing": {
+          "label": "Jarak grid"
+        },
+        "spin": {
+          "label": "Putaran serakan"
+        },
+        "twist": {
+          "label": "Sudut putaran"
+        }
+      }
+    },
     "scatterfield": {
       "description": "Menyerakkan salinan lapisan dalam medan 3D tak terhingga sambil menyembunyikan lapisan asal, dan membolehkan gerakan simulasi dalam medan tiga dimensi melalui animasi bingkai kunci.",
       "name": "Medan Serakan",
@@ -4774,7 +5387,7 @@
       }
     },
     "stroketaper": {
-      "description": "Menipiskan lejang pen dan berus lukisan bebas hingga ke satu titik: dari kosong hingga Mula, dan dari Tamat hingga kosong. Himpit menjadikan penirusan lebih tajam.",
+      "description": "Menipiskan lejang sehingga runcing: lejang pen dan berus lukisan bebas, serta Lejang pada garisan dan bentuk (Sempadan & Bayang > Lejang). Dari kosong hingga Mula, dan dari Tamat hingga kosong. Himpit menjadikan penirusan lebih tajam.",
       "name": "Lejang Menirus",
       "params": {
         "end": {
@@ -5484,6 +6097,47 @@
         },
         "wobble": {
           "label": "Goyang"
+        }
+      }
+    },
+    "videofeedback": {
+      "description": "Melukis lapisan berulang kali di dalam dirinya, seperti kamera yang menghadap skrinnya sendiri. Gerakkan, skalakan atau putarkan lapisan untuk mengarah terowong.",
+      "name": "Suap balik video",
+      "params": {
+        "blend": {
+          "label": "Campuran",
+          "options": [
+            "Biasa",
+            "Tambah",
+            "Skrin"
+          ]
+        },
+        "center": {
+          "label": "Tengah"
+        },
+        "copies": {
+          "label": "Salinan"
+        },
+        "delay": {
+          "label": "Lengahan"
+        },
+        "fade": {
+          "label": "Pudar"
+        },
+        "hueShift": {
+          "label": "Anjakan rona"
+        },
+        "offset": {
+          "label": "Ofset"
+        },
+        "rotation": {
+          "label": "Putaran"
+        },
+        "useLayerTransform": {
+          "label": "Guna transformasi lapisan"
+        },
+        "zoom": {
+          "label": "Zum"
         }
       }
     },

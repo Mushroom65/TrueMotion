@@ -55,8 +55,8 @@ fun storeBudget(budget: Long, width: Int, height: Int): Long = maxOf(budget / 4,
 
 fun cacheFrameSize(sceneWidth: Int, sceneHeight: Int, fit: Float, divisor: Int): Pair<Int, Int> {
     val longest = maxOf(sceneWidth, sceneHeight, 1)
-    val cap = minOf(1f, MAX_SIDE.toFloat() / longest)
-    val scale = if (fit > 0f) minOf(fit / divisor.coerceAtLeast(1), cap) else cap / divisor.coerceAtLeast(1)
+    val cap = MAX_SIDE.toFloat() / longest
+    val scale = if (fit > 0f) minOf(fit / divisor.coerceAtLeast(1), cap) else minOf(1f,cap) / divisor.coerceAtLeast(1)
     return maxOf(1, (sceneWidth * scale).roundToInt()) to maxOf(1, (sceneHeight * scale).roundToInt())
 }
 
@@ -264,6 +264,7 @@ class FramePlayer internal constructor(private val store: FrameStore, val width:
 
 object PreviewCache {
     enum class Phase { Empty, Rendering, Ready }
+    enum class PreRender { None, Rendering, Ready, Outdated }
     private enum class Outcome { Done, Full, Stopped, Failed, NoMemory }
 
     var phase by mutableStateOf(Phase.Empty)
@@ -274,6 +275,7 @@ object PreviewCache {
         private set
     var player by mutableStateOf<FramePlayer?>(null)
         private set
+    private var rendered by mutableStateOf<CacheKey?>(null)
     @Volatile private var store: FrameStore? = null
     @Volatile private var stopRequested = false
     @Volatile private var memoryStopped = false
@@ -332,7 +334,7 @@ object PreviewCache {
                 val pixels = state.engine.capturePreviewFrame(next.scene, next.scene.frameStart(frame), width, height, next.accurateBlur, ::current) ?: continue
                 currentCoroutineContext().ensureActive()
                 if (!current()) return
-                val encoded = withContext(Dispatchers.Default) { encoder.encode(pixels, cell, true) } ?: return
+                val encoded = withContext(Dispatchers.Default) { encoder.encode(pixels) } ?: return
                 if (!current()) return
                 while (!built.put(frame, encoded)) if (!built.evictFarthest(at)) return
                 val elapsed = System.nanoTime() - started
@@ -353,6 +355,13 @@ object PreviewCache {
     val last: Int get() = store?.last ?: -1
 
     fun covers(frame: Int): Boolean = store?.contains(frame) == true
+
+    fun preRender(state: EditorState, resources: Long = state.engine.mediaRevision.value): PreRender = when {
+        phase == Phase.Rendering -> PreRender.Rendering
+        phase == Phase.Ready && !automatic && key == keyOf(state, resources) -> PreRender.Ready
+        rendered?.projectId == state.projectId -> PreRender.Outdated
+        else -> PreRender.None
+    }
 
     fun keyOf(state: EditorState, resources: Long = state.engine.mediaRevision.value) =
         CacheKey(state.projectId, state.scene, state.settings.previewQuality.divisor, state.settings.androidEmoji, resources, state.settings.fullMotionBlur)
@@ -411,15 +420,15 @@ object PreviewCache {
         }
     }
 
-    private class Encoder(private val width: Int, private val height: Int) {
+    internal class Encoder(private val width: Int, private val height: Int) {
         val bitmap: Bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         private val out = ByteArrayOutputStream(width * height / 4)
 
-        fun encode(pixels: ByteArray, cell: Float, lossless: Boolean = false): ByteArray? {
-            flattenOnChecker(pixels, width, height, cell)
+        fun encode(pixels: ByteArray): ByteArray? {
+            bitmap.isPremultiplied=false
             bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(pixels))
             out.reset()
-            return if (bitmap.compress(if (lossless) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG, QUALITY, out)) out.toByteArray() else null
+            return if (bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)) out.toByteArray() else null
         }
     }
 
@@ -456,7 +465,7 @@ object PreviewCache {
                         val encoder = encoders[index and 1]
                         pending = async(Dispatchers.Default) {
                             val began = System.nanoTime()
-                            encoder.encode(pixels, cell).also { encodeNs += System.nanoTime() - began }
+                            encoder.encode(pixels).also { encodeNs += System.nanoTime() - began }
                         }
                     }
                     keep() ?: Outcome.Done
@@ -485,6 +494,7 @@ object PreviewCache {
         }
         store = built
         key = next
+        rendered = next
         player = FramePlayer(built, width, height)
         phase = Phase.Ready
         progress = 1f
@@ -502,6 +512,11 @@ object PreviewCache {
 
     fun cancel() {
         if (phase == Phase.Rendering) stopRequested = true
+    }
+
+    fun remove() {
+        clear()
+        rendered = null
     }
 
     fun clear() {

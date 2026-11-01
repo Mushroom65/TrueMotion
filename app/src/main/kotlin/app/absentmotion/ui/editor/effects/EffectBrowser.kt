@@ -1,5 +1,6 @@
 package app.absentmotion.ui.editor.effects
 
+import app.absentmotion.editor.addEffectToChosen
 import android.graphics.drawable.AnimatedImageDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
@@ -95,12 +96,15 @@ fun EffectBrowser(state: EditorState) {
     var query by remember { mutableStateOf("") }
     var detail by remember { mutableStateOf(state.effectDetail?.let(catalog::find)) }
     LaunchedEffect(catalog) { detail = detail?.id?.let(catalog::find) }
-    fun close() { state.effectDetail = null; state.effectCategory = null; state.effectBrowserOpen = false }
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    fun hideKeyboard() { focusManager.clearFocus(force = true); keyboard?.hide() }
+    fun close() { hideKeyboard(); state.effectDetail = null; state.effectCategory = null; state.effectTargets = null; state.effectBrowserOpen = false }
     var fromAudio by remember { mutableStateOf(false) }
     fun back() {
         when {
             detail != null -> if (state.effectDetail != null) close() else detail = null
-            searching -> { searching = false; query = "" }
+            searching -> { hideKeyboard(); searching = false; query = "" }
             fromAudio -> { fromAudio = false; category = "audio" }
             category != null && !audio -> category = null
             else -> close()
@@ -113,6 +117,15 @@ fun EffectBrowser(state: EditorState) {
     }
     fun add(effect: EffectDefinition, preset: EffectPreset? = null) {
         if (!effect.available) return
+        val targets = state.effectTargets
+        if (targets != null) {
+            val added = state.addEffectToChosen(targets) { layer: app.absentmotion.model.Layer -> effect.instance(preset, layer.endTime - layer.startTime) }
+            if (added == 0) app.absentmotion.platform.Toast.makeText(context, context.getString(R.string.effects_paste_no_target), app.absentmotion.platform.Toast.LENGTH_LONG).show()
+            recent = (listOf(effect.id) + recent.filterNot { it == effect.id }).take(40)
+            history.edit().putString("recent", recent.joinToString("|")).apply()
+            close()
+            return
+        }
         state.editSelected { layer -> layer.addEffect(effect.instance(preset, layer.endTime - layer.startTime)) }
         recent = (listOf(effect.id) + recent.filterNot { it == effect.id }).take(40)
         history.edit().putString("recent", recent.joinToString("|")).apply()
@@ -261,7 +274,7 @@ fun EffectBrowser(state: EditorState) {
     }
     AiVideoDialog(ai, state.scene)
     AiNoiseDialog(ai)
-    AiCutoutDialog(ai)
+    AiCutoutDialog(ai, state.scene)
     AiEnhanceDialog(ai, state.scene) { catalog.find(QUICK_SHARPEN)?.let(::pick) }
     AiProgressDialog(ai)
     captionClip?.let { id -> CaptionsSheet(state, clipId = id) { captionClip = null; close() } }

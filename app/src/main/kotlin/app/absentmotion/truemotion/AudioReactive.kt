@@ -33,7 +33,7 @@ internal object AudioReactive {
 
     fun remove(layer: Layer, property: AudioMotion.Property): Layer = index(layer, property).let { if (it < 0) layer else layer.removeEffect(it) }
     fun active(node: XmlNode): Boolean = node.name == "effect" && node["id"] == ID && node["hidden"] != "true"
-    fun has(node: XmlNode): Boolean = active(node) || node.children.any(::has)
+    fun has(node: XmlNode): Boolean = active(node) || Spectrum.active(node) || node.children.any(::has)
 
     fun responseKey(profileKey: String, settings: AudioMotion.Settings): String = hash(listOf(profileKey, settings.band.name, settings.gain,
         settings.gate, settings.attackMs, settings.releaseMs, settings.normalize, settings.invert).joinToString("|"))

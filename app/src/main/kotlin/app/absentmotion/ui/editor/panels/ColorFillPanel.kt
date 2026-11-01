@@ -62,6 +62,9 @@ import app.absentmotion.model.Layer
 import app.absentmotion.model.MediaDeclaration
 import app.absentmotion.model.gradient
 import app.absentmotion.model.withGradient
+import app.absentmotion.model.mediaName
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.style.TextOverflow
 import app.absentmotion.ui.editor.PanelIcons
 import app.absentmotion.ui.theme.Am
 import java.util.Locale
@@ -79,6 +82,7 @@ internal fun ColorFillPanel(state: EditorState, layer: Layer, modifier: Modifier
         FillTabs(state, layer, Modifier.offset(28.px, 37.px).size(856.px, 83.px))
         if (type == "color") ColorPicker(state, layer, Modifier.offset(28.px, 162.px).size(856.px, 359.px))
         if (type == "gradient") GradientPanel(state, layer, Modifier.fillMaxSize())
+        if (type == "media") MediaFillPanel(state, layer, Modifier.offset(28.px, 162.px).size(856.px, 359.px))
     }
 }
 
@@ -101,8 +105,24 @@ private fun FillTabs(state: EditorState, layer: Layer, modifier: Modifier) {
         }
         val stored = layer.node["fillImage"] != null || layer.node["fillVideo"] != null
         FillTab(PanelIcons.FillMedia, stringResource(R.string.add_tab_media), active = type == "media", enabled = layer.kind == "text" || stored) {
-            if (type != "media" && stored) state.editSelected { it.copy(node = it.node.with("fillType", "media")) } else if (layer.kind == "text") picker.launch()
+            if (type != "media" && stored) state.editSelected { it.copy(node = it.node.with("fillType", "media")) } else picker.launch()
         }
+    }
+}
+
+@Composable
+private fun MediaFillPanel(state: EditorState, layer: Layer, modifier: Modifier) {
+    val context=LocalContext.current
+    val scope=LocalEditorScope.current
+    val id=layer.id
+    val picker=rememberMediaPicker { uri ->
+        if(uri!=null)scope.launch { mediaDeclaration(context,uri)?.let { state.keepCopy(context,it) }?.let { state.fillWithMedia(id,it) } }
+    }
+    Column(modifier.clip(PanelShape).background(Am.Field).verticalScroll(rememberScrollState()),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
+        val uri=layer.node["fillVideo"] ?: layer.node["fillImage"]
+        Text(uri?.let { state.scene.mediaName(it) }.orEmpty(),color=Am.OnDark,fontSize=13.sp,maxLines=2,overflow=TextOverflow.Ellipsis)
+        TextButton(onClick={picker.launch()}) { Text(stringResource(R.string.true_replace_layer_media),color=Am.Accent) }
+        Text(stringResource(R.string.true_replace_layer_media_hint),color=Am.Caption,fontSize=11.sp,textAlign=TextAlign.Center)
     }
 }
 
@@ -116,7 +136,7 @@ internal fun Layer.withMediaFill(media: MediaDeclaration): Layer {
     val start = node["inTime"]?.toLongOrNull()?.takeIf { video && it in 1 until end }
     return copy(
         node = node.with("fillType", "media").with("fillImage", media.uri.takeUnless { video }).with("fillVideo", media.uri.takeIf { video })
-            .with("mediaFillMode", "fill").with("inTime", start?.toString()).with("outTime", if (video) "$end" else null),
+            .with("mediaFillMode", node["mediaFillMode"] ?: "fill").with("inTime", start?.toString()).with("outTime", if (video) "$end" else null),
     )
 }
 

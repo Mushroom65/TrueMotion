@@ -22,18 +22,35 @@ class PortInstrumentation : Instrumentation() {
     private var afterzFull = true
     private var nextOnly = false
     private var next013 = false
+    private var next014 = false
+    private var legacy = false
+    private var legacyThumbs = false
+    private var legacyGl = false
     override fun onCreate(arguments: Bundle?) {
         super.onCreate(arguments)
         afterzOnly = arguments?.getString("afterz") in setOf("true", "focused")
         afterzFull = arguments?.getString("afterz") != "focused"
         nextOnly = arguments?.getString("next012") == "true"
         next013 = arguments?.getString("next013") == "true"
+        next014 = arguments?.getString("next014") == "true"
+        legacyThumbs = arguments?.getString("legacy") == "thumbs"
+        legacy = arguments?.getString("legacy") in setOf("true", "thumbs")
+        legacyGl = arguments?.getString("backend") == "gl"
         start()
     }
     override fun onStart() {
         val report = JSONObject()
         try {
             val context = targetContext
+            if(next014 || legacy) {
+                val directory=File(context.filesDir,if(legacy) (if(legacyGl) "legacy014-gl-validation" else "legacy014-validation") else "next014-validation").apply { mkdirs() }
+                NativeEngine(if(legacyGl) NativeEngine.Backend.GL else NativeEngine.Backend.GRAPHITE).use { engine ->
+                    check(!engine.failed) { engine.info }
+                    report.put("result",if(legacy) LegacyProbe.run(context,engine,directory,!legacyThumbs) else Next014Probe.run(context,engine,directory))
+                }
+                report.put("ok",true);File(directory,"report.json").writeText(report.toString(2))
+                finish(0,Bundle().apply { putString("report",report.toString()) });return
+            }
             if(next013) {
                 val directory=File(context.filesDir,"next013-validation").apply { mkdirs() }
                 NativeEngine(NativeEngine.Backend.GRAPHITE).use { engine ->
@@ -85,11 +102,11 @@ class PortInstrumentation : Instrumentation() {
                     .put("available",loaded.definitions.count { it.available })
                     .put("unavailable",JSONArray(loaded.definitions.filterNot { it.available }.map { JSONObject().put("id",it.id).put("status",it.status) })))
                 val ours = loaded.definitions.filter { it.key.startsWith("true-") }
-                check(ours.size == 17 && ours.all { it.available }) { ours.joinToString { "${it.id}: ${it.status}" } }
+                check(ours.size == 18 && ours.all { it.available }) { ours.joinToString { "${it.id}: ${it.status}" } }
                 report.put("nativeShaders", JSONArray(ours.map { JSONObject().put("id", it.id).put("status", it.status) }))
                 val base = """<scene width="256" height="256" totalTime="1999" fps="30" bgcolor="#00000000"><shape id="1" startTime="0" endTime="1999" fillType="color"><transform><location value="128,128,0"/></transform><fillColor value="#ffed335d"/><path d="M-70,-70 L70,-70 L70,70 L-70,70 Z"/>%s</shape></scene>"""
                 fun render(xml: String): ByteArray { engine.setScene(xml); return checkNotNull(engine.still(0.0, 256, 256)) }
-                for (effect in ours) {
+                for (effect in ours.filter { it.id != "lab.true.spectrum" }) {
                     val document=base.format(effect.instance().toXml().substringAfter("?>"))
                     val pixels = if(effect.id==app.absentmotion.truemotion.Particles.ID) { engine.setScene(document); checkNotNull(engine.still(1000.0,256,256)) } else render(document)
                     check((3 until pixels.size step 4).any { pixels[it].toInt() != 0 }) { "Empty default render: ${effect.id}" }

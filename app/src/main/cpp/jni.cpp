@@ -12,12 +12,35 @@
 #include "easing.h"
 #include "engine.h"
 #include "scene.h"
+#include "legacy.h"
+#include <mutex>
 
 #define JNI_FN(name) Java_app_absentmotion_engine_NativeEngine_##name
 
 namespace {
 am::Engine* engineOf(jlong handle) { return reinterpret_cast<am::Engine*>(handle); }
 am::Target* targetOf(jlong handle) { return reinterpret_cast<am::Target*>(handle); }
+void legacyBridge(JNIEnv* env) {
+    static std::once_flag once;
+    std::call_once(once,[&]{
+        JavaVM* vm=nullptr;env->GetJavaVM(&vm);
+        jclass local=env->FindClass("app/truemotion/port/LegacyRuntime");
+        if(!local){env->ExceptionClear();return;}
+        const jclass cls=(jclass)env->NewGlobalRef(local);env->DeleteLocalRef(local);
+        const jmethodID method=env->GetStaticMethodID(cls,"evaluate","([B[B[B)[B");
+        if(!method){env->ExceptionClear();return;}
+        am::SetLegacyCallback([vm,cls,method](const std::string& id,const std::string& source,const std::string& input){
+            JNIEnv* e=nullptr;bool attached=false;
+            if(vm->GetEnv((void**)&e,JNI_VERSION_1_6)!=JNI_OK){if(vm->AttachCurrentThread(&e,nullptr)!=JNI_OK)return std::string();attached=true;}
+            const auto bytes=[&](const std::string& s){jbyteArray a=e->NewByteArray(s.size());if(a)e->SetByteArrayRegion(a,0,s.size(),(const jbyte*)s.data());return a;};
+            jbyteArray a=bytes(id),b=bytes(source),c=bytes(input);std::string out;
+            if(a&&b&&c){auto r=(jbyteArray)e->CallStaticObjectMethod(cls,method,a,b,c);if(!e->ExceptionCheck()&&r){out.resize(e->GetArrayLength(r));e->GetByteArrayRegion(r,0,out.size(),(jbyte*)out.data());e->DeleteLocalRef(r);}}
+            if(e->ExceptionCheck())e->ExceptionClear();
+            if(a)e->DeleteLocalRef(a);if(b)e->DeleteLocalRef(b);if(c)e->DeleteLocalRef(c);
+            if(attached)vm->DetachCurrentThread();return out;
+        });
+    });
+}
 am::InterpolationParams interpolationParams(JNIEnv* env, jfloatArray params) {
     jfloat p[6] = {4, 5, 6, 1, 0.15f, 4};
     env->GetFloatArrayRegion(params, 0, std::min<jsize>(6, env->GetArrayLength(params)), p);
@@ -28,6 +51,7 @@ am::InterpolationParams interpolationParams(JNIEnv* env, jfloatArray params) {
 extern "C" {
 
 JNIEXPORT jlong JNICALL JNI_FN(nativeCreate)(JNIEnv* env, jclass, jint backend) {
+    legacyBridge(env);
     std::string error;
     auto engine = am::Engine::Make(static_cast<am::Backend>(backend), &error);
     if (!engine) {
@@ -98,7 +122,10 @@ JNIEXPORT void JNICALL JNI_FN(nativeSetAudioSignals)(JNIEnv* env, jclass, jlong 
         signal->levels.resize(length);
         env->GetFloatArrayRegion(samples, 0, length, signal->levels.data());
         if (env->ExceptionCheck()) return;
-        for (float& value : signal->levels) value = std::isfinite(value) ? std::clamp(value, 0.0f, 1.0f) : 0;
+        for (float& value : signal->levels) {
+            value = std::isfinite(value) ? std::clamp(value, 0.0f, 1.0f) : 0;
+            signal->peak=std::max(signal->peak,value);
+        }
         const char* name = env->GetStringUTFChars(key, nullptr);
         if (!name) return;
         signals[name] = std::move(signal);

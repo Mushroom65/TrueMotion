@@ -31,7 +31,7 @@ internal fun EditorState.openAudioMotion(tab: Int = 0) {
     panel = EditorPanel.AudioMotion
 }
 
-internal suspend fun analyzeAudioMotion(context: Context, scene: Scene, source: Long?, respectVolume: Boolean, progress: (Float) -> Unit): AudioMotion.Profile = withContext(Dispatchers.IO) {
+internal suspend fun analyzeAudioMotion(context: Context, scene: Scene, source: Long?, respectVolume: Boolean, progress: (Float) -> Unit, spectrum: Boolean = false): AudioMotion.Profile = withContext(Dispatchers.IO) {
     val audio = AudioMotion.sourceScene(scene, source, respectVolume)
     val clips = AudioClip.of(audio)
     require(clips.isNotEmpty()) { AppText.get(R.string.true_audio_silent) }
@@ -39,8 +39,9 @@ internal suspend fun analyzeAudioMotion(context: Context, scene: Scene, source: 
     val end = clips.maxOf { it.endMs }.coerceAtMost(scene.totalTime.coerceAtMost(Int.MAX_VALUE - 1) + 1)
     require(end > start) { AppText.get(R.string.true_audio_no_source) }
     val versions = clips.map { it.uri }.distinct().associateWith { fileVersion(context.contentResolver, Uri.parse(it)) }
-    val rate = 16_000
+    val rate = if(spectrum) 44_100 else 16_000
     val stream = AudioEnvelope.Stream(rate, start)
+    val frequencies = if(spectrum) AudioSpectrum.Stream(rate,start,end-start) else null
     val beats = Beats.Stream(rate)
     val mix = OfflineMix.of(context, audio, Resampler.HIGH, rate) ?: error(AppText.get(R.string.true_audio_no_source))
     try {
@@ -50,6 +51,7 @@ internal suspend fun analyzeAudioMotion(context: Context, scene: Scene, source: 
             val next = minOf(end, at + 250)
             val pcm = if (mix is FloatMix) mix.floats(at * 1000L, next * 1000L) else mix(at * 1000L, next * 1000L).let { shorts -> FloatArray(shorts.size) { shorts[it] / 32768f } }
             stream.add(pcm)
+            frequencies?.add(pcm)
             // Avoid cancellation of opposite-phase stereo channels in beat detection.
             val mono = FloatArray(pcm.size / 2) { i -> if (abs(pcm[2 * i]) >= abs(pcm[2 * i + 1])) pcm[2 * i] else pcm[2 * i + 1] }
             beats.add(mono, mono.size)
@@ -60,7 +62,7 @@ internal suspend fun analyzeAudioMotion(context: Context, scene: Scene, source: 
     } finally { (mix as? Closeable)?.close() }
     currentCoroutineContext().ensureActive()
     val found = beats.beats().map { (start + it).roundToInt() }.filter { it in start until end }.distinct().sorted()
-    AudioMotion.Profile(AudioMotion.signature(scene, source, respectVolume), versions, stream.finish(), found)
+    AudioMotion.Profile(AudioMotion.signature(scene, source, respectVolume), versions, stream.finish(), found, frequencies?.finish())
 }
 
 internal suspend fun AudioMotion.Profile.sourcesUnchanged(context: Context): Boolean = withContext(Dispatchers.IO) {

@@ -11002,7 +11002,7 @@
     "tint": "3c6dda082d4aaed5e0e103ea9973562e6eaacbca596b6226bbc359c18bdce827",
     "colorize": "28c9fc3a97527fc38fbe09bdf3c538d4f52c9194f22859d5e0a7691820268834",
     "palettemap": "dc14dc6b7f297f74a535a470cb70c4a7414fea68dce70e216fcc28c91168c9be",
-    "retrodither": "74c2b412ff378960e45299ce1e44aa0aa835bd642dc472e3325649ec6541a01e",
+    "retrodither": "8a8df50e3f901d1257e04d510e2437ae541868bbb1f8f53b45679bf4d7abe735",
     "ominodiffusion": "e240908e2d6a7fdadf5cd97eba1597db4162570c75b06eaeaaeed6fda458ef70",
     "spotcolor": "5ddb834baa33c62dcdd08123540fbefeebff8ea412200de4b3e3f2ed431b28f7",
     "replacecolor": "c206f83f3ee8806c76f9866f5027f0ff9270a653c8ccb4a224aaa39f0fe68acb",
@@ -11076,7 +11076,7 @@
     "radialshadow": "c05acb25a8d1544bc4a2460e1e510eccfaf4f0dce2a2bd96842a24bd81e5d534",
     "pixelate": "bf78e1e52dfded78f8437922b0e21e6f835cd3203a25ce6f9014f27c3b19d8de",
     "mosaic": "1b7e7c4a9332a163cb2f53f8af4aaa2ad7817aac106aae8a675007b0d488ed95",
-    "pixeltiles": "419bc535f8a6e324d343a41dfbd7cc19d79be6854f85143d5a1e539a95c2b01f",
+    "pixeltiles": "5f1b753fc5937fd32b2a67421bd11cb4c85591796f0f042d211991198874f97e",
     "rgbsplit": "daed036e0eb9d219f18f73e73057fb2ba873b267d8896bd21ee393b60d217bf8",
     "scanlines": "3fb7bf7d74d1e165a641c05be428e55c27be922323ce5f493c9933fa8be8f1a6",
     "stripes": "d06672c282e6155fdac043e2db23270cada82144292f5ce0ec45383713146762",
@@ -11173,7 +11173,7 @@
     "timecode": "0c00df8484226127a2cfefc41f6ee5375fe93e5c38ee93ca2b79dfc98c8455e1",
     "textpath": "a513d874b9e79b171c294de2b965bbbe2fa637b08d62cfdc39dcea63cd5249f3",
     "drawingprogress": "c1a290f7605243bba9989f43ecf8cff11dc19f44ce6ebf8446e40da8e86f6221",
-    "stroketaper": "dbb1442e70cbd24da63af07575760f26e522b7a873da1fbc2052c3cecf61d29f",
+    "stroketaper": "5974b5c3a5843616b71ad5ef50202f2827250c7d2288498d3602a10725e0c0ef",
     "true-grade": "283ec57c545055fcc847de7df336a3667d064b9ce762f4e4f500cd6f25445704",
     "true-plugin-builtin-distort-swirl": "513eb34fb0a8da2fe927131d75f76570ab3a73fa59933678b97aa7f0412438ba",
     "true-plugin-builtin-distort-wave": "3a42b47b06619db06d981a9c8cddf30db41f6c8fc8bd5ac662b6b143ef89958e",
@@ -11606,6 +11606,23 @@
       "previousSHA256": "d05ccc530dc8f225dd0c6818b3c9aaf117b58e62273c86309c572209a6ce161f",
       "sha256": "40207d1997e35938da0525fc5bfe3bded258734afd60e69489571e7a5cc3df8b",
       "reason": "Add explicit 2D/3D generation choice while retaining the previous missing-parameter behavior for saved particles"
+    }
+  ],
+  "baseUpdate440": [
+    {
+      "key": "retrodither",
+      "previous": "74c2b412ff378960e45299ce1e44aa0aa835bd642dc472e3325649ec6541a01e",
+      "upstream440": "8a8df50e3f901d1257e04d510e2437ae541868bbb1f8f53b45679bf4d7abe735"
+    },
+    {
+      "key": "pixeltiles",
+      "previous": "419bc535f8a6e324d343a41dfbd7cc19d79be6854f85143d5a1e539a95c2b01f",
+      "upstream440": "5f1b753fc5937fd32b2a67421bd11cb4c85591796f0f042d211991198874f97e"
+    },
+    {
+      "key": "stroketaper",
+      "previous": "dbb1442e70cbd24da63af07575760f26e522b7a873da1fbc2052c3cecf61d29f",
+      "upstream440": "5974b5c3a5843616b71ad5ef50202f2827250c7d2288498d3602a10725e0c0ef"
     }
   ]
 }

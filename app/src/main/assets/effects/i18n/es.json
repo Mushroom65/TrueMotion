@@ -2,6 +2,7 @@
   "categories": {
     "3d": "3D",
     "ai": "AI",
+    "beat": "Ritmo",
     "blur": "Desenfoque",
     "color": "Color",
     "distort": "Distorsión",
@@ -73,6 +74,267 @@
         },
         "spill": {
           "label": "Efectos hacia afuera"
+        }
+      }
+    },
+    "beatblur": {
+      "description": "Hace un desenfoque de zoom en cada beat que se aclara mientras el beat se desvanece. Selecciona tu clip de música, abre su menú y toca Marcar beats primero; sin marcas de beat, sigue el ajuste de BPM.",
+      "name": "Desenfoque de beat",
+      "params": {
+        "beats": {
+          "label": "Beats",
+          "options": [
+            "Cada beat",
+            "Cada 2 beats",
+            "Cada 4 beats"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Decaimiento"
+        },
+        "offset": {
+          "label": "Desplazamiento"
+        },
+        "strength": {
+          "label": "Intensidad"
+        }
+      }
+    },
+    "beatflash": {
+      "description": "Hace destellar la capa con un color en cada beat. Selecciona tu clip de música, abre su menú y toca Marcar beats primero; sin marcas de beat, sigue el ajuste de BPM.",
+      "name": "Destello de beat",
+      "params": {
+        "beats": {
+          "label": "Beats",
+          "options": [
+            "Cada beat",
+            "Cada 2 beats",
+            "Cada 4 beats"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "decay": {
+          "label": "Decaimiento"
+        },
+        "offset": {
+          "label": "Desplazamiento"
+        },
+        "strength": {
+          "label": "Intensidad"
+        }
+      }
+    },
+    "beatglitch": {
+      "description": "Divide la capa en franjas desplazadas con colores separados en cada beat. Selecciona tu clip de música, abre su menú y toca Marcar beats primero; sin marcas de beat, sigue el ajuste de BPM.",
+      "name": "Glitch de beat",
+      "params": {
+        "beats": {
+          "label": "Beats",
+          "options": [
+            "Cada beat",
+            "Cada 2 beats",
+            "Cada 4 beats"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Decaimiento"
+        },
+        "offset": {
+          "label": "Desplazamiento"
+        },
+        "slices": {
+          "label": "Franjas"
+        },
+        "strength": {
+          "label": "Intensidad"
+        }
+      }
+    },
+    "beatglow": {
+      "description": "Hace brillar las partes claras de la capa en cada beat. Selecciona tu clip de música, abre su menú y toca Marcar beats primero; sin marcas de beat, sigue el ajuste de BPM.",
+      "name": "Brillo de beat",
+      "params": {
+        "beats": {
+          "label": "Pulsos",
+          "options": [
+            "Cada pulso",
+            "Cada 2 pulsos",
+            "Cada 4 pulsos"
+          ]
+        },
+        "blur": {
+          "label": "Radio"
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "decay": {
+          "label": "Caída"
+        },
+        "offset": {
+          "label": "Desplazamiento"
+        },
+        "strength": {
+          "label": "Intensidad"
+        },
+        "threshold": {
+          "label": "Umbral"
+        }
+      }
+    },
+    "beatpulse": {
+      "description": "Ilumina la capa en cada pulso como un destello de exposición; una intensidad negativa la oscurece. Primero selecciona tu clip de música, abre su menú y toca Marcar pulsos; sin marcas de pulso sigue el ajuste de BPM.",
+      "name": "Pulso rítmico",
+      "params": {
+        "beats": {
+          "label": "Pulsos",
+          "options": [
+            "Cada pulso",
+            "Cada 2 pulsos",
+            "Cada 4 pulsos"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Caída"
+        },
+        "offset": {
+          "label": "Desplazamiento"
+        },
+        "strength": {
+          "label": "Intensidad"
+        }
+      }
+    },
+    "beatrgbsplit": {
+      "description": "Separa los canales rojo y azul en cada pulso. Primero selecciona tu clip de música, abre su menú y toca Marcar pulsos; sin marcas de pulso sigue el ajuste de BPM.",
+      "name": "División RGB rítmica",
+      "params": {
+        "angle": {
+          "label": "Ángulo"
+        },
+        "beats": {
+          "label": "Pulsos",
+          "options": [
+            "Cada pulso",
+            "Cada 2 pulsos",
+            "Cada 4 pulsos"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Caída"
+        },
+        "offset": {
+          "label": "Desplazamiento"
+        },
+        "strength": {
+          "label": "Intensidad"
+        }
+      }
+    },
+    "beatrotate": {
+      "description": "Inclina la capa en cada pulso, alternando izquierda y derecha, y vuelve a su posición. Primero selecciona tu clip de música, abre su menú y toca Marcar pulsos; sin marcas de pulso sigue el ajuste de BPM.",
+      "name": "Rotación rítmica",
+      "params": {
+        "alternate": {
+          "label": "Alternar"
+        },
+        "beats": {
+          "label": "Pulsos",
+          "options": [
+            "Cada pulso",
+            "Cada 2 pulsos",
+            "Cada 4 pulsos"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "cover": {
+          "label": "Rellenar cuadro"
+        },
+        "decay": {
+          "label": "Caída"
+        },
+        "offset": {
+          "label": "Desplazamiento"
+        },
+        "strength": {
+          "label": "Intensidad"
+        }
+      }
+    },
+    "beatshake": {
+      "description": "Sacude la capa en cada pulso, en una dirección nueva cada vez, y se asienta antes del siguiente. Primero selecciona tu clip de música, abre su menú y toca Marcar pulsos; sin marcas de pulso sigue el ajuste de BPM.",
+      "name": "Sacudida rítmica",
+      "params": {
+        "beats": {
+          "label": "Pulsos",
+          "options": [
+            "Cada pulso",
+            "Cada 2 pulsos",
+            "Cada 4 pulsos"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Caída"
+        },
+        "frequency": {
+          "label": "Frecuencia"
+        },
+        "offset": {
+          "label": "Desplazamiento"
+        },
+        "strength": {
+          "label": "Intensidad"
+        }
+      }
+    },
+    "beatzoom": {
+      "description": "Acerca la imagen en cada pulso y vuelve suavemente. Primero selecciona tu clip de música, abre su menú y toca Marcar pulsos; sin marcas de pulso sigue el ajuste de BPM.",
+      "name": "Zoom rítmico",
+      "params": {
+        "beats": {
+          "label": "Pulsos",
+          "options": [
+            "Cada beat",
+            "Cada 2.º beat",
+            "Cada 4.º beat"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "decay": {
+          "label": "Caída"
+        },
+        "offset": {
+          "label": "Desfase"
+        },
+        "strength": {
+          "label": "Intensidad"
         }
       }
     },
@@ -1683,6 +1945,54 @@
         }
       }
     },
+    "fracture3d": {
+      "description": "Rompe la capa en fragmentos 3D en movimiento.",
+      "name": "Fractura 3D",
+      "params": {
+        "depthPush": {
+          "label": "Impulso en profundidad"
+        },
+        "direction": {
+          "label": "Dirección"
+        },
+        "fade": {
+          "label": "Fundido de salida"
+        },
+        "force": {
+          "label": "Fuerza"
+        },
+        "gravity": {
+          "label": "Gravedad"
+        },
+        "impact": {
+          "label": "Punto de impacto"
+        },
+        "intensity": {
+          "label": "Intensidad de la luz"
+        },
+        "light": {
+          "label": "Dirección de la luz"
+        },
+        "pieces": {
+          "label": "Fragmentos"
+        },
+        "progress": {
+          "label": "Progreso"
+        },
+        "seed": {
+          "label": "Semilla"
+        },
+        "spin": {
+          "label": "Giro"
+        },
+        "spread": {
+          "label": "Dispersión de dirección"
+        },
+        "thickness": {
+          "label": "Grosor"
+        }
+      }
+    },
     "fringeclean": {
       "description": "Quita el color de los píxeles en el borde de la máscara de la capa, así los halos de color que deja un croma se vuelven grises, mientras que hasta tres colores protegidos se conservan.",
       "name": "Fleco de máscara",
@@ -2650,6 +2960,36 @@
         }
       }
     },
+    "liquidglass": {
+      "description": "Convierte la forma de la capa en un vidrio transparente y redondeado, como un botón de celular: las capas de atrás se curvan más cerca del borde, con un brillo intenso del lado iluminado y otro más suave del lado opuesto. Escarchado desenfoca lo que hay detrás y Borde arcoíris separa los colores en el borde.",
+      "name": "Liquid Glass",
+      "params": {
+        "angle": {
+          "label": "Ángulo de luz"
+        },
+        "blur": {
+          "label": "Borde"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "dispersion": {
+          "label": "Borde arcoíris"
+        },
+        "frost": {
+          "label": "Escarchado"
+        },
+        "highlight": {
+          "label": "Reflejo"
+        },
+        "refraction": {
+          "label": "Curvatura"
+        },
+        "tint": {
+          "label": "Tinte"
+        }
+      }
+    },
     "longshadow": {
       "description": "Proyecta sombras largas y paralelas desde las partes opacas de la capa.",
       "name": "Sombra larga",
@@ -3171,6 +3511,208 @@
             "Paleta"
           ]
         }
+      }
+    },
+    "particles": {
+      "description": "Lanza partículas desde la capa: nieve, chispas, confeti, burbujas, polvo, corazones, estrellas, pétalos o pequeñas copias de la propia capa, que se mueven con la gravedad, el viento y el remolino. Empieza con un preajuste y luego cambia el emisor, la cantidad y las fuerzas. Con «En cada beat» lanza una ráfaga con cada beat: selecciona tu música, abre su menú y toca Marcar beats primero.",
+      "name": "Partículas",
+      "params": {
+        "beats": {
+          "label": "Beats",
+          "options": [
+            "Cada beat",
+            "Cada 2.º beat",
+            "Cada 4.º beat"
+          ]
+        },
+        "blend": {
+          "label": "Fusión",
+          "options": [
+            "Normal",
+            "Agregar",
+            "Trama"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "color2": {
+          "label": "Color 2"
+        },
+        "colorMode": {
+          "label": "Modo de color",
+          "options": [
+            "Color único",
+            "Mezcla aleatoria",
+            "Durante la vida"
+          ]
+        },
+        "colorVariation": {
+          "label": "Variación de color"
+        },
+        "count": {
+          "label": "Cantidad"
+        },
+        "depth": {
+          "label": "Profundidad"
+        },
+        "direction": {
+          "label": "Dirección"
+        },
+        "drag": {
+          "label": "Resistencia del aire"
+        },
+        "emission": {
+          "label": "Emisión",
+          "options": [
+            "Continua",
+            "Ráfaga",
+            "En cada beat"
+          ]
+        },
+        "emitter": {
+          "label": "Emisor",
+          "options": [
+            "Punto",
+            "Línea",
+            "Área",
+            "Contorno"
+          ]
+        },
+        "emitterSize": {
+          "label": "Tamaño del emisor"
+        },
+        "endSize": {
+          "label": "Tamaño final"
+        },
+        "every": {
+          "label": "Repetir cada"
+        },
+        "fadeIn": {
+          "label": "Fundido de entrada"
+        },
+        "fadeOut": {
+          "label": "Fundido de salida"
+        },
+        "gravity": {
+          "label": "Gravedad"
+        },
+        "kind": {
+          "label": "Partícula",
+          "options": [
+            "Nieve",
+            "Chispas",
+            "Confeti",
+            "Burbujas",
+            "Polvo",
+            "Corazones",
+            "Estrellas",
+            "Pétalos",
+            "Capa"
+          ]
+        },
+        "layer": {
+          "label": "Capa",
+          "options": [
+            "Debajo de las partículas",
+            "Encima de las partículas",
+            "Oculta"
+          ]
+        },
+        "lifeVariation": {
+          "label": "Variación de duración"
+        },
+        "lifetime": {
+          "label": "Duración"
+        },
+        "more": {
+          "label": "Más ajustes"
+        },
+        "orientation": {
+          "label": "Orientación",
+          "options": [
+            "Libre",
+            "Seguir movimiento"
+          ]
+        },
+        "perspective": {
+          "label": "Perspectiva"
+        },
+        "position": {
+          "label": "Posición del emisor"
+        },
+        "prewarm": {
+          "label": "Empezar lleno"
+        },
+        "randomRotation": {
+          "label": "Rotación aleatoria"
+        },
+        "rate": {
+          "label": "Frecuencia"
+        },
+        "seed": {
+          "label": "Semilla"
+        },
+        "size": {
+          "label": "Tamaño"
+        },
+        "sizeVariation": {
+          "label": "Variación de tamaño"
+        },
+        "speed": {
+          "label": "Velocidad"
+        },
+        "speedVariation": {
+          "label": "Variación de velocidad"
+        },
+        "spin": {
+          "label": "Giro"
+        },
+        "spinVariation": {
+          "label": "Variación de giro"
+        },
+        "spread": {
+          "label": "Dispersión"
+        },
+        "start": {
+          "label": "Momento de la ráfaga"
+        },
+        "swirl": {
+          "label": "Remolino"
+        },
+        "swirlSpeed": {
+          "label": "Velocidad del remolino"
+        },
+        "tint": {
+          "label": "Tinte"
+        },
+        "twinkle": {
+          "label": "Centelleo"
+        },
+        "wind": {
+          "label": "Viento"
+        },
+        "zSpeed": {
+          "label": "Velocidad Z"
+        },
+        "zSpread": {
+          "label": "Dispersión Z"
+        }
+      },
+      "presets": {
+        "beat-confetti": "Confeti al ritmo",
+        "bubbles": "Burbujas",
+        "confetti": "Confeti",
+        "dust": "Polvo",
+        "hearts": "Corazones",
+        "layer-fountain": "Fuente de capas",
+        "petals": "Pétalos",
+        "snow": "Nieve",
+        "sparks": "Chispas",
+        "twinkle": "Centelleo"
       }
     },
     "pixelate": {
@@ -4056,6 +4598,77 @@
         }
       }
     },
+    "scatter3d": {
+      "description": "Convierte la capa en una cuadrícula de piezas 3D dispersas.",
+      "name": "Dispersión 3D",
+      "params": {
+        "axis": {
+          "label": "Eje de torsión",
+          "options": [
+            "X",
+            "Y",
+            "Z"
+          ]
+        },
+        "depth": {
+          "label": "Profundidad de cuadrícula"
+        },
+        "depthSpacing": {
+          "label": "Espaciado en profundidad"
+        },
+        "intensity": {
+          "label": "Intensidad de la luz"
+        },
+        "light": {
+          "label": "Dirección de la luz"
+        },
+        "lightHeight": {
+          "label": "Altura de la luz"
+        },
+        "perspective": {
+          "label": "Perspectiva"
+        },
+        "rotX": {
+          "label": "Rotación X"
+        },
+        "rotY": {
+          "label": "Rotación Y"
+        },
+        "rotZ": {
+          "label": "Rotación Z"
+        },
+        "scatter": {
+          "label": "Dispersión"
+        },
+        "seed": {
+          "label": "Semilla"
+        },
+        "shading": {
+          "label": "Sombreado"
+        },
+        "shape": {
+          "label": "Forma",
+          "options": [
+            "Cubo",
+            "Esfera",
+            "Cuadrado",
+            "Círculo"
+          ]
+        },
+        "size": {
+          "label": "Tamaño de pieza"
+        },
+        "spacing": {
+          "label": "Espaciado de cuadrícula"
+        },
+        "spin": {
+          "label": "Rotación de dispersión"
+        },
+        "twist": {
+          "label": "Ángulo de torsión"
+        }
+      }
+    },
     "scatterfield": {
       "description": "Dispersa copias de la capa en un campo 3D infinito y oculta la capa original; permite simular movimiento en el campo en tres dimensiones mediante animación de fotogramas clave.",
       "name": "Campo de dispersión",
@@ -4774,7 +5387,7 @@
       }
     },
     "stroketaper": {
-      "description": "Adelgaza los trazos de lápiz y pincel de un dibujo a mano alzada hasta una punta: desde nada hasta Inicio, y de Fin a nada. Compresión hace la punta más afilada.",
+      "description": "Adelgaza los trazos hasta una punta: los trazos de lápiz y pincel de un dibujo a mano alzada y el Trazo de líneas y formas (Borde y sombra > Trazo). Desde nada hasta Inicio, y de Fin a nada. Compresión hace la punta más afilada.",
       "name": "Afinado del trazo",
       "params": {
         "end": {
@@ -5484,6 +6097,47 @@
         },
         "wobble": {
           "label": "Ondulación"
+        }
+      }
+    },
+    "videofeedback": {
+      "description": "Dibuja la capa dentro de sí misma repetidamente, como una cámara apuntada a su propia pantalla. Mueve, escala o gira la capa para dirigir el túnel.",
+      "name": "Retroalimentación de video",
+      "params": {
+        "blend": {
+          "label": "Fusión",
+          "options": [
+            "Normal",
+            "Sumar",
+            "Trama"
+          ]
+        },
+        "center": {
+          "label": "Centro"
+        },
+        "copies": {
+          "label": "Copias"
+        },
+        "delay": {
+          "label": "Retraso"
+        },
+        "fade": {
+          "label": "Desvanecimiento"
+        },
+        "hueShift": {
+          "label": "Cambio de tono"
+        },
+        "offset": {
+          "label": "Desplazamiento"
+        },
+        "rotation": {
+          "label": "Rotación"
+        },
+        "useLayerTransform": {
+          "label": "Usar transformación de capa"
+        },
+        "zoom": {
+          "label": "Zoom"
         }
       }
     },

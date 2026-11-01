@@ -35,7 +35,11 @@ class AppLanguageTest {
         assertEquals(AppLanguage.Portuguese, pick("pt-PT"))
         assertEquals(AppLanguage.Portuguese, pick("pt-BR"))
         assertEquals(AppLanguage.Portuguese, pick("pt"))
-        assertEquals(AppLanguage.Spanish, pick("es-ES"))
+        assertEquals(AppLanguage.SpanishSpain, pick("es-ES"))
+        assertEquals(AppLanguage.SpanishSpain, pick("es_ES"))
+        assertEquals(AppLanguage.Spanish, pick("es"))
+        assertEquals(AppLanguage.Urdu, pick("ur-PK"))
+        assertEquals(AppLanguage.Japanese, pick("ja-JP"))
         assertEquals(AppLanguage.Spanish, pick("es-419"))
         assertEquals(AppLanguage.Spanish, pick("es_MX"))
         assertEquals(AppLanguage.Malay, pick("ms-SG"))
@@ -51,11 +55,12 @@ class AppLanguageTest {
 
     @Test fun unsupportedLanguagesFallBackToTheNextPhoneLanguageThenEnglish() {
         assertEquals(AppLanguage.Chinese, pick("zh-CN"))
+        assertEquals(AppLanguage.Chinese, pick("zh-Hant-TW", "ko-KR"))
         assertEquals(AppLanguage.Chinese, pick("zh-Hant-TW", "ja-JP"))
         assertEquals(AppLanguage.Chinese, pick("zh-CN", "ru-RU", "en-US"))
         assertEquals(AppLanguage.English, pick())
         assertEquals(AppLanguage.English, pick(""))
-        assertNull(AppLanguage.match(listOf("ja-JP", "ko-KR")))
+        assertNull(AppLanguage.match(listOf("ko-KR")))
     }
 
     @Test fun theSuggestedLanguageComesFirstAndEveryLanguageOnce() {
@@ -68,9 +73,9 @@ class AppLanguageTest {
         assertEquals(AppLanguage.entries, AppLanguage.suggestedOrder(AppLanguage.English))
     }
 
-    @Test fun fifteenLanguagesEachKnowTheirOwnName() {
-        assertEquals(15, AppLanguage.entries.size)
-        assertEquals(15, AppLanguage.entries.map { it.nativeName }.toSet().size)
+    @Test fun fourteenLanguagesEachKnowTheirOwnName() {
+        assertEquals(18, AppLanguage.entries.size)
+        assertEquals(18, AppLanguage.entries.map { it.nativeName }.toSet().size)
         assertEquals("বাংলা", AppLanguage.Bengali.nativeName)
         assertEquals("العربية", AppLanguage.Arabic.nativeName)
         assertEquals("فارسی", AppLanguage.Persian.nativeName)

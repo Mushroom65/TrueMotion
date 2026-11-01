@@ -1,165 +1,192 @@
 package app.absentmotion.ui.editor.panels
 
-import app.absentmotion.R
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
-import app.absentmotion.editor.EditorState
+import app.absentmotion.R
 import app.absentmotion.ai.AiAction
+import app.absentmotion.ai.AiKind
 import app.absentmotion.ai.AiTools
-import app.absentmotion.ui.editor.effects.AiProgressDialog
-import app.absentmotion.ui.editor.effects.AiSmoothDialog
-import androidx.compose.ui.platform.LocalContext
-import app.absentmotion.editor.applySpeedRamp
-import app.absentmotion.editor.deleteSpeedKeyframes
+import app.absentmotion.ai.aiMarks
+import app.absentmotion.ai.reverseMark
+import app.absentmotion.editor.EditorState
 import app.absentmotion.editor.freezeFrame
-import app.absentmotion.model.SpeedRamp
 import app.absentmotion.editor.retimeVideo
 import app.absentmotion.editor.setVideoSpeed
+import app.absentmotion.model.CurvePoint
+import app.absentmotion.model.FASTEST_SPEED
 import app.absentmotion.model.Layer
-import app.absentmotion.model.VideoTiming
-import app.absentmotion.model.PlaybackSpeed
-import app.absentmotion.model.atVideoTime
+import app.absentmotion.model.SLOWEST_SPEED
+import app.absentmotion.model.SpeedTicks
 import app.absentmotion.model.isKeyframed
+import app.absentmotion.model.normalSpeed
+import app.absentmotion.model.rulerTick
+import app.absentmotion.model.steppedSpeed
+import app.absentmotion.model.tickSpeed
+import app.absentmotion.platform.BackHandler
 import app.absentmotion.ui.editor.PanelIcons
-import app.absentmotion.ui.editor.rememberHaptic
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import app.absentmotion.ui.editor.effects.AiProgressDialog
+import app.absentmotion.ui.editor.effects.AiSmoothDialog
 import app.absentmotion.ui.theme.Am
+import app.absentmotion.ui.theme.Swap
+import app.absentmotion.ui.theme.animatedColor
+import app.absentmotion.ui.theme.fadeBackground
 import kotlin.math.roundToInt
 
 @Composable
 fun SpeedPanel(state: EditorState, layer: Layer, modifier: Modifier = Modifier) {
-    var askRemove by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val ai = remember(state, context, scope) { AiTools(context.applicationContext, state, scope) }
-    val speed = VideoTiming(layer).speed((state.sampleMs - layer.startTime).toDouble())
-    val enabled = listOf(state.sampleMs < layer.startTime, state.sampleMs in (layer.startTime + 1) until layer.endTime,
-        state.sampleMs in (layer.startTime + 1) until layer.endTime, state.sampleMs > layer.endTime)
-    Box(modifier) {
-        Row(Modifier.padding(horizontal = 15.dp).offset(y = 16.dp).fillMaxWidth().height(37.dp), Arrangement.spacedBy(1.5.dp)) {
-            for (i in 0..3) {
-                val shape = when (i) {
-                    0 -> RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp)
-                    3 -> RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
-                    else -> RoundedCornerShape(0.dp)
-                }
-                Box(Modifier.weight(1f).fillMaxHeight().alpha(if (enabled[i]) 1f else 0.35f)
-                    .background(Am.Button, shape).clickable(enabled = enabled[i]) { state.retimeVideo(i < 2) }, Alignment.Center) {
-                    RetimeGlyph(i, Modifier.size(23.dp))
-                }
+    var curveTab by remember(layer.id) { mutableStateOf(layer.node.child("speedMap")?.isKeyframed == true) }
+    var editing by remember(layer.id) { mutableStateOf<List<CurvePoint>?>(null) }
+    BackHandler(editing != null) { editing = null }
+    Swap(editing != null, modifier, rise = 0.dp) {
+        val base = editing
+        if (base != null) SpeedCurveEditor(state, layer, ai, base, { editing = null }, Modifier.fillMaxSize())
+        else Column(Modifier.fillMaxSize()) {
+            SpeedTabs(curveTab, Modifier.padding(top = 8.dp).align(Alignment.CenterHorizontally)) { curveTab = it }
+            Swap(curveTab, Modifier.fillMaxWidth().weight(1f), rise = 0.dp) {
+                if (curveTab) CurvePresets(state, layer, Modifier.fillMaxSize()) { editing = it }
+                else NormalSpeed(state, layer, ai, Modifier.fillMaxSize())
             }
-        }
-        fun applySpeed(value: Float) {
-            val original = state.selected ?: return
-            state.playing = false
-            state.setVideoSpeed(value, original.atVideoTime(state.sampleMs, state.scene.fps).t, original)
-            state.endGesture()
-        }
-        Row(Modifier.offset(y = 54.dp).fillMaxWidth().height(26.dp).horizontalScroll(rememberScrollState()).padding(horizontal = 15.dp), Arrangement.spacedBy(4.dp)) {
-            for (preset in PlaybackSpeed.presets) RampChip(formatPlain(preset) + "x", true) { applySpeed(preset) }
-        }
-        val speedLabel = stringResource(R.string.true_speed_number)
-        Text(formatFixed(speed, 2) + "x", Modifier.align(Alignment.TopCenter).offset(y = 80.dp)
-            .clickable { state.askNumber(speedLabel, speed, min = .001f, max = 100f, onDone = ::applySpeed) }.padding(horizontal = 12.dp, vertical = 4.dp), color = Am.OnDark, fontSize = 12.sp)
-        Row(Modifier.offset(y = 105.dp).fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
-            PaceIcon(PanelIcons.Turtle, Modifier.width(44.dp).height(40.dp))
-            SpeedSlider(speed, state, Modifier.weight(1f).fillMaxHeight())
-            PaceIcon(PanelIcons.Rabbit, Modifier.width(44.dp).height(40.dp))
-        }
-        Row(Modifier.offset(y = 153.dp).fillMaxWidth().height(34.dp).horizontalScroll(rememberScrollState()).padding(horizontal = 15.dp), Arrangement.spacedBy(6.dp)) {
-            RampChip(stringResource(R.string.smooth_clip), layer.mediaFill?.video == true && ai.running == null) { state.playing = false; ai.apply(AiAction.Smooth) }
-            for (ramp in SpeedRamp.entries) RampChip(stringResource(ramp.label), true) { state.applySpeedRamp(ramp) }
-            val secondsLabel = stringResource(R.string.speed_seconds)
-            RampChip(stringResource(R.string.speed_freeze_frame), enabled[1]) { state.askNumber(secondsLabel, 2f, "", 0.1f, 30f) { state.freezeFrame(it) } }
-            RampChip(stringResource(R.string.speed_remove_keyframes), layer.node.child("speedMap")?.isKeyframed == true) { askRemove = true }
         }
     }
     AiSmoothDialog(ai, state.scene)
     AiProgressDialog(ai)
-    if (askRemove) AlertDialog(onDismissRequest = { askRemove = false }, title = { Text(stringResource(R.string.remove_every_keyframe)) },
-        confirmButton = { TextButton({ askRemove = false; state.deleteSpeedKeyframes() }) { Text(stringResource(R.string.delete), color = Am.Accent) } },
-        dismissButton = { TextButton({ askRemove = false }) { Text(stringResource(R.string.cancel), color = Am.Accent) } }, containerColor = Am.Field, titleContentColor = Am.OnDark, textContentColor = Am.OnDark)
 }
 
 @Composable
-private fun RampChip(label: String, enabled: Boolean, onClick: () -> Unit) {
-    Box(Modifier.fillMaxHeight().alpha(if (enabled) 1f else 0.35f).background(Am.Button, RoundedCornerShape(4.dp))
-        .clickable(enabled = enabled, onClick = onClick).padding(horizontal = 12.dp), Alignment.Center) {
-        Text(label, color = Am.OnDark, fontSize = 12.sp, maxLines = 1, softWrap = false)
-    }
-}
-
-@Composable
-private fun SpeedSlider(speed: Float, state: EditorState, modifier: Modifier) {
-    val liveLayer by rememberUpdatedState(state.selected)
-    val haptic = rememberHaptic(state)
-    fun coord(value: Float, width: Float, thumb: Float): Float = thumb / 2 + PlaybackSpeed.position(value) * (width - thumb).coerceAtLeast(1f)
-    Canvas(modifier.sliderSemantics(speed, PlaybackSpeed.Min..PlaybackSpeed.Max) { v ->
-        liveLayer?.let { state.setVideoSpeed(v, it.atVideoTime(state.sampleMs, state.scene.fps).t, it); state.endGesture() }
-    }.pointerInput(state) {
-        awaitEachGesture {
-            val down = awaitFirstDown()
-            val original = liveLayer ?: return@awaitEachGesture
-            state.playing = false
-            val anchor = original.atVideoTime(state.sampleMs, state.scene.fps).t
-            val thumb = 24.dp.toPx()
-            var detent: Float? = null
-            var moved = false
-            fun update(x: Float) {
-                val u = ((x - thumb / 2) / (size.width - thumb).coerceAtLeast(1f)).coerceIn(0f, 1f)
-                val value = PlaybackSpeed.presets.minByOrNull { kotlin.math.abs(PlaybackSpeed.position(it) - u) }
-                    ?.takeIf { kotlin.math.abs(PlaybackSpeed.position(it) - u) < .012f }
-                if (moved && value != null && value != detent) haptic(HapticFeedbackType.SegmentTick)
-                moved = true
-                detent = value
-                val raw = PlaybackSpeed.value(u)
-                val precision = if (raw < 1f) 1000f else if (raw < 10f) 100f else 10f
-                state.setVideoSpeed(value ?: ((raw * precision).roundToInt() / precision).coerceIn(PlaybackSpeed.Min, PlaybackSpeed.Max), anchor, original)
+private fun SpeedTabs(curve: Boolean, modifier: Modifier, choose: (Boolean) -> Unit) {
+    Row(modifier.height(28.dp).clip(PanelShape).background(Am.Field)) {
+        for (option in listOf(false, true)) {
+            val chosen = option == curve
+            Box(
+                Modifier.width(92.dp).fillMaxHeight().clip(PanelShape).fadeBackground(chosen, PanelDark)
+                    .semantics { selected = chosen }.clickable(role = Role.Tab) { choose(option) },
+                Alignment.Center,
+            ) {
+                Text(stringResource(if (option) R.string.speed_curve else R.string.speed_normal), color = animatedColor(if (chosen) Am.Accent else Am.OnDark),
+                    fontSize = 12.5.sp, maxLines = 1, softWrap = false)
             }
-            down.consume(); update(down.position.x)
-            try {
-                do {
-                    val event = awaitPointerEvent()
-                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                    if (change.pressed) { change.consume(); update(change.position.x) }
-                } while (event.changes.any { it.pressed })
-            } finally { state.endGesture() }
         }
-    }) {
-        val thumb = 24.dp.toPx(); val cy = size.height / 2
-        val grey = Am.Caption
-        drawLine(grey, Offset(thumb / 2, cy), Offset(size.width - thumb / 2, cy), 2.5.dp.toPx(), StrokeCap.Round)
-        for (v in listOf(.001f, .1f, 1f, 4f, 10f, 100f)) {
-            val x = coord(v, size.width, thumb)
-            drawLine(grey, Offset(x, cy - 15.dp.toPx()), Offset(x, cy - 10.dp.toPx()), 1.dp.toPx(), StrokeCap.Round)
-            drawLine(grey, Offset(x, cy + 10.dp.toPx()), Offset(x, cy + 15.dp.toPx()), 1.dp.toPx(), StrokeCap.Round)
-        }
-        drawCircle(Am.OnDark, thumb / 2, Offset(coord(speed, size.width, thumb), cy))
     }
+}
+
+@Composable
+private fun NormalSpeed(state: EditorState, layer: Layer, ai: AiTools, modifier: Modifier) {
+    val speed = remember(layer.node) { layer.normalSpeed().coerceIn(SLOWEST_SPEED, FASTEST_SPEED) }
+    val inside = state.sampleMs in (layer.startTime + 1) until layer.endTime
+    val before = state.sampleMs < layer.startTime
+    val past = state.sampleMs > layer.endTime
+    val usable = listOf(before, inside, inside, past)
+    val held = remember { arrayOfNulls<Layer>(1) }
+    val speedLabel = stringResource(R.string.a11y_speed)
+    val secondsLabel = stringResource(R.string.speed_seconds)
+    val video = layer.mediaFill?.video == true && ai.running == null
+    Column(modifier.padding(top = 8.dp), Arrangement.spacedBy(8.dp)) {
+        RetimeButtons(state, usable, Modifier.padding(horizontal = 15.dp).fillMaxWidth().height(36.dp))
+        Row(Modifier.padding(horizontal = 15.dp).fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
+            EffectRuler(rulerTick(speed).toFloat(), 1f, 1f, SpeedTicks.size.toFloat(), true,
+                { held[0] = state.selected }, { tick -> held[0]?.let { state.setVideoSpeed(tickSpeed(tick.roundToInt()), it) } }, state::endGesture,
+                Modifier.weight(1f).fillMaxHeight(), rulerTick(1f).toFloat(), state.settings.vibration)
+            SpeedValue(speed, Modifier.padding(start = 8.dp).width(88.dp).height(40.dp)) {
+                state.askNumber(speedLabel, speed, "x", SLOWEST_SPEED, FASTEST_SPEED) { v -> state.selected?.let { state.setVideoSpeed(steppedSpeed(v), it); state.endGesture() } }
+            }
+        }
+        Row(Modifier.fillMaxWidth().height(34.dp).horizontalScroll(rememberScrollState()).padding(horizontal = 15.dp), Arrangement.spacedBy(6.dp)) {
+            RampChip(stringResource(R.string.smooth_clip), video, layer.aiMarks.any { it.kind == AiKind.Smooth }) { state.playing = false; ai.apply(AiAction.Smooth) }
+            RampChip(stringResource(R.string.speed_reverse), video, layer.reverseMark != null) { state.playing = false; ai.apply(AiAction.Reverse) }
+            RampChip(stringResource(R.string.speed_freeze_frame), inside) { state.askNumber(secondsLabel, 2f, "", 0.1f, 30f) { state.freezeFrame(it) } }
+        }
+    }
+}
+
+@Composable
+internal fun SpeedValue(speed: Float, modifier: Modifier, onClick: (() -> Unit)?) {
+    Row(
+        modifier.clip(PanelShape).background(Am.Field).then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PanelIcon(paceIcon(speed), Am.OnDark, size = 18.dp)
+        Text(formatFixed(speed, 2) + "x", Modifier.weight(1f), color = Am.OnDark, fontSize = 13.sp, maxLines = 1, softWrap = false, textAlign = TextAlign.End)
+    }
+}
+
+@Composable
+internal fun RampChip(label: String, enabled: Boolean, active: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(modifier.fillMaxHeight().alpha(if (enabled) 1f else 0.35f).background(if (active) Am.Accent else Am.Button, RoundedCornerShape(4.dp))
+        .clickable(enabled = enabled, onClick = onClick).padding(horizontal = 10.dp), Alignment.Center) {
+        Text(label, color = Am.OnDark, maxLines = 1, softWrap = false, autoSize = TextAutoSize.StepBased(8.sp, 12.sp, 0.5.sp))
+    }
+}
+
+@Composable
+private fun RetimeButtons(state: EditorState, usable: List<Boolean>, modifier: Modifier) {
+    Row(modifier, Arrangement.spacedBy(1.5.dp)) {
+        val shown = (0..3).filter { usable[it] }.ifEmpty { (0..3).toList() }
+        for (i in shown) {
+            val first = i == shown.first()
+            val last = i == shown.last()
+            val shape = RoundedCornerShape(topStart = if (first) 4.dp else 0.dp, bottomStart = if (first) 4.dp else 0.dp, topEnd = if (last) 4.dp else 0.dp, bottomEnd = if (last) 4.dp else 0.dp)
+            val name = stringResource(RetimeNames[i])
+            Box(Modifier.weight(1f).fillMaxHeight().alpha(if (usable[i]) 1f else 0.35f)
+                .background(Am.Button, shape).clickable(enabled = usable[i], role = Role.Button) { state.retimeVideo(i < 2) }.semantics { contentDescription = name }, Alignment.Center) {
+                RetimeGlyph(i, Modifier.size(23.dp))
+            }
+        }
+    }
+}
+
+private val RetimeNames = listOf(R.string.a11y_extend_start, R.string.a11y_trim_start, R.string.a11y_trim_end, R.string.a11y_extend_end)
+
+internal fun paceIcon(speed: Float) = when {
+    speed < 0.3f -> PanelIcons.Snail
+    speed < 0.75f -> PanelIcons.Turtle
+    speed < 1.5f -> PanelIcons.Walk
+    speed < 4f -> PanelIcons.Rabbit
+    speed < 20f -> PanelIcons.Horse
+    else -> PanelIcons.Cheetah
 }
 
 @Composable
@@ -190,9 +217,4 @@ private fun RetimeGlyph(index: Int, modifier: Modifier) {
         drawLine(Am.OnDark, p(tip, 12f), p(tip + if (extend) 2 else -2, 10f), k)
         drawLine(Am.OnDark, p(tip, 12f), p(tip + if (extend) 2 else -2, 14f), k)
     }
-}
-
-@Composable
-private fun PaceIcon(icon: ImageVector, modifier: Modifier) {
-    Box(modifier, Alignment.Center) { PanelIcon(icon, Am.Caption, size = 22.dp) }
 }

@@ -43691,6 +43691,1223 @@
           "label": "Radius"
         }
       }
+    },
+    "true-spectrum": {
+      "name": "音频频谱",
+      "description": "基于立体声 FFT 的频谱，可选择音频图层、视频图层或项目混音。支持七种显示样式、分析缓存和参数关键帧。",
+      "params": {
+        "style": {
+          "label": "频谱样式",
+          "options": [
+            "柱状",
+            "折线",
+            "填充区域",
+            "环形柱状",
+            "环形折线",
+            "点状",
+            "环形填充"
+          ]
+        },
+        "sourceLayer": {
+          "label": "音频来源"
+        },
+        "count": {
+          "label": "频带数量"
+        },
+        "width": {
+          "label": "宽度"
+        },
+        "height": {
+          "label": "高度"
+        },
+        "radius": {
+          "label": "半径"
+        },
+        "thickness": {
+          "label": "粗细"
+        },
+        "gap": {
+          "label": "柱间距"
+        },
+        "angle": {
+          "label": "起始角度"
+        },
+        "sweep": {
+          "label": "圆弧角度"
+        },
+        "minimum": {
+          "label": "最小电平"
+        },
+        "glow": {
+          "label": "辉光"
+        },
+        "gain": {
+          "label": "增益"
+        },
+        "gate": {
+          "label": "噪声门限"
+        },
+        "attackMs": {
+          "label": "起音（毫秒）"
+        },
+        "releaseMs": {
+          "label": "释音（毫秒）"
+        },
+        "minHz": {
+          "label": "最低频率（赫兹）"
+        },
+        "maxHz": {
+          "label": "最高频率（赫兹）"
+        },
+        "floorDb": {
+          "label": "噪声底（分贝）"
+        },
+        "offsetMs": {
+          "label": "音频偏移（毫秒）"
+        },
+        "mirror": {
+          "label": "镜像"
+        },
+        "reverse": {
+          "label": "反转频率顺序"
+        },
+        "normalize": {
+          "label": "归一化"
+        },
+        "respectVolume": {
+          "label": "跟随图层音量"
+        },
+        "colorLow": {
+          "label": "起始颜色"
+        },
+        "colorHigh": {
+          "label": "结束颜色"
+        }
+      }
+    },
+    "legacy-021b7d16fb1b": {
+      "params": {},
+      "name": "True Motion 调整图层",
+      "description": "复制下方图层的图像。请在此效果之后添加调整效果。调整图层上方的对象不受影响。"
+    },
+    "legacy-256d1e2060e8": {
+      "params": {
+        "strength": {
+          "label": "缩放增量 ×"
+        },
+        "sensitivity": {
+          "label": "灵敏度"
+        },
+        "smooth": {
+          "label": "平滑"
+        }
+      },
+      "name": "True Motion 音频缩放",
+      "description": "图层缩放跟随所选音频或视频图层的实际音量。音频源：True Motion → 关联图层音频。渲染时会考虑源的速度、裁剪和音量变化；原始关键帧会保留。"
+    },
+    "legacy-8f27af47f2ee": {
+      "params": {
+        "sensitivity": {
+          "label": "灵敏度"
+        },
+        "smooth": {
+          "label": "平滑"
+        },
+        "height": {
+          "label": "频段条高度"
+        },
+        "baseline": {
+          "label": "基线 Y"
+        },
+        "gap": {
+          "label": "频段条间距"
+        },
+        "tint": {
+          "label": "颜色"
+        },
+        "showOriginal": {
+          "label": "显示原始图层"
+        }
+      },
+      "name": "True Motion 音频频谱",
+      "description": "使用 FFT 分析其他图层的音轨，显示 40–4000 Hz 的 16 频段频谱。在 True Motion → 关联图层音频中选择源。动画由音频时间决定，拖动时间线和导出时保持一致。"
+    },
+    "legacy-472d1a1f832f": {
+      "params": {
+        "strength": {
+          "label": "强度"
+        },
+        "threshold": {
+          "label": "亮度阈值"
+        },
+        "softness": {
+          "label": "柔和度"
+        },
+        "edgeGain": {
+          "label": "边缘响应"
+        },
+        "darkColor": {
+          "label": "阴影"
+        },
+        "lightColor": {
+          "label": "高光"
+        },
+        "alphaReact": {
+          "label": "控制不透明度"
+        }
+      },
+      "name": "True Motion 背景响应",
+      "description": "下方图层的亮度和边缘控制当前图层的颜色与不透明度。读取当前图层下方的实际合成图像；此功能不是音频频谱或跟踪器。"
+    },
+    "legacy-3ddd9e0cfbdc": {
+      "params": {},
+      "name": "True Motion 表达式",
+      "description": "位置、缩放、旋转和不透明度表达式。编辑器：选择图层 → True Motion → 表达式。"
+    },
+    "legacy-b3bfe750655a": {
+      "params": {
+        "rotationX": {
+          "label": "旋转 X"
+        },
+        "rotationY": {
+          "label": "旋转 Y"
+        },
+        "rotationZ": {
+          "label": "旋转 Z"
+        },
+        "size": {
+          "label": "几何体大小 ×"
+        },
+        "tint": {
+          "label": "几何体颜色"
+        }
+      },
+      "name": "True Motion 三维模型",
+      "description": "调整真实 OBJ 几何体的旋转和颜色。通过 True Motion 菜单导入。模型使用场景相机的位置和视场角。实验功能：不支持 MTL 和纹理，最多 20,000 个三角形。"
+    },
+    "legacy-3c8eecf254d1": {
+      "params": {
+        "rotationX": {
+          "label": "相机旋转 X"
+        },
+        "rotationY": {
+          "label": "相机旋转 Y"
+        },
+        "rotationZ": {
+          "label": "相机旋转 Z"
+        }
+      },
+      "name": "True Motion 三维相机",
+      "description": "为 OBJ 几何体和平面图层提供共享场景相机的 XYZ 旋转。XYZ 位置、视场角及活动相机选择来自相机图层。实验功能：穿过近裁剪面的平面图层会保留原有投影。"
+    },
+    "legacy-47fb0a8a1000": {
+      "params": {
+        "rotationX": {
+          "label": "图层旋转 X"
+        },
+        "rotationY": {
+          "label": "图层旋转 Y"
+        },
+        "rotationZ": {
+          "label": "图层旋转 Z"
+        }
+      },
+      "name": "True Motion 三维平面",
+      "description": "使用共享场景相机的透视对平面图层进行 XYZ 旋转。保留现有的效果处理。实验功能：穿过相机近裁剪面时使用原有投影。"
+    },
+    "legacy-4f00154224e2": {
+      "params": {
+        "inX": {
+          "label": "入控制点 X"
+        },
+        "inY": {
+          "label": "入控制点 Y"
+        },
+        "outX": {
+          "label": "出控制点 X"
+        },
+        "outY": {
+          "label": "出控制点 Y"
+        }
+      },
+      "name": "True Motion 运动路径",
+      "description": "空间贝塞尔控制点。在运动面板中编辑路径。"
+    },
+    "legacy-70c6c0e9c1ac": {
+      "params": {
+        "amount": {
+          "label": "粒子数量"
+        },
+        "life": {
+          "label": "生命周期（秒）"
+        },
+        "lifeRandom": {
+          "label": "生命周期随机性"
+        },
+        "timeScale": {
+          "label": "时间倍率"
+        },
+        "timeOffset": {
+          "label": "时间偏移（秒）"
+        },
+        "seed": {
+          "label": "随机种子"
+        },
+        "emitter": {
+          "label": "发射器类型",
+          "options": [
+            "点",
+            "球体 — 椭球",
+            "长方体",
+            "圆形 — XY 圆盘"
+          ]
+        },
+        "origin": {
+          "label": "位置 XYZ"
+        },
+        "spawnX": {
+          "label": "生成半径 X"
+        },
+        "spawnY": {
+          "label": "生成半径 Y"
+        },
+        "spawnZ": {
+          "label": "生成半径 Z"
+        },
+        "velocity": {
+          "label": "速度 XYZ"
+        },
+        "spread": {
+          "label": "扩散"
+        },
+        "directionSpread": {
+          "label": "方向扩散锥角（度）"
+        },
+        "velocityRandom": {
+          "label": "速度随机性"
+        },
+        "speedStart": {
+          "label": "初始速度 ×"
+        },
+        "speedEnd": {
+          "label": "结束速度 ×"
+        },
+        "gravityX": {
+          "label": "重力 X"
+        },
+        "gravity": {
+          "label": "重力 Y"
+        },
+        "gravityZ": {
+          "label": "重力 Z"
+        },
+        "wind": {
+          "label": "风力 XYZ（加速度）"
+        },
+        "forceRandom": {
+          "label": "力的随机性"
+        },
+        "drag": {
+          "label": "阻力"
+        },
+        "turbulence": {
+          "label": "湍流"
+        },
+        "noiseFrequency": {
+          "label": "噪声频率"
+        },
+        "attractor": {
+          "label": "吸引器位置 XYZ"
+        },
+        "attractStrength": {
+          "label": "吸引（+）/ 排斥（−）"
+        },
+        "attractRadius": {
+          "label": "中心附近的力衰减"
+        },
+        "radius": {
+          "label": "大小"
+        },
+        "sizeStart": {
+          "label": "初始大小 ×"
+        },
+        "sizeEnd": {
+          "label": "结束大小 ×"
+        },
+        "lifeCurve": {
+          "label": "大小 / 颜色 / 不透明度曲线"
+        },
+        "variation": {
+          "label": "大小随机性"
+        },
+        "tint": {
+          "label": "颜色"
+        },
+        "colorStart": {
+          "label": "初始颜色 ×"
+        },
+        "colorEnd": {
+          "label": "结束颜色 ×"
+        },
+        "colorRandom": {
+          "label": "颜色随机性"
+        },
+        "opacityStart": {
+          "label": "初始不透明度"
+        },
+        "opacityEnd": {
+          "label": "结束不透明度"
+        },
+        "opacityRandom": {
+          "label": "不透明度随机性"
+        },
+        "softFade": {
+          "label": "淡入 / 淡出"
+        },
+        "rotation": {
+          "label": "旋转（度）"
+        },
+        "rotationRandom": {
+          "label": "旋转随机范围 ±"
+        },
+        "rotationSpeed": {
+          "label": "旋转速度（度 / 秒）"
+        },
+        "spinRandom": {
+          "label": "自旋随机性"
+        },
+        "alignVelocity": {
+          "label": "纹理沿运动方向对齐"
+        },
+        "useTexture": {
+          "label": "自定义纹理"
+        },
+        "additive": {
+          "label": "叠加发光"
+        },
+        "camera": {
+          "label": "相机位置 XYZ"
+        },
+        "camRotation": {
+          "label": "相机旋转 XYZ（度）"
+        },
+        "fov": {
+          "label": "视场角"
+        }
+      },
+      "name": "True Motion 三维粒子",
+      "description": "粒子 v2：四种发射器、生命周期控制、XYZ 方向力、噪声和自定义纹理。拖动时间线时计算结果保持一致。发射器相机独立于场景相机。"
+    },
+    "legacy-a25e678c49e1": {
+      "params": {
+        "p0x": {
+          "label": "控制点 1 X"
+        },
+        "p0y": {
+          "label": "控制点 1 Y"
+        },
+        "p1x": {
+          "label": "控制点 2 X"
+        },
+        "p1y": {
+          "label": "控制点 2 Y"
+        },
+        "p2x": {
+          "label": "控制点 3 X"
+        },
+        "p2y": {
+          "label": "控制点 3 Y"
+        },
+        "p3x": {
+          "label": "控制点 4 X"
+        },
+        "p3y": {
+          "label": "控制点 4 Y"
+        },
+        "p4x": {
+          "label": "控制点 5 X"
+        },
+        "p4y": {
+          "label": "控制点 5 Y"
+        },
+        "p5x": {
+          "label": "控制点 6 X"
+        },
+        "p5y": {
+          "label": "控制点 6 Y"
+        },
+        "p6x": {
+          "label": "控制点 7 X"
+        },
+        "p6y": {
+          "label": "控制点 7 Y"
+        },
+        "p7x": {
+          "label": "控制点 8 X"
+        },
+        "p7y": {
+          "label": "控制点 8 Y"
+        },
+        "p8x": {
+          "label": "控制点 9 X"
+        },
+        "p8y": {
+          "label": "控制点 9 Y"
+        }
+      },
+      "name": "True Motion 网格变形器",
+      "description": "用于图层变形的双线性 3×3 网格。可在变形面板中编辑控制点，或通过参数关键帧制作动画。"
+    },
+    "legacy-23c3e6a830d0": {
+      "params": {},
+      "name": "True Motion AI 抠像",
+      "description": "用于对象抠像工具生成视频的透明度解码器。请将此效果置于效果堆栈首位，并使用拉伸媒体填充。"
+    },
+    "legacy-52c2c938261a": {
+      "params": {
+        "exposure": {
+          "label": "曝光"
+        },
+        "contrast": {
+          "label": "对比度"
+        },
+        "saturation": {
+          "label": "饱和度"
+        },
+        "temperature": {
+          "label": "色温"
+        },
+        "tint": {
+          "label": "色调"
+        },
+        "lift": {
+          "label": "阴影亮度"
+        },
+        "liftR": {
+          "label": "阴影 红"
+        },
+        "liftG": {
+          "label": "阴影 绿"
+        },
+        "liftB": {
+          "label": "阴影 蓝"
+        },
+        "gamma": {
+          "label": "中间调亮度"
+        },
+        "gammaR": {
+          "label": "中间调 红"
+        },
+        "gammaG": {
+          "label": "中间调 绿"
+        },
+        "gammaB": {
+          "label": "中间调 蓝"
+        },
+        "gain": {
+          "label": "高光亮度"
+        },
+        "gainR": {
+          "label": "高光 红"
+        },
+        "gainG": {
+          "label": "高光 绿"
+        },
+        "gainB": {
+          "label": "高光 蓝"
+        },
+        "curveY1": {
+          "label": "总曲线 1"
+        },
+        "curveY2": {
+          "label": "总曲线 2"
+        },
+        "curveY3": {
+          "label": "总曲线 3"
+        },
+        "curveR1": {
+          "label": "红曲线 1"
+        },
+        "curveR2": {
+          "label": "红曲线 2"
+        },
+        "curveR3": {
+          "label": "红曲线 3"
+        },
+        "curveG1": {
+          "label": "绿曲线 1"
+        },
+        "curveG2": {
+          "label": "绿曲线 2"
+        },
+        "curveG3": {
+          "label": "绿曲线 3"
+        },
+        "curveB1": {
+          "label": "蓝曲线 1"
+        },
+        "curveB2": {
+          "label": "蓝曲线 2"
+        },
+        "curveB3": {
+          "label": "蓝曲线 3"
+        }
+      },
+      "name": "True 调色",
+      "description": "基础调色、色调色轮和 RGB 曲线。请在 True Motion 工具中打开调色面板。"
+    },
+    "beatblur": {
+      "name": "节拍模糊",
+      "description": "根据项目节拍改变模糊强度。",
+      "params": {
+        "strength": {
+          "label": "强度"
+        },
+        "decay": {
+          "label": "衰减"
+        },
+        "beats": {
+          "label": "节拍",
+          "options": [
+            "每个节拍",
+            "每两个节拍",
+            "每四个节拍"
+          ]
+        },
+        "offset": {
+          "label": "偏移"
+        },
+        "bpm": {
+          "label": "BPM"
+        }
+      }
+    },
+    "beatflash": {
+      "name": "节拍闪光",
+      "description": "根据项目节拍产生闪光。",
+      "params": {
+        "strength": {
+          "label": "强度"
+        },
+        "color": {
+          "label": "颜色"
+        },
+        "decay": {
+          "label": "衰减"
+        },
+        "beats": {
+          "label": "节拍",
+          "options": [
+            "每个节拍",
+            "每两个节拍",
+            "每四个节拍"
+          ]
+        },
+        "offset": {
+          "label": "偏移"
+        },
+        "bpm": {
+          "label": "BPM"
+        }
+      }
+    },
+    "beatglitch": {
+      "name": "节拍故障",
+      "description": "根据项目节拍产生故障失真。",
+      "params": {
+        "strength": {
+          "label": "强度"
+        },
+        "slices": {
+          "label": "切片数量"
+        },
+        "decay": {
+          "label": "衰减"
+        },
+        "beats": {
+          "label": "节拍",
+          "options": [
+            "每个节拍",
+            "每两个节拍",
+            "每四个节拍"
+          ]
+        },
+        "offset": {
+          "label": "偏移"
+        },
+        "bpm": {
+          "label": "BPM"
+        }
+      }
+    },
+    "beatglow": {
+      "name": "节拍发光",
+      "description": "根据项目节拍改变发光强度。",
+      "params": {
+        "strength": {
+          "label": "强度"
+        },
+        "threshold": {
+          "label": "阈值"
+        },
+        "blur": {
+          "label": "半径"
+        },
+        "color": {
+          "label": "颜色"
+        },
+        "decay": {
+          "label": "衰减"
+        },
+        "beats": {
+          "label": "节拍",
+          "options": [
+            "每个节拍",
+            "每两个节拍",
+            "每四个节拍"
+          ]
+        },
+        "offset": {
+          "label": "偏移"
+        },
+        "bpm": {
+          "label": "BPM"
+        }
+      }
+    },
+    "beatpulse": {
+      "name": "节拍脉冲",
+      "description": "根据项目节拍产生脉冲变化。",
+      "params": {
+        "strength": {
+          "label": "强度"
+        },
+        "decay": {
+          "label": "衰减"
+        },
+        "beats": {
+          "label": "节拍",
+          "options": [
+            "每个节拍",
+            "每两个节拍",
+            "每四个节拍"
+          ]
+        },
+        "offset": {
+          "label": "偏移"
+        },
+        "bpm": {
+          "label": "BPM"
+        }
+      }
+    },
+    "beatrgbsplit": {
+      "name": "节拍 RGB 分离",
+      "description": "根据项目节拍分离颜色通道。",
+      "params": {
+        "strength": {
+          "label": "强度"
+        },
+        "angle": {
+          "label": "角度"
+        },
+        "decay": {
+          "label": "衰减"
+        },
+        "beats": {
+          "label": "节拍",
+          "options": [
+            "每个节拍",
+            "每两个节拍",
+            "每四个节拍"
+          ]
+        },
+        "offset": {
+          "label": "偏移"
+        },
+        "bpm": {
+          "label": "BPM"
+        }
+      }
+    },
+    "beatrotate": {
+      "name": "节拍旋转",
+      "description": "根据项目节拍旋转图层。",
+      "params": {
+        "strength": {
+          "label": "强度"
+        },
+        "alternate": {
+          "label": "交替"
+        },
+        "cover": {
+          "label": "填满画面"
+        },
+        "decay": {
+          "label": "衰减"
+        },
+        "beats": {
+          "label": "节拍",
+          "options": [
+            "每个节拍",
+            "每两个节拍",
+            "每四个节拍"
+          ]
+        },
+        "offset": {
+          "label": "偏移"
+        },
+        "bpm": {
+          "label": "BPM"
+        }
+      }
+    },
+    "beatshake": {
+      "name": "节拍抖动",
+      "description": "根据项目节拍抖动图层。",
+      "params": {
+        "strength": {
+          "label": "强度"
+        },
+        "frequency": {
+          "label": "频率"
+        },
+        "decay": {
+          "label": "衰减"
+        },
+        "beats": {
+          "label": "节拍",
+          "options": [
+            "每个节拍",
+            "每两个节拍",
+            "每四个节拍"
+          ]
+        },
+        "offset": {
+          "label": "偏移"
+        },
+        "bpm": {
+          "label": "BPM"
+        }
+      }
+    },
+    "beatzoom": {
+      "name": "节拍缩放",
+      "description": "根据项目节拍缩放图层。",
+      "params": {
+        "strength": {
+          "label": "强度"
+        },
+        "decay": {
+          "label": "衰减"
+        },
+        "beats": {
+          "label": "节拍",
+          "options": [
+            "每个节拍",
+            "每两个节拍",
+            "每四个节拍"
+          ]
+        },
+        "offset": {
+          "label": "偏移"
+        },
+        "bpm": {
+          "label": "BPM"
+        }
+      }
+    },
+    "fracture3d": {
+      "name": "3D 碎裂",
+      "description": "将图层分割为可在三维空间中移动和旋转的碎片。",
+      "params": {
+        "progress": {
+          "label": "进度"
+        },
+        "pieces": {
+          "label": "碎片数量"
+        },
+        "seed": {
+          "label": "随机种子"
+        },
+        "impact": {
+          "label": "冲击点"
+        },
+        "force": {
+          "label": "力度"
+        },
+        "spread": {
+          "label": "方向散布"
+        },
+        "direction": {
+          "label": "方向"
+        },
+        "gravity": {
+          "label": "重力"
+        },
+        "spin": {
+          "label": "自转"
+        },
+        "depthPush": {
+          "label": "深度推力"
+        },
+        "thickness": {
+          "label": "粗细"
+        },
+        "light": {
+          "label": "光照方向"
+        },
+        "intensity": {
+          "label": "光照强度"
+        },
+        "fade": {
+          "label": "淡出"
+        }
+      }
+    },
+    "liquidglass": {
+      "name": "液态玻璃",
+      "description": "通过折射、色散、模糊和高光模拟半透明玻璃。",
+      "params": {
+        "blur": {
+          "label": "边缘"
+        },
+        "refraction": {
+          "label": "弯曲"
+        },
+        "frost": {
+          "label": "磨砂"
+        },
+        "dispersion": {
+          "label": "彩虹边缘"
+        },
+        "angle": {
+          "label": "光照角度"
+        },
+        "highlight": {
+          "label": "高光"
+        },
+        "color": {
+          "label": "颜色"
+        },
+        "tint": {
+          "label": "色调"
+        }
+      }
+    },
+    "particles": {
+      "name": "粒子",
+      "description": "生成可随节拍发射的粒子，并支持自定义图层纹理和景深。",
+      "params": {
+        "kind": {
+          "label": "粒子",
+          "options": [
+            "雪",
+            "火花",
+            "彩纸",
+            "气泡",
+            "尘埃",
+            "爱心",
+            "星星",
+            "花瓣",
+            "图层"
+          ]
+        },
+        "emitter": {
+          "label": "发射器",
+          "options": [
+            "点",
+            "直线",
+            "区域",
+            "轮廓"
+          ]
+        },
+        "emission": {
+          "label": "发射方式",
+          "options": [
+            "连续",
+            "爆发",
+            "按节拍"
+          ]
+        },
+        "rate": {
+          "label": "速率"
+        },
+        "count": {
+          "label": "计数"
+        },
+        "start": {
+          "label": "爆发时间"
+        },
+        "every": {
+          "label": "重复间隔"
+        },
+        "beats": {
+          "label": "节拍",
+          "options": [
+            "每个节拍",
+            "每两个节拍",
+            "每四个节拍"
+          ]
+        },
+        "bpm": {
+          "label": "BPM"
+        },
+        "lifetime": {
+          "label": "生命周期"
+        },
+        "speed": {
+          "label": "速度"
+        },
+        "direction": {
+          "label": "方向"
+        },
+        "spread": {
+          "label": "散射角度"
+        },
+        "gravity": {
+          "label": "重力"
+        },
+        "wind": {
+          "label": "风力"
+        },
+        "swirl": {
+          "label": "旋转扰动"
+        },
+        "size": {
+          "label": "大小"
+        },
+        "color": {
+          "label": "颜色"
+        },
+        "color2": {
+          "label": "颜色2"
+        },
+        "tint": {
+          "label": "色调"
+        },
+        "layer": {
+          "label": "图层",
+          "options": [
+            "在粒子下方",
+            "在粒子上方",
+            "隐藏"
+          ]
+        },
+        "depth": {
+          "label": "深度"
+        },
+        "zSpeed": {
+          "label": "Z 轴速度"
+        },
+        "zSpread": {
+          "label": "Z 轴散布"
+        },
+        "perspective": {
+          "label": "透视"
+        },
+        "more": {
+          "label": "更多设置"
+        },
+        "emitterSize": {
+          "label": "发射器大小"
+        },
+        "position": {
+          "label": "发射器位置"
+        },
+        "prewarm": {
+          "label": "预热填充"
+        },
+        "lifeVariation": {
+          "label": "生命周期变化"
+        },
+        "speedVariation": {
+          "label": "速度变化"
+        },
+        "drag": {
+          "label": "空气阻力"
+        },
+        "swirlSpeed": {
+          "label": "扰动速度"
+        },
+        "sizeVariation": {
+          "label": "大小变化"
+        },
+        "endSize": {
+          "label": "结束大小"
+        },
+        "orientation": {
+          "label": "朝向",
+          "options": [
+            "自由",
+            "沿运动方向"
+          ]
+        },
+        "randomRotation": {
+          "label": "随机旋转"
+        },
+        "spin": {
+          "label": "自转"
+        },
+        "spinVariation": {
+          "label": "自转变化"
+        },
+        "fadeIn": {
+          "label": "淡入"
+        },
+        "fadeOut": {
+          "label": "淡出"
+        },
+        "twinkle": {
+          "label": "闪烁"
+        },
+        "colorMode": {
+          "label": "颜色模式",
+          "options": [
+            "单色",
+            "随机混色",
+            "随生命周期变化"
+          ]
+        },
+        "colorVariation": {
+          "label": "颜色变化"
+        },
+        "blend": {
+          "options": [
+            "正常",
+            "相加",
+            "屏幕"
+          ],
+          "label": "混合"
+        },
+        "seed": {
+          "label": "随机种子"
+        }
+      },
+      "presets": {
+        "snow": "雪",
+        "sparks": "火花",
+        "confetti": "彩纸",
+        "bubbles": "气泡",
+        "dust": "尘埃",
+        "hearts": "爱心",
+        "twinkle": "闪烁",
+        "petals": "花瓣",
+        "layer-fountain": "图层喷泉",
+        "beat-confetti": "节拍彩纸"
+      }
+    },
+    "scatter3d": {
+      "name": "3D 散布",
+      "description": "将图层的副本散布到三维空间，可选择形状、间距和深度。",
+      "params": {
+        "shape": {
+          "label": "形状",
+          "options": [
+            "立方体",
+            "球体",
+            "正方形",
+            "圆形"
+          ]
+        },
+        "spacing": {
+          "label": "网格间距"
+        },
+        "size": {
+          "label": "碎片大小"
+        },
+        "depth": {
+          "label": "网格深度"
+        },
+        "depthSpacing": {
+          "label": "深度间距"
+        },
+        "scatter": {
+          "label": "散布"
+        },
+        "seed": {
+          "label": "随机种子"
+        },
+        "spin": {
+          "label": "散布旋转"
+        },
+        "rotX": {
+          "label": "旋转 X"
+        },
+        "rotY": {
+          "label": "旋转 Y"
+        },
+        "rotZ": {
+          "label": "旋转 Z"
+        },
+        "axis": {
+          "options": [
+            "X",
+            "Y 位置",
+            "Z"
+          ],
+          "label": "扭转轴"
+        },
+        "twist": {
+          "label": "扭转角度"
+        },
+        "perspective": {
+          "label": "透视"
+        },
+        "light": {
+          "label": "光照方向"
+        },
+        "lightHeight": {
+          "label": "光照高度"
+        },
+        "intensity": {
+          "label": "光照强度"
+        },
+        "shading": {
+          "label": "着色"
+        }
+      }
+    },
+    "videofeedback": {
+      "name": "视频反馈",
+      "description": "重复合成之前的画面，生成可调节变换、透明度和颜色的反馈拖影。",
+      "params": {
+        "copies": {
+          "label": "副本数量"
+        },
+        "zoom": {
+          "label": "缩放"
+        },
+        "rotation": {
+          "label": "旋转"
+        },
+        "offset": {
+          "label": "偏移"
+        },
+        "center": {
+          "label": "中心"
+        },
+        "useLayerTransform": {
+          "label": "使用图层变换"
+        },
+        "fade": {
+          "label": "褪色"
+        },
+        "hueShift": {
+          "label": "色相转移"
+        },
+        "delay": {
+          "label": "延迟"
+        },
+        "blend": {
+          "label": "混合",
+          "options": [
+            "正常",
+            "相加",
+            "屏幕"
+          ]
+        }
+      }
     }
   },
   "categories": {
@@ -43718,6 +44935,19 @@
     "amz-opacity": "AfterMotionZ+ · 不透明度",
     "amz-matte": "AfterMotionZ+ · 蒙版与抠像",
     "amz-repeat": "AfterMotionZ+ · 重复",
-    "amz-other": "AfterMotionZ+ · 其他"
+    "amz-other": "AfterMotionZ+ · 其他",
+    "legacy-color": "True Motion Classic · 颜色与光线",
+    "legacy-blur": "True Motion Classic · 模糊与发光",
+    "legacy-distort": "True Motion Classic · 扭曲",
+    "legacy-procedural": "True Motion Classic · 程序生成",
+    "legacy-drawing": "True Motion Classic · 绘画与边缘",
+    "legacy-transform": "True Motion Classic · 变换",
+    "legacy-3d": "True Motion Classic · 3D",
+    "legacy-text": "True Motion Classic · 文字",
+    "legacy-opacity": "True Motion Classic · 不透明度",
+    "legacy-matte": "True Motion Classic · 遮罩与抠像",
+    "legacy-repeat": "True Motion Classic · 重复",
+    "legacy-other": "True Motion Classic · 其他",
+    "beat": "节拍"
   }
 }

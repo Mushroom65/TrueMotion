@@ -12,25 +12,32 @@ The AI tools are in three places: the **AI** category of the Effects Library (**
 
 Auto captions turns speech into text layers that appear in time with the voice.
 
-1. Select an audio or video clip, then tap **AI > Auto captions**. Video clips also have an **Auto captions** action. This works only on that clip, including its trims and speed changes.
+1. Select an audio or video clip, then tap **AI > Auto captions**. Video clips also have an **Auto Captions** button on page 2 of the tool grid. This works only on that clip, including its trims and speed changes.
 2. To caption the whole project instead, tap **+ > Captions** and choose **Whole project**. This entry also lets you choose one audio or video layer.
 3. Choose the settings below and tap **Generate**.
 
+![The Auto Captions sheet: Source (1), the sample (2), Language (3), Words per caption (4), the speech model (5), Appearance (6) and Generate (7).](img/ai-captions.webp)
+
 | Setting | Choices |
 |---|---|
+| **Source** | **Whole project**, or one audio or video layer from the list, shown by name |
 | **Language** | **Auto** (the speech decides the language) or **English** |
+| **Words per caption** | A slider from 1 to 10 (default 4) |
+| **Speech model** | **Standard** (about 60 MB, the default) or **Higher precision** (about 82 MB) |
+| **Appearance** | Folded at first. Tap it to show the five rows below |
 | **Font** | Opens the font browser |
 | **Size** | 50 to 200 % (default 100 %) |
-| **Color** | Eight swatches: white (default), yellow, orange, red, pink, green, blue and black |
-| **Outline** | A black border around the letters, on by default |
+| **Color** | Eight swatches: white (default), yellow, orange, red, pink, green, blue and black, and **Custom** for any color |
 | **Position** | **Top**, **Middle** or **Bottom** (default) |
-| **Words per caption** | 1 to 10 (default 4) |
+| **Outline** | A border around the letters, on by default. When it is on, **Thickness** (0 to 50, default 6) and **Outline color** (the same swatches and **Custom**, default black) appear |
+
+The sample caption in the middle of the sheet shows the look you choose, including its position.
 
 The first time, the app asks before downloading a speech model. **Standard** is about 60 MB. The optional **Higher precision** model is about 82 MB. Both support multiple languages and stay below 100 MB. Downloads come from the Whisper model repository on Hugging Face and are checked before use. Recognition then runs offline on your device. **Settings > Remove caption model** removes downloaded caption models.
 
 While captions are generated, the setup controls disappear. The centre shows the current stage, progress and estimated time remaining; **Cancel** is the only action. The estimate appears after enough work has completed and may change. Long recordings are processed in ten-minute parts.
 
-The result is one text layer per caption, in time with the speech and selected together so that you can restyle them. A caption ends at a long pause, sentence end, three seconds or the word limit. For a clip, caption timing follows its position in the project.
+The result is one text layer per caption, in time with the speech and selected together so that you can restyle them. Each caption starts on time, when its first word is spoken. A caption ends at a long pause, sentence end, three seconds or the word limit. For a clip, caption timing follows its position in the project.
 
 If there is no sound the app says "There is no sound to caption", and if no speech is found, "No speech was found".
 
@@ -39,6 +46,8 @@ If there is no sound the app says "There is no sound to caption", and if no spee
 ### Photos
 
 Select a photo layer and open **Effects**, **Add Effect**, **AI**, **Remove Background**. The app cuts out the main subject and replaces the picture with a version with a transparent background. The original file is kept: the effect list shows a **Remove Background** row with an AI badge, and its button (**Undo this AI change and bring back the original**) restores the original picture.
+
+Before it starts, a dialog shows the photo. **Keep everything** (the default) keeps every subject the app finds. To keep only one person or thing, tap it; tap more places to keep more, and tap a dot again to remove it. **Softness** feathers the edge of the cut-out and **Grow / Shrink** moves the edge out or in by a few pixels. They are applied when the cut-out is made. To change them, choose **Remove Background** again on the same layer: the dialog remembers your taps and settings, and the app starts again from the original photo.
 
 ### Standard or AI background removal 2.0
 
@@ -53,9 +62,11 @@ If AI background removal 2.0 cannot be downloaded or cannot finish a photo, the 
 
 Select a video layer and choose **Remove Background (video)**. A dialog says "Every frame of this clip is processed on this phone. The result is a group with the video and a mask layer above it." You choose the size of the mask: **Small 360p**, **Medium 540p** (default) or **Large 720p**, and the dialog estimates the number of frames and the storage needed. Tap **Start**.
 
+The dialog also shows the first frame of the clip. **Keep everything** is the default. To keep only one person or thing, tap it on that frame: the app keeps the parts you tapped and follows them from frame to frame, together with anything that touches them, and leaves out everything else. The subject has to be visible on the first frame, so trim the clip to start where it is.
+
 - A clip can be up to five minutes. For longer clips, trim or split it first.
 - The app needs free storage for the mask video and warns if there is not enough.
-- The result is a group called "name cut out" holding the original clip and a mask layer. To undo it, delete or ungroup the group; this tool has no restore button.
+- The result is a group called "name cut out" holding the original clip and a mask layer. To undo it, delete or ungroup the group; this tool has no restore button. Select the group and tap **Cut-out Edge** to change the **Softness** and **Grow / Shrink** of the edge while you watch the preview; **Reset** goes back to the edge as it was made.
 
 ### Which build?
 
