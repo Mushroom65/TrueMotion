@@ -8,6 +8,7 @@ import app.absentmotion.model.XmlNode
 import app.absentmotion.model.formatFloats
 import app.absentmotion.model.valueAt
 import app.absentmotion.platform.Context
+import app.absentmotion.truemotion.ColorGrade
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.abs
@@ -49,14 +50,27 @@ class EffectMigration(private val rules: Map<String, Rule>, private val catalog:
         val dropped = sortedSetOf<String>()
         var renamed = false
         val exact = catalog.definitions.filter { it.dialect == "legacy" && it.available }.associateBy { it.sourceId }
+        val nativeIds = catalog.definitions.filter { it.dialect != "legacy" }.mapTo(hashSetOf()) { it.id }
+        val nativeGrade = catalog.find(ColorGrade.ID)
+        val classicGrade = exact[ColorGrade.ID]
+        val nativeGradeOnlyParams = if (nativeGrade != null && classicGrade != null)
+            nativeGrade.params.map { it.id }.toSet() - classicGrade.params.map { it.id }.toSet() else emptySet()
         val origin = scene.node["am"].orEmpty()
         val classic = origin.startsWith("com.alightcreative") && origin.substringBefore('/') != "com.alightcreative.motion" || scene.node["trueLegacyEffects"] == "true"
         fun visit(node: XmlNode, dims: FloatArray): XmlNode {
             val source = node["id"].orEmpty()
+            // 0.14 could replace the native grade ID on project open while
+            // retaining all 53 properties. Recover that identifiable schema;
+            // deliberately added Classic grades keep their original identity.
+            if (node.name == "effect" && source == classicGrade?.id && nativeGrade != null &&
+                node.children.any { it.name == "property" && it["name"] in nativeGradeOnlyParams }) {
+                converted.merge("${classicGrade.name} → ${nativeGrade.name}", 1, Int::plus)
+                return node.with("id", nativeGrade.id)
+            }
             // Stock Alight imports retain the tested upstream native counterparts.
             // Old mod packages use their original shader/schema; native True tools
             // keep their dedicated migration (not the old placeholder shader).
-            if (node.name == "effect" && (source !in rules || classic && !source.startsWith("lab."))) exact[source]?.let { own ->
+            if (node.name == "effect" && source !in nativeIds && (source !in rules || classic && !source.startsWith("lab."))) exact[source]?.let { own ->
                 converted.merge("${node["id"]!!.substringAfterLast('.')} → ${own.name}", 1, Int::plus)
                 // The original schema is retained: values, easing and quaternion keys are copied without approximation.
                 return node.with("id", own.id)

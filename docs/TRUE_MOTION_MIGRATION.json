@@ -5,7 +5,7 @@
     "commit": "e3d562832a0071181a08945e6927ec4c44a5cbe7"
   },
   "date": "2026-11-01",
-  "portVersion": "0.14.0",
+  "portVersion": "0.14.1",
   "complete": false,
   "features": [
     {
@@ -367,6 +367,12 @@
       "name": "Артефакты и вылет OnePlus Nord 5",
       "status": "partial",
       "notes": "Conservative initial OpenGL choice for OnePlus Nord 5/SM8635, failed-backend recovery and 128 MiB reusable Skia resource budget. Physical device crash not reproduced; no crash log supplied, root cause unconfirmed."
+    },
+    {
+      "id": "grade-identity-0141",
+      "name": "Приоритет нативной цветокоррекции",
+      "status": "ported",
+      "notes": "Current registered runtime IDs take priority over Classic source aliases. Identifiable native 53-property grades substituted by 0.14.0 are restored without changing values, easing or visibility; genuine 29-property Classic instances remain Classic."
     }
   ]
 }

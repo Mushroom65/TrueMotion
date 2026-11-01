@@ -44774,7 +44774,7 @@
           "label": "curveB3"
         }
       },
-      "name": "True Color Grade",
+      "name": "True Color Grade (Classic)",
       "description": "Primary color grading, tonal color wheels and RGB curves. Open Color grading in True Motion tools for the visual editor."
     }
   }

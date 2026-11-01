@@ -44253,7 +44253,7 @@
           "label": "蓝曲线 3"
         }
       },
-      "name": "True 调色",
+      "name": "True 调色（旧版）",
       "description": "基础调色、色调色轮和 RGB 曲线。请在 True Motion 工具中打开调色面板。"
     },
     "beatblur": {
