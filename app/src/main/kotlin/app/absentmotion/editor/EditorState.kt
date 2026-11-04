@@ -20,6 +20,7 @@ import app.absentmotion.library.ProjectStore
 import app.absentmotion.model.KeyScope
 import app.absentmotion.model.Layer
 import app.absentmotion.model.PropRef
+import app.absentmotion.model.refreshMediaSwitches
 import app.absentmotion.model.Scene
 import app.absentmotion.model.groupScene
 import app.absentmotion.model.validGroupPath
@@ -326,7 +327,7 @@ class EditorState(
         visualPreview.clear()
         Glide.interrupt()
         val before = scene
-        val next = change(before).withMattesFollowing(before)
+        val next = change(before).refreshMediaSwitches(before).withMattesFollowing(before)
         if (next != before) history.edit(key, document.withGroupScene(groupPath, next).withGroupHolds())
     }
 

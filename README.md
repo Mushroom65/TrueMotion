@@ -6,6 +6,8 @@ An experimental Android motion graphics editor based on [AbsentMotion 4.4.0](htt
 
 [Русская инструкция](README_TRUE_MOTION_RU.md) · [Port status](docs/TRUE_MOTION_MIGRATION_RU.md) · [Telegram](https://t.me/TrueMoti0n)
 
+0.15.0 adds a main-editor project library with held media replacement keys, cutout bone rigs with FK/two-bone IK, and a separate saved-model tab. Experimental preview; Android device validation is pending. [Usage and limits](docs/RELEASE_0_15_RU.md).
+
 0.14.1 fixes native color grading being replaced by its Classic counterpart on project open and recovers identifiable affected instances. [Hotfix notes](docs/RELEASE_0_14_1_RU.md).
 
 ## Included in 0.14.0

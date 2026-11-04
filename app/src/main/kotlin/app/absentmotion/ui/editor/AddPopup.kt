@@ -1,6 +1,8 @@
 package app.absentmotion.ui.editor
 
 import app.absentmotion.platform.BackHandler
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -101,6 +103,7 @@ private class Tab(@StringRes val label: Int, val icon: ImageVector)
 private val Tabs = listOf(
     Tab(R.string.add_tab_shape, ChromeIcons.ShapeTab), Tab(R.string.add_tab_media, ChromeIcons.MediaTab), Tab(R.string.add_tab_audio, ChromeIcons.AudioTab),
     Tab(R.string.add_tab_object_asset, ChromeIcons.ObjectTab), Tab(R.string.add_tab_template, ChromeIcons.TemplateTab),
+    Tab(R.string.asset_tab, ChromeIcons.MediaTab), Tab(R.string.rig_tab, ChromeIcons.ObjectTab),
 )
 
 @Composable
@@ -109,12 +112,12 @@ internal fun AddPopup(state: EditorState, modifier: Modifier = Modifier, library
     BackHandler { state.addOpen = false }
     Row(modifier.clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)).background(PopupBar)) {
         Column(Modifier.weight(1f).fillMaxHeight()) {
-            Row(Modifier.padding(start = 6.dp).height(58.dp)) {
-                Tabs.forEachIndexed { i, tab -> TabButton(tab, active = i == selectedTab, enabled = i <= 4, Modifier.tutorialTarget(if (i == 1) "add_tab_media" else if (i == 2) "add_tab_audio" else null)) { selectedTab = i } }
+            Row(Modifier.padding(start = 6.dp).height(58.dp).horizontalScroll(rememberScrollState())) {
+                Tabs.forEachIndexed { i, tab -> TabButton(tab, active = i == selectedTab, enabled = true, Modifier.tutorialTarget(if (i == 1) "add_tab_media" else if (i == 2) "add_tab_audio" else null)) { selectedTab = i } }
             }
             val body = Modifier.weight(1f).fillMaxWidth().background(Am.Panel).tutorialTarget(if (selectedTab == 1) "add_media" else if (selectedTab == 2) "add_audio" else null)
             Swap(selectedTab, body, rise = 0.dp) {
-                when (selectedTab) { 0 -> ShapePages(state, Modifier.fillMaxSize()); 1 -> MediaTab(state, Modifier.fillMaxSize(), library); 3 -> ObjectPage(state, Modifier.fillMaxSize()); 4 -> TemplatePage(state, Modifier.fillMaxSize()); else -> AudioTab(state, Modifier.fillMaxSize(), library) }
+                when (selectedTab) { 5 -> AssetWorkspacePage(state, Modifier.fillMaxSize(), false); 6 -> AssetWorkspacePage(state, Modifier.fillMaxSize(), true); 0 -> ShapePages(state, Modifier.fillMaxSize()); 1 -> MediaTab(state, Modifier.fillMaxSize(), library); 3 -> ObjectPage(state, Modifier.fillMaxSize()); 4 -> TemplatePage(state, Modifier.fillMaxSize()); else -> AudioTab(state, Modifier.fillMaxSize(), library) }
             }
         }
         QuickBar(state, Modifier.width(64.dp).fillMaxHeight())

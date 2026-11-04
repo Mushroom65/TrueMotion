@@ -34,6 +34,8 @@ internal fun Scene.withGroupScene(path: List<Long>, changed: Scene): Scene {
     val merged = edited.media.fold(this) { scene, record -> scene.withMedia(record) }
     return merged.update(id) {
         var node = it.node.withChild("scene", stored.node)
+        // Manual edits turn generated exposures into an ordinary group; never overwrite them later.
+        if (it.isMediaSwitch && stored != original) node = node.withChild("trueMediaSwitch", null).withChild("trueSwitchSource", null)
         // Linked elements are refreshed from their source on load. A local edit becomes an instance copy.
         if (stored != original && it.link != null) node = node.with("trueSourceLink", it.link).with("link", null)
         it.copy(node = node)

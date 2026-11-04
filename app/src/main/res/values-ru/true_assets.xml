@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="asset_tab">Библиотека</string>
+    <string name="asset_help">Импортируйте файлы в библиотеку проекта, добавляйте их как слои или выберите медиаслой и задайте ключи замены. Работает в основном редакторе. Видео начинается заново и зацикливается на каждом ключе замены.</string>
+    <string name="asset_import">Добавить медиа</string>
+    <string name="asset_target">Выбранный слой: %1$s</string>
+    <string name="asset_remove_key">Удалить ключ замены</string>
+    <string name="asset_empty">Библиотека проекта пуста. Добавьте изображения, видео или аудио.</string>
+    <string name="asset_add_layer">Добавить в сцену</string>
+    <string name="asset_key">Заменить на этом кадре ◆</string>
+    <string name="asset_remove">Удалить</string>
+    <string name="rig_tab">Риги и модели</string>
+    <string name="rig_help">Создайте корневую кость, затем дочерние. Выберите рисунок или медиа на таймлайне, откройте эту вкладку, выберите кость и привяжите слой. Анимируйте поворот ключами или используйте IK цепочки из двух костей. Длина задаёт точку присоединения НОВЫХ дочерних костей; существующие суставы перемещайте через «Трансформацию». Риг из отдельных деталей, без деформации сетки.</string>
+    <string name="rig_bones">Кости</string>
+    <string name="rig_saved">Сохранённые модели</string>
+    <string name="rig_name">Имя новой кости</string>
+    <string name="rig_bone">Кость</string>
+    <string name="rig_length">Длина кости (1–10000 px)</string>
+    <string name="rig_root">+ Корневая кость</string>
+    <string name="rig_child">+ Дочерняя кость</string>
+    <string name="rig_keyed">Анимировать ключами (выключение заменяет всю дорожку)</string>
+    <string name="rig_rotation">Поворот: %1$d°</string>
+    <string name="rig_edit_timeline">Выбрать кость на таймлайне</string>
+    <string name="rig_set_length">Задать длину</string>
+    <string name="rig_bind_help">Выбрано слоёв рисунка: %1$d. Привязка сохраняет их текущую анимацию и положение.</string>
+    <string name="rig_bind">Привязать к этой кости</string>
+    <string name="rig_unbind">Отвязать</string>
+    <string name="rig_ik_help">Цель IK X/Y задаётся относительно начала родительской кости в координатах её родителя. Используйте цепочку без масштабирования, с дочерним суставом в точке (длина родителя, 0). Недостижимая цель ограничивается длиной цепочки.</string>
+    <string name="rig_flip">Сменить сгиб</string>
+    <string name="rig_ik">Задать позу IK двух костей</string>
+    <string name="rig_rest_save">Запомнить исходную позу</string>
+    <string name="rig_rest_restore">Восстановить исходную позу</string>
+    <string name="rig_save_help">Сохраните выбранный риг со всеми связанными слоями или всю сцену, сняв выделение. Медиа копируется вместе с моделью. Вставленные модели — независимые редактируемые группы: откройте группу для работы с костями и рисунками.</string>
+    <string name="rig_model_name">Название модели / новое имя</string>
+    <string name="rig_save">Сохранить модель</string>
+    <string name="rig_empty">Пока нет сохранённых моделей.</string>
+    <string name="rig_model_info">Костей: %1$d · слоёв: %2$d</string>
+    <string name="rig_rename">Переименовать</string>
+    <string name="rig_ik_invalid">Для IK нужны масштаб 1, отсутствие наклона и дочерний сустав в точке (длина родителя, 0). Восстановите исходную позу или исправьте трансформацию.</string>
+</resources>

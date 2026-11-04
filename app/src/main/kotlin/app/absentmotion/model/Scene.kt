@@ -153,7 +153,7 @@ value class Scene(val node: XmlNode) {
     private fun withChildren(children: List<XmlNode>): Scene {
         val end = children.filter { it.name in LAYER_TAGS }.maxOfOrNull { Layer(it).endTime } ?: 0
         val removed = node.mediaUris() - node.copy(children = children).mediaUris()
-        return Scene(node.copy(children = children.filterNot { it.name == "media" && it["uri"] in removed }).with("totalTime", "$end"))
+        return Scene(node.copy(children = children.filterNot { it.name == "media" && it["trueLibrary"] != "true" && it["uri"] in removed }).with("totalTime", "$end"))
     }
 
     fun toXml(): String = node.with("modifiedTime", "${System.currentTimeMillis()}").toXml()

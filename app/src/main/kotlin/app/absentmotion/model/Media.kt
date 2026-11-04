@@ -51,6 +51,7 @@ fun XmlNode.mediaUris(): Set<String> = buildSet {
 
 fun XmlNode.storedMediaUris(): Set<String> = mediaUris() + buildSet {
     fun walk(node: XmlNode) {
+        if (node.name == "media" && node["trueLibrary"] == "true") node["uri"]?.let(::add)
         if (node.name == "ai") listOf("original", "result").forEach { key -> node[key]?.let(::add) }
         sequenceOf(node["trueVector"], node["templatePPId"]).filterNotNull().firstOrNull { it.startsWith("truevector:v1:") }
             ?.let { addAll(app.truemotion.vector.VectorPortable.mediaUris(it)) }
@@ -78,6 +79,7 @@ fun XmlNode.modelUris(): Set<String> = buildSet {
 fun XmlNode.mapMediaUris(change: (String) -> String): XmlNode {
     val keys = when (name) { "media" -> listOf("uri"); "ai" -> listOf("original", "result"); else -> listOf("fillImage", "fillVideo", "src") }
     var self = keys.fold(this) { node, key -> node[key]?.let { node.with(key, change(it)) } ?: node }
+    if (name == "kf" && (this["fillImage"] != null || this["fillVideo"] != null)) this["v"]?.let { self = self.with("v", change(it)) }
     for (attribute in listOf("trueVector", "templatePPId")) self[attribute]?.takeIf { it.startsWith("truevector:v1:") }?.let { marker ->
         self = self.with(attribute, app.truemotion.vector.VectorPortable.remap(marker, change))
     }
@@ -87,6 +89,8 @@ fun XmlNode.mapMediaUris(change: (String) -> String): XmlNode {
 fun Scene.mediaName(uri: String): String = (media(uri)?.filename?.takeIf { it.isNotEmpty() }
     ?: (runCatching { java.net.URI(uri).path }.getOrNull() ?: uri).substringAfterLast('/').takeIf { it.isNotEmpty() } ?: "media").substringAfterLast('/')
 
-fun Scene.replaceMedia(old: String, with: MediaDeclaration): Scene =
-    Scene(node.copy(children = node.children.filterNot { it.name == "media" && it["uri"] == old })
-        .mapMediaUris { if (it == old) with.uri else it }).withMedia(with)
+fun Scene.replaceMedia(old: String, with: MediaDeclaration): Scene {
+    val record = if (media(old)?.node?.get("trueLibrary") == "true") MediaDeclaration(with.node.with("trueLibrary", "true")) else with
+    return Scene(node.copy(children = node.children.filterNot { it.name == "media" && it["uri"] == old })
+        .mapMediaUris { if (it == old) with.uri else it }).withMedia(record)
+}

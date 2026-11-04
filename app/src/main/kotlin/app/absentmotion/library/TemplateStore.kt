@@ -21,7 +21,8 @@ data class SavedTemplate(val id: String, val scene: Scene, val thumbnail: File?,
     val title: String get() = scene.title
 }
 
-class TemplateStore(private val root: File, private val open: (String) -> InputStream?) {
+class TemplateStore(private val root: File, private val open: (String) -> InputStream?, private val requireLocalMedia: Boolean) {
+    constructor(root: File, open: (String) -> InputStream?) : this(root, open, false)
     constructor(root: File, resolver: ContentResolver) : this(root, { uri -> resolver.openInputStream(Uri.parse(uri)) })
     constructor(context: Context) : this(File(context.filesDir, "templates"), context.applicationContext.contentResolver)
 
@@ -85,6 +86,7 @@ class TemplateStore(private val root: File, private val open: (String) -> InputS
             val copied = if (folder != null) copyModel(folder, File(URI(uri)).canonicalFile.name, dir)
                 else runCatching { open(uri) }.getOrNull()?.use { input -> publish(dir, safeName(scene.mediaName(uri))) { input.copyTo(it) } }
             if (copied != null) moved[uri] = copied.toURI().toString()
+            else if (requireLocalMedia) throw IOException("Cannot copy model media: ${scene.mediaName(uri)}")
         }
         return Scene(scene.node.mapMediaUris { moved[it] ?: it })
     }

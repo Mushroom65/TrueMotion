@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="asset_tab">Library</string>
+    <string name="asset_help">Import assets into this project library, add them as layers, or select a media layer and set held replacement keys. Works in the main editor. Videos restart and loop at each replacement key.</string>
+    <string name="asset_import">Import media</string>
+    <string name="asset_target">Selected layer: %1$s</string>
+    <string name="asset_remove_key">Remove replacement key</string>
+    <string name="asset_empty">Your project library is empty. Import images, videos or audio.</string>
+    <string name="asset_add_layer">Add to scene</string>
+    <string name="asset_key">Replace at this frame ◆</string>
+    <string name="asset_remove">Remove</string>
+    <string name="rig_tab">Rigs &amp; models</string>
+    <string name="rig_help">Create a root bone, then child bones. Select artwork in the timeline, reopen this tab, choose a bone and bind it. Animate rotation with keys or solve a two-bone chain with IK. Bone length sets the attachment point for NEW children; move existing joints with Transform. Rigid cutout rigs, without mesh deformation.</string>
+    <string name="rig_bones">Bones</string>
+    <string name="rig_saved">Saved models</string>
+    <string name="rig_name">New bone name</string>
+    <string name="rig_bone">Bone</string>
+    <string name="rig_length">Bone length (1–10000 px)</string>
+    <string name="rig_root">+ Root bone</string>
+    <string name="rig_child">+ Child bone</string>
+    <string name="rig_keyed">Animate with keyframes (off replaces the whole track)</string>
+    <string name="rig_rotation">Rotation: %1$d°</string>
+    <string name="rig_edit_timeline">Select bone in timeline</string>
+    <string name="rig_set_length">Set length</string>
+    <string name="rig_bind_help">Selected artwork layers: %1$d. Binding preserves their current animation and placement.</string>
+    <string name="rig_bind">Bind to this bone</string>
+    <string name="rig_unbind">Detach</string>
+    <string name="rig_ik_help">IK target X/Y is relative to the parent bone origin in its parent coordinate system. Use an unscaled chain with its child joint at (parent length, 0). Unreachable targets are clamped.</string>
+    <string name="rig_flip">Flip elbow</string>
+    <string name="rig_ik">Pose two-bone IK</string>
+    <string name="rig_rest_save">Capture rest pose</string>
+    <string name="rig_rest_restore">Restore rest pose</string>
+    <string name="rig_save_help">Save the selected rig and all connected layers, or the whole scene when nothing is selected. Media is copied with the model. Inserted models are independent editable groups: open the group to edit bones and artwork.</string>
+    <string name="rig_model_name">Model name / new name</string>
+    <string name="rig_save">Save model</string>
+    <string name="rig_empty">No saved models yet.</string>
+    <string name="rig_model_info">%1$d bones · %2$d layers</string>
+    <string name="rig_rename">Rename</string>
+    <string name="rig_ik_invalid">IK requires unit scale, no skew, and a child joint at (parent length, 0). Restore the rest pose or correct Transform first.</string>
+</resources>

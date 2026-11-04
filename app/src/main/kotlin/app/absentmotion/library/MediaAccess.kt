@@ -59,7 +59,7 @@ class MediaAccess private constructor(private val filesDir: File?, private val o
             val inside = if (path.startsWith(base) && path != base) base.relativize(path) else null
             when (inside?.getName(0)?.toString()) {
                 "media" -> inside.nameCount > 1
-                "templates" -> inside.nameCount > 3 && inside.getName(2).toString() == "media"
+                "templates", "rig-models" -> inside.nameCount > 3 && inside.getName(2).toString() == "media"
                 else -> false
             }
         } catch (e: Exception) {

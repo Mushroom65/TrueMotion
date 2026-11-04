@@ -1,0 +1,85 @@
+package app.absentmotion.model
+
+/** Library membership is explicit, so unused assets survive layer deletion and packaging. */
+val Scene.libraryMedia: List<MediaDeclaration> get() = media.filter { it.node["trueLibrary"] == "true" }
+
+fun Scene.withLibraryMedia(record: MediaDeclaration): Scene {
+    val marked = MediaDeclaration(record.node.with("trueLibrary", "true"))
+    return if (media(record.uri) == null) withMedia(marked) else Scene(node.copy(children = node.children.map {
+        if (it.name == "media" && it["uri"] == record.uri) it.with("trueLibrary", "true") else it
+    }))
+}
+
+fun Scene.withoutLibraryMedia(uri: String): Scene = Scene(node.copy(children = node.children.mapNotNull {
+    if (it.name != "media" || it["uri"] != uri) it
+    else if (uri in node.mediaUris()) it.with("trueLibrary", null) else null
+}))
+
+val Layer.isMediaSwitch: Boolean get() = kind == "embedScene" && node.child("trueMediaSwitch") != null
+val Layer.mediaSwitchKeys: List<Keyframe> get() = node.child("trueMediaSwitch")?.keyframes.orEmpty()
+
+/** Native, editable scene clips implement held media keys in preview AND all export paths. */
+fun Scene.withMediaSwitch(id: Long, timeMs: Int, media: MediaDeclaration): Scene {
+    val original = layer(id) ?: return this
+    if (timeMs !in original.startTime..original.endTime) return this
+    if (!media.type.startsWith("image/") && !media.type.startsWith("video/")) return this
+    if (!original.isMediaSwitch && (original.kind != "shape" || original.mediaFill == null)) return this
+    val span = (original.endTime - original.startTime).coerceAtLeast(1)
+    val local = (timeMs - original.startTime).toFloat() / span
+    val initial = original.mediaFill
+    val source = original.node.child("trueSwitchSource") ?: original.node.copy(name = "trueSwitchSource",
+        attrs = original.node.attrs - setOf("id", "parent", "clippingMask", "blending"),
+        children = original.node.children.filterNot { it.name in setOf("transform", "effect", "shadow", "speedMap") })
+    val first = if (original.isMediaSwitch) original.mediaSwitchKeys else listOf(Keyframe(0f, initial!!.uri,
+        extra = mapOf((if (initial.video) "fillVideo" else "fillImage") to initial.uri)))
+    val key = Keyframe(local, media.uri, extra = mapOf((if (media.type.startsWith("video/")) "fillVideo" else "fillImage") to media.uri))
+    val keys = (first.filter { frameAt(original.timeOf(it.t)) != frameAt(timeMs) } + key).sortedBy { it.t }
+    return withMedia(media).update(id) { makeMediaSwitch(it, source, keys) }
+}
+
+fun Scene.withoutMediaSwitchKey(id: Long, timeMs: Int): Scene {
+    val layer = layer(id)?.takeIf { it.isMediaSwitch } ?: return this
+    val keys = layer.mediaSwitchKeys
+    val here = keys.indexOfFirst { frameAt(layer.timeOf(it.t)) == frameAt(timeMs) }
+    // Keep the initial exposure; removing later keys extends the previous exposure.
+    if (here <= 0) return this
+    return update(id) { makeMediaSwitch(it, it.node.child("trueSwitchSource")!!, keys.filterIndexed { i, _ -> i != here }) }
+}
+
+private fun Scene.makeMediaSwitch(layer: Layer, source: XmlNode, keys: List<Keyframe>): Layer {
+    val length = (layer.endTime - layer.startTime).coerceAtLeast(1)
+    val sorted = keys.sortedBy { it.t }
+    val initial = sorted.lastOrNull { it.t <= 0f } ?: sorted.firstOrNull()
+    val exposures = listOfNotNull(initial?.copy(t = 0f)) + sorted.filter { it.t > 0f && it.t <= 1f }
+    val clips = exposures.mapIndexedNotNull { i, key ->
+        val start = (layer.timeOf(key.t) - layer.startTime).coerceAtLeast(0)
+        val end = exposures.getOrNull(i + 1)?.let { layer.timeOf(it.t) - layer.startTime - 1 } ?: length
+        if (end < start) return@mapIndexedNotNull null
+        val video = key.extra["fillVideo"] != null
+        val geometry = source.retimed(layer.startTime, layer.endTime, layer.startTime + start, layer.startTime + end)
+        var clip = Layer(geometry.copy(name = "shape", attrs = geometry.attrs - setOf("fillImage", "fillVideo", "inTime", "outTime", "speed") + mapOf(
+            "id" to "${Layer.newId()}", "label" to (media(key.v)?.title ?: ""), "startTime" to "$start", "endTime" to "$end",
+            "fillType" to "media", (if (video) "fillVideo" else "fillImage") to key.v,
+        ))).withTransform("location", width / 2f, height / 2f, 0f)
+        if (video) clip = clip.copy(node = clip.node.with("inTime", "0").with("speed", "1").with("loop", "true"))
+        clip.node
+    }
+    val nested = Scene.create("", width, height, fps, 0).node.with("totalTime", "$length").with("retime", "off").copy(children = clips)
+    val outerChildren = layer.node.children.filter { it.name !in setOf("trueMediaSwitch", "trueSwitchSource", "scene", "property", "fillColor", "path-stroke", "speedMap") }
+    return layer.copy(node = XmlNode("embedScene", layer.node.attrs - setOf("s", "fillImage", "fillVideo", "fillType", "inTime", "outTime", "speed", "loop"),
+        outerChildren + source + XmlNode("trueMediaSwitch").withKeyframes(keys) + nested))
+}
+
+/** Timeline edits can move/delete replacement diamonds; keep native exposures synchronized. */
+internal fun Scene.refreshMediaSwitches(previous: Scene): Scene = Scene(node.copy(children = node.children.map { child ->
+    if (child.name !in Scene.LAYER_TAGS) return@map child
+    val layer = Layer(child)
+    val old = previous.layer(layer.id) ?: return@map child
+    if (layer.isMediaSwitch && (layer.node.child("trueMediaSwitch") != old.node.child("trueMediaSwitch") ||
+            layer.node.child("trueSwitchSource") != old.node.child("trueSwitchSource") ||
+            layer.endTime - layer.startTime != old.endTime - old.startTime)) {
+        val source = layer.node.child("trueSwitchSource") ?: return@map child
+        val keys = layer.mediaSwitchKeys.ifEmpty { old.mediaSwitchKeys.take(1) }
+        makeMediaSwitch(layer, source, keys).node
+    } else child
+}))
