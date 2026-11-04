@@ -1,0 +1,127 @@
+name: Publish True Motion preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: 'Full commit SHA to build and release'
+        required: true
+        type: string
+      tag:
+        description: 'Version tag, matching version.properties (for example v0.15.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.source_commit }}
+          fetch-depth: 2
+      - name: Validate source and version
+        run: |
+          python3 - <<'PY'
+          import os, re, subprocess
+          from pathlib import Path
+          source = os.environ['SOURCE_COMMIT']
+          assert re.fullmatch(r'[0-9a-f]{40}', source), 'Use a full commit SHA'
+          assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == source
+          version = dict(line.split('=', 1) for line in Path('version.properties').read_text().splitlines() if '=' in line)['versionName']
+          assert re.fullmatch(r'\d+\.\d+\.\d+', version), 'Unsupported version'
+          assert os.environ['RELEASE_TAG'] == 'v' + version, 'Tag does not match the source version'
+          with open(os.environ['GITHUB_ENV'], 'a') as out:
+              out.write('RELEASE_VERSION=' + version + '\n')
+          PY
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install SDK packages
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.0 build-tools;37.0.0'
+      - name: Audit, test and build
+        run: |
+          python3 tools/source_audit.py
+          python3 tools/verify_native.py
+          bash gradlew -PtrueMotionNativePrebuilt=true :app:testCompatDebugUnitTest :app:assembleCompatDebug --no-daemon
+      - name: Prepare release files
+        run: |
+          mkdir -p build/release
+          cp app/build/outputs/apk/compat/debug/app-compat-debug.apk "build/release/TrueMotion-${RELEASE_VERSION}-compatible-arm64-debug.apk"
+          cp testdata/rig-model-demo.xml build/release/
+          git archive --format=zip --output="build/release/TrueMotion-${RELEASE_VERSION}-source.zip" HEAD
+          git format-patch -1 HEAD --stdout > "build/release/TrueMotion-${RELEASE_VERSION}-source.patch"
+          python3 - <<'PY'
+          import hashlib, json, os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          reports = list(Path('app/build/test-results/testCompatDebugUnitTest').glob('TEST-*.xml'))
+          assert reports, 'Missing test reports'
+          totals = {key: 0 for key in ('tests', 'failures', 'errors', 'skipped')}
+          for report in reports:
+              root = ET.parse(report).getroot()
+              for key in totals:
+                  totals[key] += int(root.get(key, '0'))
+          assert totals['tests'] > 0 and totals['failures'] == 0 and totals['errors'] == 0, totals
+          release = Path('build/release')
+          (release / 'test-summary.json').write_text(json.dumps(totals) + '\n')
+          version = os.environ['RELEASE_VERSION']
+          names = [f'TrueMotion-{version}-compatible-arm64-debug.apk', f'TrueMotion-{version}-source.zip', f'TrueMotion-{version}-source.patch', 'rig-model-demo.xml']
+          (release / 'SHA256SUMS.txt').write_text(''.join(hashlib.file_digest((release / name).open('rb'), 'sha256').hexdigest() + '  ' + name + '\n' for name in names))
+          PY
+          "${ANDROID_HOME}/build-tools/37.0.0/apksigner" verify "build/release/TrueMotion-${RELEASE_VERSION}-compatible-arm64-debug.apk"
+      - name: Upload files and publish preview
+        run: |
+          if gh release view "$RELEASE_TAG" --json isDraft,targetCommitish,body > build/release/existing-release.json; then
+            python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          existing = json.loads(Path('build/release/existing-release.json').read_text())
+          assert existing['isDraft'], 'Refusing to replace assets in a published release'
+          assert existing['targetCommitish'] == os.environ['SOURCE_COMMIT'], 'Draft points at another source commit'
+          Path('build/release/RELEASE_NOTES_RU.md').write_text(existing['body'])
+          PY
+          else
+            cp "docs/RELEASE_${RELEASE_VERSION//./_}_RU.md" build/release/RELEASE_NOTES_RU.md
+            gh release create "$RELEASE_TAG" --target "$SOURCE_COMMIT" --title "True Motion ${RELEASE_VERSION} (preview)" --notes-file build/release/RELEASE_NOTES_RU.md --draft --prerelease
+          fi
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          report = json.loads(Path('build/release/test-summary.json').read_text())
+          notes = Path('build/release/RELEASE_NOTES_RU.md')
+          url = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          passed = report['tests'] - report['skipped']
+          with notes.open('a') as out:
+              out.write(f"\n\nAPK этого релиза собран и проверен [GitHub Actions]({url}) из коммита `{os.environ['SOURCE_COMMIT']}`. Проверка CI: {passed} тестов пройдено, {report['skipped']} пропущено, ошибок нет. Debug-подпись этой сборки может отличаться от ранее установленных APK.\n")
+          PY
+          gh release upload "$RELEASE_TAG" \
+            "build/release/TrueMotion-${RELEASE_VERSION}-compatible-arm64-debug.apk" \
+            "build/release/TrueMotion-${RELEASE_VERSION}-source.zip" \
+            "build/release/TrueMotion-${RELEASE_VERSION}-source.patch" \
+            build/release/rig-model-demo.xml build/release/SHA256SUMS.txt build/release/test-summary.json --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --prerelease --notes-file build/release/RELEASE_NOTES_RU.md
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: TrueMotion-release-${{ inputs.tag }}
+          path: |
+            build/release/
+            app/build/reports/tests/testCompatDebugUnitTest/
+          if-no-files-found: warn
