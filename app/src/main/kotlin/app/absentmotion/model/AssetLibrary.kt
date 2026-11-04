@@ -29,7 +29,7 @@ fun Scene.withMediaSwitch(id: Long, timeMs: Int, media: MediaDeclaration): Scene
     val initial = original.mediaFill
     val source = original.node.child("trueSwitchSource") ?: original.node.copy(name = "trueSwitchSource",
         attrs = original.node.attrs - setOf("id", "parent", "clippingMask", "blending"),
-        children = original.node.children.filterNot { it.name in setOf("transform", "effect", "shadow", "speedMap", "trueAssetLibrary") })
+        children = original.node.children.filterNot { it.name in setOf("transform", "effect", "shadow", "speedMap", "trueAssetLibrary", "trueRigBind") })
     val first = if (original.isMediaSwitch) original.mediaSwitchKeys else listOf(Keyframe(0f, initial!!.uri,
         extra = mapOf((if (initial.video) "fillVideo" else "fillImage") to initial.uri)))
     val key = Keyframe(local, media.uri, extra = mapOf((if (media.type.startsWith("video/")) "fillVideo" else "fillImage") to media.uri))
@@ -117,7 +117,7 @@ fun Scene.withStaticLayerAsset(id: Long, media: MediaDeclaration): Scene = withL
     if (original == null) layer.copy(node = layer.node.with("fillType", "media").with("fillImage", media.uri.takeUnless { media.type.startsWith("video/") })
         .with("fillVideo", media.uri.takeIf { media.type.startsWith("video/") }))
     else {
-        val placement = layer.node.children.filter { it.name in setOf("transform", "effect", "shadow", "trueAssetLibrary") }
+        val placement = layer.node.children.filter { it.name in setOf("transform", "effect", "shadow", "trueAssetLibrary", "trueRigBind") }
         val node = XmlNode("shape", original.attrs + layer.node.attrs, original.children + placement)
             .with("fillType", "media").with("fillImage", media.uri.takeUnless { media.type.startsWith("video/") })
             .with("fillVideo", media.uri.takeIf { media.type.startsWith("video/") })

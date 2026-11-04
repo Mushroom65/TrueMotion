@@ -2085,4 +2085,7 @@
     <string name="depth_light">Свет сцены · модели</string>
     <string name="depth_azimuth">Азимут °</string>
     <string name="depth_elevation">Высота °</string>
+    <string name="property_link_title">Связь</string>
+    <string name="property_unlink">Отвязать</string>
+    <string name="repeat_controls_help">Копии следуют за этим слоем. Смещения, масштаб и прозрачность копии меняются обычными свойствами слоя.</string>
 </resources>

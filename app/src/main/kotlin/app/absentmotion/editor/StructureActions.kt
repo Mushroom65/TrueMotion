@@ -12,6 +12,10 @@ import app.absentmotion.model.cutBetween
 import app.absentmotion.model.withAnimation
 import app.absentmotion.model.withTransition
 import app.absentmotion.model.bones
+import app.absentmotion.model.rigBinding
+import app.absentmotion.model.Pt
+import kotlin.math.hypot
+import kotlin.math.atan2
 import app.absentmotion.model.boneAncestors
 import app.absentmotion.model.pruneBones
 import app.absentmotion.model.Layer
@@ -237,7 +241,8 @@ private fun Scene.parentOf(layer: Layer): Layer? =
     layer.node["parent"]?.toLongOrNull()?.takeIf { it != layer.id }?.let { id -> layer(id) }
 
 internal fun Scene.place(layer: Layer, timeMs: Int, depth: Int = 0): Place =
-    compose(ownPlace(layer, timeMs, fps), parentOf(layer)?.takeIf { depth <= 16 }?.let { place(it, timeMs, depth + 1) })
+    if (chain(layer).any { it.rigBinding!=null }) rigPlace(layer,timeMs)
+    else compose(ownPlace(layer, timeMs, fps), parentOf(layer)?.takeIf { depth <= 16 }?.let { place(it, timeMs, depth + 1) })
 
 internal fun Scene.chain(layer: Layer?): List<Layer> = generateSequence(layer) { parentOf(it) }.take(17).toList()
 
@@ -323,15 +328,25 @@ internal fun Scene.rebased(layer: Layer, parentId: Long?): Layer? {
     val new = parentId?.let { id -> layer(id) }
     val outer = chain(old) + chain(new)
     val moved = Layer(layer.node).rebaked(outer.any { it.moves() }, outer.flatMap { it.keyframeTimes() }, fps) { own, ms ->
-        val world = compose(own, old?.let { place(it, ms) })
+        val binding=layer.rigBinding?.let { b ->
+            val scale=hypot(b.a,b.b)
+            Place(b.tx.toFloat(),b.ty.toFloat(),0f,0f,scale.toFloat(),((b.a*b.d-b.b*b.c)/scale).toFloat(),Math.toDegrees(atan2(b.b,b.a)).toFloat(),b.z)
+        }
+        val world = compose(if(binding==null)own else compose(own,binding), old?.let { place(it, ms) })
         if (new == null) world else decompose(world, place(new, ms))
     } ?: return null
-    return moved.copy(node = moved.node.with("parent", parentId?.toString()))
+    return moved.copy(node = moved.node.with("parent", parentId?.toString()).withChild("trueRigBind",null))
 }
 
 internal fun Scene.withWorldLocation(layer: Layer, timeMs: Int, change: (x: Float, y: Float) -> Pair<Float, Float>): Layer {
     val world = place(layer, timeMs)
     val (x, y) = change(world.x, world.y)
+    if(layer.rigBinding!=null) {
+        val local=rigParentAffine(layer,timeMs).inverse()?.map(Pt(x,y))?:return layer
+        val pivot=layer.at(timeMs,fps).pivot
+        val imported=layer.node.child("transform")?.get("originMode")=="alight"
+        return layer.withTransform("location",local.x-if(imported)pivot[0] else 0f,local.y-if(imported)pivot[1] else 0f,layer.location[2])
+    }
     val parent = chain(layer).getOrNull(1) ?: return layer.withTransform("location", x, y, layer.location[2])
     val local = decompose(world.copy(x = x, y = y), place(parent, timeMs)) ?: return layer
     return layer.withTransform("location", local.x, local.y, layer.location[2])

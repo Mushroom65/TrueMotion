@@ -17,6 +17,7 @@ import app.absentmotion.model.Layer
 import app.absentmotion.model.PropRef
 import androidx.compose.ui.res.stringResource
 import app.absentmotion.R
+import app.absentmotion.ui.editor.SceneLightControls
 
 private val ModelParams = listOf(
     EffectParam("size", "", "float", "300", 1f, 20000f, 1f) to R.string.model_param_size,
@@ -29,14 +30,18 @@ private val ModelParams = listOf(
 @Composable
 internal fun ModelPanel(state: EditorState, layer: Layer, modifier: Modifier = Modifier) {
     var active by remember { mutableStateOf(ModelParams[0].first) }
-    SideEffect { state.keyTarget = KeyTarget(PropRef.shape(active.id), active.default) }
+    var light by remember { mutableStateOf(false) }
+    val global=state.scene.node["trueDepth3D"]=="true" && !state.editingGroup
+    SideEffect { state.keyTarget = if(global&&light)null else KeyTarget(PropRef.shape(active.id), active.default) }
     Column(modifier.verticalScroll(rememberScrollState())) {
-        for ((plain, label) in ModelParams) {
+        for ((plain, label) in if(global)ModelParams.take(2) else ModelParams) {
             val param = plain.copy(label = stringResource(label))
-            EffectNumbers(state, param, layer.propText(param.id) ?: param.default, true, active.id == param.id, { active = plain }) { text, gesture ->
+            EffectNumbers(state, param, layer.propText(param.id) ?: param.default, true, active.id == param.id, { active = plain;light=false }) { text, gesture ->
                 active = plain
+                light=false
                 state.editSelected(if (gesture) "model-${param.id}" else null) { it.withProp(param.id, "float", text) }
             }
         }
+        if(global) SceneLightControls(state) {light=true}
     }
 }

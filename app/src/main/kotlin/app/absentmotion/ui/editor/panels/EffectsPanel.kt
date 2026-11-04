@@ -38,6 +38,9 @@ import app.absentmotion.ui.editor.MenuRow
 import app.absentmotion.ui.editor.PanelHeight
 import app.absentmotion.ui.editor.PanelIcons
 import app.absentmotion.ui.editor.Reorder
+import app.absentmotion.ui.editor.PropertyLinkEditor
+import app.absentmotion.ui.editor.RepeatedCopiesControls
+import app.absentmotion.ui.editor.hasValueLink
 import app.absentmotion.ui.editor.rememberReorder
 import app.absentmotion.ui.export.ExportIcons
 import app.absentmotion.ui.home.HelpScreen
@@ -92,6 +95,8 @@ internal fun EffectsPanel(state: EditorState, modifier: Modifier) {
     val pathText = usable && definition.id == TEXT_PATH_ID
     val pinTarget = if (puppet) pin?.let { name -> instance.effectProperty(name)?.let { KeyTarget(PropRef.effect(index, name), it.valueAt(layer.t) ?: "0,0", "vec2") } } else null
     val target = pinTarget ?: active?.takeIf { usable && definition.shown(it, instance, layer.t) }?.let { KeyTarget(PropRef.effect(index, it.id), it.missingDefault, it.type) }
+    var linking by remember(layer.id,index,target?.ref) {mutableStateOf(false)}
+    val linkable=target?.ref?.let {ref->layer.numericChannels().any {it.ref==ref}}==true && layer.copySource==null
     val point = active?.takeIf { it.kind == "point" && usable && !pathText }
     val adjust = remember(layer.id, index, point?.id, point?.label) {
         point?.let { param ->
@@ -122,7 +127,7 @@ internal fun EffectsPanel(state: EditorState, modifier: Modifier) {
     }
     Row(modifier.background(Am.Panel)) {
         Column(Modifier.width(168.px).heightIn(max = PanelHeight).fillMaxHeight()) {
-            EffectFrameButton(PanelIcons.Back, stringResource(R.string.topbar_back), Modifier.weight(1f)) { state.stepBack() }
+            EffectFrameButton(PanelIcons.Back, stringResource(R.string.topbar_back), Modifier.weight(1f)) { if(linking)linking=false else state.stepBack() }
             val onKeyframe = target != null && layer.onKeyframe(target.ref)
             EffectFrameButton(if (onKeyframe) PanelIcons.KeyframeRemove else PanelIcons.Keyframe, stringResource(if (onKeyframe) R.string.a11y_remove_keyframe else R.string.a11y_add_keyframe), Modifier.weight(1f), target != null) { state.toggleKeyframe() }
             EffectFrameButton(PanelIcons.Easing, stringResource(R.string.a11y_easing), Modifier.weight(1f), target != null) { if (target != null && layer.easing(target.ref) != null) state.easingOpen = true else state.easingHint = true }
@@ -138,9 +143,13 @@ internal fun EffectsPanel(state: EditorState, modifier: Modifier) {
                     }
                 }
             }
+            if(linkable) TextButton({linking=!linking},Modifier.weight(1f).fillMaxWidth()) {
+                Text(stringResource(R.string.property_link_title),color=if(linking||layer.hasValueLink(target.ref))Am.Accent else Am.OnDark,fontSize=10.sp,maxLines=1)
+            }
         }
         Swap(index, Modifier.weight(1f).fillMaxHeight(), rise = 0.dp) {
-            if (instance == null) {
+            if(linking && target!=null) PropertyLinkEditor(state,target.ref,Modifier.fillMaxSize()) {linking=false}
+            else if (instance == null) {
                 val scroll = rememberScrollState()
                 val marks = layer.aiMarks
                 val reorder = rememberReorder(state, scroll, top = 6.5.dp + (AiMarkRowHeight + AiMarkRowGap) * marks.size)
@@ -155,6 +164,7 @@ internal fun EffectsPanel(state: EditorState, modifier: Modifier) {
                             }
                         }
                     }
+                    if(layer.kind !in setOf("audio","camera","nullobj")) RepeatedCopiesControls(state,layer)
                     Box(Modifier.padding(6.5.dp).fillMaxWidth().height(37.dp).clip(RowShape).background(Am.Button)
                         .clickable { state.playing = false; state.effectBrowserOpen = true }, contentAlignment = Alignment.Center) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

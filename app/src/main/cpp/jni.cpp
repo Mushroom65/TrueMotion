@@ -1,7 +1,9 @@
 #include <android/hardware_buffer_jni.h>
 #include <android/bitmap.h>
 #include <android/native_window_jni.h>
+#if defined(__aarch64__)
 #include <asm/hwcap.h>
+#endif
 #include <jni.h>
 #include <sys/auxv.h>
 

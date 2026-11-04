@@ -22,7 +22,7 @@ class NativeEngine(backend: Backend) : AutoCloseable {
     fun timing(target: Long): String = nativeTiming(handle, target)
 
     fun setScene(xml: String) {
-        nativeSetScene(handle, (if (xml.contains("<bone ")) app.absentmotion.model.XmlNode.parse(xml).withNativeBones().toXml() else xml).toByteArray())?.let { throw IllegalArgumentException(it) }
+        nativeSetScene(handle, (if (xml.contains("<bone ") || xml.contains("<trueRigBind ")) app.absentmotion.model.XmlNode.parse(xml).withNativeBones().toXml() else xml).toByteArray())?.let { throw IllegalArgumentException(it) }
         sceneSetCount++
     }
     internal var sceneSetCount = 0L

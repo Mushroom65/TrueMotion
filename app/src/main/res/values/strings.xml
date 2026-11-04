@@ -2053,4 +2053,7 @@
     <string name="depth_light">Scene light · models</string>
     <string name="depth_azimuth">Azimuth °</string>
     <string name="depth_elevation">Elevation °</string>
+    <string name="property_link_title">Link</string>
+    <string name="property_unlink">Unlink</string>
+    <string name="repeat_controls_help">Copies follow this layer. Edit each copy with the usual Transform and Opacity controls.</string>
 </resources>

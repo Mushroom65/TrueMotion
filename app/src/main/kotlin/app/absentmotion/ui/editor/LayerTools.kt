@@ -69,6 +69,8 @@ import androidx.compose.ui.unit.sp
 import app.absentmotion.editor.EditorPanel
 import app.absentmotion.editor.openRig
 import app.absentmotion.model.isMediaSwitch
+import app.absentmotion.model.numericChannels
+import app.absentmotion.model.copySource
 import app.absentmotion.editor.EditorState
 import app.absentmotion.editor.openColorGrade
 import app.absentmotion.editor.KeypadRequest
@@ -214,7 +216,6 @@ fun LayerTools(state: EditorState, modifier: Modifier = Modifier, side: Boolean 
         val saved = stringResource(R.string.screenshot_saved)
         val failed = stringResource(R.string.screenshot_failed)
         val more = listOfNotNull(
-            if (kind !in setOf("audio", "camera", "nullobj")) Tile(MotionTools) { state.playing = false; state.panel = EditorPanel.MotionTools } else null,
             if (kind == "shape" || state.selected?.isMediaSwitch == true) Tile(Library) { state.playing = false; state.easingOpen = false; state.panel = EditorPanel.Library } else null,
             if (kind !in setOf("camera", "audio", "nullobj")) Tile(Rig) { state.openRig() } else null,
             if (state.selected?.canCrop == true) Tile(Crop) { state.openCrop() } else null,
@@ -235,9 +236,8 @@ fun LayerTools(state: EditorState, modifier: Modifier = Modifier, side: Boolean 
         )
         val direct = more.filter { it.tool === Library || it.tool === Rig }
         val baseRows = if (direct.isEmpty()) rows else listOf(direct + listOf(transform, effects)) + rows.map { row -> row.filterNot { it.tool === MoveTransform || it.tool === Effects } }.filter { it.isNotEmpty() }
-        val motion = more.firstOrNull { it.tool === MotionTools }
-        val visibleRows = if (motion == null) baseRows else baseRows.dropLast(1) + listOf(baseRows.last() + motion)
-        val extra = more.filterNot { it.tool === Library || it.tool === Rig || it.tool === MotionTools }
+        val visibleRows = baseRows
+        val extra = more.filterNot { it.tool === Library || it.tool === Rig }
         if (side) TileRows((visibleRows.flatten() + extra).chunked(2), 2)
         else if (extra.isEmpty()) TileRows(visibleRows, null)
         else key(state.selectedId) {
@@ -292,7 +292,6 @@ private class Tool(@StringRes val label: Int, val icon: ImageVector, val iconY: 
 private class Tile(val tool: Tool, val enabled: Boolean = true, val active: Boolean = false, val onLongClick: (() -> Unit)? = null, val menu: (@Composable () -> Unit)? = null, val onClick: () -> Unit)
 
 private val Library = Tool(R.string.asset_tab, ChromeIcons.MediaTab, 18.1f)
-private val MotionTools = Tool(R.string.motion_tools, PanelIcons.MoveTransform, 18.1f)
 private val Rig = Tool(R.string.rig_viewport_title, PanelIcons.MoveTransform, 18.1f)
 private val ColorFill = Tool(R.string.layer_tool_fill_color, PanelIcons.PaintBucket, 18.1f)
 private val BorderShadow = Tool(R.string.layer_tool_frame_shadow, PanelIcons.BorderShadow, 18.1f)
@@ -353,7 +352,6 @@ fun LayerPanel(state: EditorState, modifier: Modifier = Modifier) {
     val selected = state.selected ?: return
     val panel = state.panel
     if (panel == EditorPanel.Library) { LayerLibraryPanel(state, modifier); return }
-    if (panel == EditorPanel.MotionTools) { MotionToolsPanel(state, modifier); return }
     app.absentmotion.ui.editor.panels.BorderShadowLifetime(state, selected.id, panel)
     val layer = selected
     if (panel == EditorPanel.AudioMotion) {
@@ -392,9 +390,11 @@ fun LayerPanel(state: EditorState, modifier: Modifier = Modifier) {
         return
     }
     val target = if (named) known else state.keyTarget
+    var linking by remember(layer.id,target?.ref,panel) { mutableStateOf(false) }
+    val linkable=target?.ref?.let {ref->layer.numericChannels().any {it.ref==ref}}==true && layer.copySource==null
     Row(modifier.tutorialGuard(any = true).background(Am.Panel)) {
         Column(Modifier.width(168.px).heightIn(max = PanelHeight).fillMaxHeight()) {
-            FrameButton(PanelIcons.Back, stringResource(R.string.topbar_back), Modifier.weight(1f).fillMaxWidth()) { state.stepBack() }
+            FrameButton(PanelIcons.Back, stringResource(R.string.topbar_back), Modifier.weight(1f).fillMaxWidth()) { if(linking)linking=false else state.stepBack() }
             if (target == null) {
                 FrameButton(PanelIcons.Keyframe, stringResource(R.string.a11y_add_keyframe), Modifier.weight(1f).fillMaxWidth().dimmed(), enabled = false)
                 FrameButton(PanelIcons.Easing, stringResource(R.string.a11y_easing), Modifier.weight(1f).fillMaxWidth().dimmed(), enabled = false)
@@ -413,10 +413,14 @@ fun LayerPanel(state: EditorState, modifier: Modifier = Modifier) {
             } else {
                 Spacer(Modifier.weight(1f))
             }
+            if(linkable) androidx.compose.material3.TextButton({linking=!linking},Modifier.weight(1f).fillMaxWidth()) {
+                Text(stringResource(R.string.property_link_title),color=if(linking||layer.hasValueLink(target.ref))Am.Accent else Am.OnDark,fontSize=10.sp,maxLines=1)
+            }
         }
         Box(Modifier.weight(1f).fillMaxHeight().tutorialGuard().background(if (move) Am.PanelInset else Am.Panel)) {
             if (panel == EditorPanel.BorderShadow) BorderShadowTabs(Modifier.align(Alignment.CenterEnd).width(168.px).fillMaxHeight().background(Am.Panel))
-            when (panel) {
+            if(linking && target!=null) PropertyLinkEditor(state,target.ref,Modifier.fillMaxSize()) {linking=false}
+            else when (panel) {
                 EditorPanel.MoveTransform -> Swap(tab to anchor, Modifier.fillMaxSize().tutorialTarget("pad"), rise = 0.dp) { MoveTransformPanel(state, layer, tab, turn, Modifier.fillMaxSize(), anchor) }
                 EditorPanel.ColorFill -> ColorFillPanel(state, layer, Modifier.fillMaxSize())
                 EditorPanel.EditShape -> EditShapePanel(state, layer, Modifier.fillMaxSize())
@@ -426,7 +430,7 @@ fun LayerPanel(state: EditorState, modifier: Modifier = Modifier) {
                 EditorPanel.Camera -> CameraPanel(state, layer, Modifier.fillMaxSize())
                 EditorPanel.Model -> ModelPanel(state, layer, Modifier.fillMaxSize())
                 EditorPanel.Edge -> app.absentmotion.ui.editor.panels.EdgePanel(state, layer, Modifier.fillMaxSize())
-                EditorPanel.Tools, EditorPanel.EditText, EditorPanel.Effects, EditorPanel.Crop, EditorPanel.AudioMotion, EditorPanel.Library, EditorPanel.MotionTools -> {}
+                EditorPanel.Tools, EditorPanel.EditText, EditorPanel.Effects, EditorPanel.Crop, EditorPanel.AudioMotion, EditorPanel.Library -> {}
             }
             Box(Modifier.width(2.px).fillMaxHeight().background(PanelDark))
             if (move) Box(Modifier.align(Alignment.CenterEnd).width(2.px).fillMaxHeight().background(PanelDark))

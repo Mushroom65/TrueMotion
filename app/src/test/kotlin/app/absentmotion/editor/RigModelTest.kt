@@ -119,4 +119,74 @@ class RigModelTest {
         assertTrue(scene.node.withNativeBones().toXml().contains("nullobj"))
         assertEquals(scene.bones,Scene.parse(scene.toXml()).bones)
     }
+
+    @Test fun bindingToAnAnimatedBoneKeepsOriginalKeysAndLetsTheBoneDriveArtwork() {
+        val before=artwork().add(Layer(XmlNode.parse("""<bone id="1" length="100" startTime="0" endTime="2999"><transform><location value="100,150,0"/><rotation><kf t="0" v="0"/><kf t="1" v="90"/></rotation></transform></bone>""")))
+        val transform=before.layer(3)!!.node.child("transform")
+        val at=before.place(before.layer(3)!!,1500)
+        val bound=before.withRigParent(3,1,1500)
+        assertEquals(transform,bound.layer(3)!!.node.child("transform"))
+        assertTrue(bound.layer(3)!!.keyframeTimes().isEmpty())
+        assertEquals(at.x,bound.place(bound.layer(3)!!,1500).x,.001f)
+        assertEquals(at.y,bound.place(bound.layer(3)!!,1500).y,.001f)
+        assertTrue(abs(bound.place(bound.layer(3)!!,2500).y-at.y)>10f)
+        assertEquals(bound,bound.withRigParent(3,1,2500))
+    }
+
+    @Test fun rebindingAndDeletingAnimatedBonesNeverBakeTheArtworkPerFrame() {
+        val animation=XmlNode("location").withKeyframes(listOf(Keyframe(0f,"200,150,0"),Keyframe(1f,"250,170,0")))
+        val source=artwork().update(3) { it.withElement(PropRef.Location,animation) }
+            .add(Layer(XmlNode.parse("""<bone id="1" length="100" startTime="0" endTime="2999"><transform><location value="100,150,0"/><rotation><kf t="0" v="0"/><kf t="1" v="90"/></rotation></transform></bone>""")))
+            .add(Layer(XmlNode.parse("""<bone id="2" length="100" startTime="0" endTime="2999"><transform><location value="300,200,0"/><rotation><kf t="0" v="20"/><kf t="1" v="-40"/></rotation></transform></bone>""")))
+        val original=source.layer(3)!!.node.child("transform")
+        val first=source.withRigParent(3,1,1000)
+        val before=first.place(first.layer(3)!!,2000)
+        val second=first.withRigParent(3,2,2000)
+        assertEquals(original,second.layer(3)!!.node.child("transform"))
+        assertEquals(before.x,second.place(second.layer(3)!!,2000).x,.001f)
+        val detached=second.withRigChildrenDetached(2,2000).remove(2)
+        assertEquals(original,detached.layer(3)!!.node.child("transform"))
+        assertEquals(2,detached.layer(3)!!.keyframes(PropRef.Location).size)
+        assertEquals(before.y,detached.place(detached.layer(3)!!,2000).y,.001f)
+        val compiled=Scene(detached.node.withNativeBones())
+        val bridge=compiled.layer(compiled.layer(3)!!.node["parent"]!!.toLong())!!
+        assertEquals("nullobj",bridge.kind)
+        assertTrue(bridge.keyframeTimes().isEmpty())
+    }
+
+    @Test fun staticBindingPreservesCurvesMirrorsAndAnchorsWithoutNewAnimation() {
+        val source=artwork().add(Layer(XmlNode.parse("""<nullobj id="10" startTime="0" endTime="2999"><transform><location value="50,70,0"/><rotation value="30"/><scale value="-2,0.8"/><pivot value="4,7,0"/></transform></nullobj>""")))
+            .update(3) {it.copy(node=it.node.with("parent","10"))}
+            .add(Layer(XmlNode.parse("""<bone id="1" length="100" startTime="0" endTime="2999"><transform><location value="100,150,0"/><rotation value="-40"/><scale value="1.2,0.7"/></transform></bone>""")))
+        val world=source.rigAffine(source.layer(3)!!,1000)
+        val bound=source.withRigParent(3,1,1000)
+        val next=bound.rigAffine(bound.layer(3)!!,1000)
+        for(p in listOf(Pt(0f,0f),Pt(50f,30f),Pt(-20f,70f))) {
+            assertEquals(world.map(p).x,next.map(p).x,.001f)
+            assertEquals(world.map(p).y,next.map(p).y,.001f)
+        }
+        assertEquals(source.layer(3)!!.node.child("transform"),bound.layer(3)!!.node.child("transform"))
+        val restored=Scene.parse(bound.toXml())
+        assertEquals(bound.layers,restored.layers)
+        assertEquals(bound.bones,restored.bones)
+        val compiled=Scene(bound.node.withNativeBones())
+        val native=compiled.rigAffine(compiled.layer(3)!!,1000)
+        for(p in listOf(Pt(0f,0f),Pt(50f,30f))) {
+            assertEquals(world.map(p).x,native.map(p).x,.003f)
+            assertEquals(world.map(p).y,native.map(p).y,.003f)
+        }
+    }
+
+    @Test fun libraryReplacementKeepsTheBindingOnlyOnItsOuterLayer() {
+        val image=MediaDeclaration(XmlNode("media",mapOf("uri" to "file:///rig.png","type" to "image/png")))
+        val source=artwork().withMedia(image).update(3) {it.copy(node=it.node.with("fillType","media").with("fillImage",image.uri))}
+            .withDrawnBone(3,null,Pt(100f,150f),Pt(200f,150f),1,0)
+        val binding=source.layer(3)!!.rigBinding
+        val animated=source.withMediaSwitch(3,1000,image)
+        assertEquals(binding,animated.layer(3)!!.rigBinding)
+        assertTrue(animated.layer(3)!!.nested!!.layers.all {it.rigBinding==null})
+        val restored=animated.withStaticLayerAsset(3,image)
+        assertEquals(binding,restored.layer(3)!!.rigBinding)
+        assertEquals(200f,restored.place(restored.layer(3)!!,1000).x,.001f)
+    }
 }

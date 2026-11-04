@@ -58,6 +58,9 @@ internal fun PreviewModePanel(state: EditorState, modifier: Modifier = Modifier)
         ModeCell(cell, true, { state.gridMode = !state.gridMode }, stringResource(R.string.camera_grid)) { GridIcon(state.gridMode) }
         ModeCell(cell, selected, { state.soloMode = (state.soloMode + 1) % 3 }, stringResource(R.string.a11y_solo)) { SoloIcon(state.soloMode, selected) }
         ModeCell(cell, cameraToggle, { state.cameraMode = !state.cameraMode }, stringResource(R.string.camerapanel_tab_camera_view)) { CameraIcon(state.cameraMode, cameraToggle) }
+        ModeCell(cell,!state.editingGroup,{state.playing=false;state.edit {app.absentmotion.model.Scene(it.node.with("trueDepth3D",if(it.node["trueDepth3D"]=="true")null else "true"))}},stringResource(R.string.depth_enable)) {
+            Text("3D",color=if(state.scene.node["trueDepth3D"]=="true")Am.Accent else Am.OnDark,fontSize=12.sp)
+        }
         val quality = state.settings.previewQuality
         ModeCell(cell, true, { state.settings.previewQuality = PreviewQuality.entries[(quality.ordinal + 1) % PreviewQuality.entries.size] }) {
             Text(stringResource(quality.label), color = if (quality == PreviewQuality.Full) Color.White else Am.Accent, fontSize = 10.sp, maxLines = 1)

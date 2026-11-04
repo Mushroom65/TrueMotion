@@ -23,8 +23,7 @@ fun solveTwoBoneIK(a: Float, b: Float, x: Float, y: Float, flipped: Boolean): Tw
 
 internal fun Scene.rigLocal(world: Pt, parentId: Long?, time: Int): Pt {
     val parent = parentId?.let(::layer) ?: return world
-    val local = decompose(Place(world.x, world.y, 0f, 0f, 1f, 1f, 0f), place(parent, time)) ?: return world
-    return Pt(local.x, local.y)
+    return rigAffine(parent,time).inverse()?.map(world) ?: world
 }
 
 /** Draw a bone on the selected artwork and bind it in the same undoable operation. */
@@ -42,7 +41,7 @@ internal fun Scene.withDrawnBone(artId: Long, parentId: Long?, from: Pt, to: Pt,
     if (parent != null) bone = bone.copy(node = bone.node.with("parent", "${parent.id}"))
     bone = bone.copy(node = bone.node.withChild("trueRest", bone.node.child("transform")!!.copy(name = "trueRest")))
     val next = add(bone)
-    return if (bindArtwork) next.update(art.id) { next.rebased(it, bone.id) ?: it } else next
+    return if (bindArtwork) next.withRigParent(art.id,bone.id,time) else next
 }
 
 internal data class RigAttachment(val parent: Long, val point: Pt)
@@ -88,8 +87,7 @@ internal fun EditorState.drawRigBone(parentId: Long?, from: Pt, to: Pt) {
 
 internal fun EditorState.bindViewportBone(id: Long) {
     val art = selected ?: return
-    val next = scene.rebased(art, id) ?: return
-    edit { it.update(art.id) { next } }
+    edit { it.withRigParent(art.id,id,sampleMs) }
     rigBoneId = id
 }
 
@@ -97,7 +95,7 @@ internal fun EditorState.poseViewportBone(id: Long, target: Pt, rootHandle: Bool
     val bone = scene.layer(id)?.takeIf { it.isBone } ?: return
     val at = bone.at(sampleMs, scene.fps)
     if (rootHandle) {
-        val p = scene.rigLocal(target, bone.node["parent"]?.toLongOrNull(), sampleMs)
+        val p = scene.rigParentAffine(bone,sampleMs).inverse()?.map(target) ?: return
         edit("rig-pose") { s -> s.update(id, sampleMs) { b ->
             val seeded = if (rigKeyed && b.keyframes(PropRef.Location).isEmpty()) b.withElement(PropRef.Location, XmlNode("location").withKeyframes(listOf(Keyframe(0f, formatFloats(b.location))))) else b
             if (rigKeyed) seeded.withTransform("location", p.x, p.y, b.location[2]) else b.withElement(PropRef.Location, XmlNode("location", mapOf("value" to formatFloats(floatArrayOf(p.x, p.y, b.location[2])))))
@@ -105,13 +103,13 @@ internal fun EditorState.poseViewportBone(id: Long, target: Pt, rootHandle: Bool
         return
     }
     val parent = bone.node["parent"]?.toLongOrNull()?.let { scene.layer(it) }
-    if (allowIK && rigTool == 2 && parent?.isBone == true && abs(at.location[0] - parent.rigLength) < .01f && abs(at.location[1]) < .01f) {
-        val p = scene.rigLocal(target, parent.node["parent"]?.toLongOrNull(), sampleMs)
+    if (allowIK && rigTool == 2 && parent?.isBone == true && bone.rigBinding==null && abs(at.location[0] - parent.rigLength) < .01f && abs(at.location[1]) < .01f) {
+        val p = scene.rigParentAffine(parent,sampleMs).inverse()?.map(target) ?: return
         val origin = parent.at(sampleMs, scene.fps).location
         val a = solveTwoBoneIK(parent.rigLength, bone.rigLength, p.x - origin[0], p.y - origin[1], rigFlip)
         edit("rig-pose") { s -> s.update(parent.id, sampleMs) { it.withRigRotation(a.root, rigKeyed) }.update(id, sampleMs) { it.withRigRotation(a.child, rigKeyed) } }
     } else {
-        val p = scene.rigLocal(target, parent?.id, sampleMs)
+        val p = scene.rigParentAffine(bone,sampleMs).inverse()?.map(target) ?: return
         val location = at.location
         val angle = Math.toDegrees(atan2((p.y - location[1]).toDouble(), (p.x - location[0]).toDouble())).toFloat()
         edit("rig-pose") { it.update(id, sampleMs) { b -> b.withRigRotation(angle, rigKeyed) } }
@@ -127,6 +125,6 @@ internal fun EditorState.toggleRigKey() {
 internal fun EditorState.deleteViewportBone() {
     val id = rigBoneId ?: return
     val related = scene.boneAncestors(setOf(id)).map { it.id }.toSet()
-    edit { it.unparentChildrenOf(setOf(id)).remove(id).pruneBones(related) }
+    edit { it.withRigChildrenDetached(id,sampleMs).remove(id).pruneBones(related) }
     rigBoneId = null
 }
