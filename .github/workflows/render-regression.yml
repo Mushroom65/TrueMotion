@@ -1,0 +1,63 @@
+name: Android GPU render regression
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: 'Full source SHA'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  renderer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.source_commit }}
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'ndk;30.0.16248370 platforms;android-37.0 build-tools;37.0.0'
+      - uses: actions/cache@v4
+        id: skia
+        with:
+          path: |
+            third_party/skia
+            third_party/gn-src
+          key: skia-95ee33d7-android28-x64-v1
+          restore-keys: skia-95ee33d7-android28-arm64-v1
+      - name: Build x86 Skia and the actual renderer
+        env:
+          ANDROID_NDK: ${{ env.ANDROID_HOME }}/ndk/30.0.16248370
+          AM_NATIVE_ABI: x86_64
+        run: |
+          if [[ ! -f third_party/skia/out/android-x64-compat/libskia.a ]]; then
+            bash tools/build_skia.sh compatx64
+          fi
+          bash tools/build_engine_only.sh
+          mkdir -p build/native-test/x86_64
+          cp .native-engine-build/libamengine.so build/native-test/x86_64/
+          bash gradlew -PtrueMotionNativePrebuilt=true -PtrueMotionTestAbi=x86_64 :app:assembleCompatDebug :app:assembleCompatDebugAndroidTest --no-daemon
+      - name: Enable KVM
+        run: sudo chmod a+rw /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -feature Vulkan
+          disable-animations: true
+          script: bash tools/test_android_depth.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: Android-depth-regression
+          path: build/render-regression/
+          if-no-files-found: warn

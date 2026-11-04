@@ -2052,7 +2052,7 @@ static bool SharedDepth(SkCanvas* canvas,const std::vector<Layer>& layers,int wi
     }
     const auto rgba=buffer.resolve();
     const auto info=SkImageInfo::Make(w,h,kRGBA_8888_SkColorType,kPremul_SkAlphaType,SkColorSpace::MakeSRGB());
-    auto image=SkImages::RasterFromData(info,SkData::MakeWithCopy(rgba.data(),rgba.size()),(size_t)w*4);
+    auto image=Uploaded(SkImages::RasterFromData(info,SkData::MakeWithCopy(rgba.data(),rgba.size()),(size_t)w*4),false);
     if(!image) return false;
     canvas->save();canvas->resetMatrix();canvas->drawImage(image,bounds.left(),bounds.top());canvas->restore();
     return true;

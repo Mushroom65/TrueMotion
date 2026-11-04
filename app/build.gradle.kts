@@ -7,6 +7,8 @@ plugins {
 
 val appVersion = Properties().apply { rootProject.file("version.properties").inputStream().use { load(it) } }
 val nativePrebuilt = providers.gradleProperty("trueMotionNativePrebuilt").orNull == "true"
+val nativeTestAbi = providers.gradleProperty("trueMotionTestAbi").orNull
+require(nativeTestAbi == null || nativeTestAbi == "x86_64")
 
 android {
     namespace = "app.absentmotion"
@@ -103,7 +105,7 @@ android {
             dimension = "distribution"
             manifestPlaceholders["variant"] = "compat"
             minSdk = 26
-            ndk { abiFilters += "arm64-v8a" }
+            ndk { abiFilters += nativeTestAbi ?: "arm64-v8a" }
             buildConfigField("boolean", "COMPATIBLE", "true")
             externalNativeBuild { cmake { arguments += "-DAM_COMPAT=ON" } }
         }
@@ -118,7 +120,7 @@ android {
     }
 
     sourceSets {
-        if (nativePrebuilt) named("main") { jniLibs.srcDir("native-prebuilt") }
+        if (nativePrebuilt) named("main") { jniLibs.srcDir(if (nativeTestAbi == null) "native-prebuilt" else rootProject.file("build/native-test")) }
         named("compat") {
             kotlin.directories += "src/foss/kotlin"
             assets.directories += "src/foss/assets"

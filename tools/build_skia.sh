@@ -8,6 +8,7 @@ case "${1:-}" in
     "") ;;
     compat) OUT=out/android-arm64-compat; API=28 ;;
     compat32) OUT=out/android-arm-compat; API=26; CPU=arm ;;
+    compatx64) OUT=out/android-x64-compat; API=28; CPU=x64 ;;
     *) echo "usage: tools/build_skia.sh [compat|compat32]" >&2; exit 2 ;;
 esac
 SKIA="$ROOT/third_party/skia"
