@@ -1,0 +1,43 @@
+name: Build native renderer
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: 'Full source commit SHA'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.source_commit }}
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'ndk;30.0.16248370'
+      - uses: actions/cache@v4
+        id: skia
+        with:
+          path: |
+            third_party/skia
+            third_party/gn-src
+          key: skia-95ee33d7-android28-arm64-v1
+      - name: Build pinned Skia
+        if: steps.skia.outputs.cache-hit != 'true'
+        env:
+          ANDROID_NDK: ${{ env.ANDROID_HOME }}/ndk/30.0.16248370
+        run: bash tools/build_skia.sh compat
+      - name: Build engine
+        env:
+          ANDROID_NDK: ${{ env.ANDROID_HOME }}/ndk/30.0.16248370
+        run: bash tools/build_engine_only.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-renderer-${{ inputs.source_commit }}
+          path: .native-engine-build/libamengine.so
+          include-hidden-files: true
+          if-no-files-found: error
