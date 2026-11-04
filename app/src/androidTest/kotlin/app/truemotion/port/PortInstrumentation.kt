@@ -23,6 +23,7 @@ class PortInstrumentation : Instrumentation() {
     private var nextOnly = false
     private var next013 = false
     private var next014 = false
+    private var depth017 = false
     private var legacy = false
     private var legacyThumbs = false
     private var legacyGl = false
@@ -33,6 +34,7 @@ class PortInstrumentation : Instrumentation() {
         nextOnly = arguments?.getString("next012") == "true"
         next013 = arguments?.getString("next013") == "true"
         next014 = arguments?.getString("next014") == "true"
+        depth017 = arguments?.getString("depth017") == "true"
         legacyThumbs = arguments?.getString("legacy") == "thumbs"
         legacy = arguments?.getString("legacy") in setOf("true", "thumbs")
         legacyGl = arguments?.getString("backend") == "gl"
@@ -42,6 +44,15 @@ class PortInstrumentation : Instrumentation() {
         val report = JSONObject()
         try {
             val context = targetContext
+            if (depth017) {
+                val directory = File(context.filesDir,if (legacyGl) "depth017-gl-validation" else "depth017-validation").apply { mkdirs() }
+                NativeEngine(if (legacyGl) NativeEngine.Backend.GL else NativeEngine.Backend.GRAPHITE).use { engine ->
+                    check(!engine.failed) { engine.info }
+                    report.put("depth017",Depth017Probe.run(engine,directory))
+                }
+                report.put("ok",true); File(directory,"report.json").writeText(report.toString(2))
+                finish(0,Bundle().apply { putString("report",report.toString()) });return
+            }
             if(next014 || legacy) {
                 val directory=File(context.filesDir,if(legacy) (if(legacyGl) "legacy014-gl-validation" else "legacy014-validation") else "next014-validation").apply { mkdirs() }
                 NativeEngine(if(legacyGl) NativeEngine.Backend.GL else NativeEngine.Backend.GRAPHITE).use { engine ->
