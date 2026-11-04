@@ -1579,7 +1579,7 @@ int EngineImpl::frame(Target* target, int64_t presentTimeNs, bool sync,
     if (fBackend == Backend::kGraphite) {
         {
             SkAutoCanvasRestore restore(surface->getCanvas(), true);
-            const bool grabbing = fEffects.grabs(fScene.layers);
+            const bool grabbing = fScene.depth3D || fEffects.grabs(fScene.layers);
             sk_sp<SkSurface> layer = target->encoder || grabbing ? SkSurfaces::RenderTarget(fRecorder.get(), surface->imageInfo()) : nullptr;
             if (layer) {
                 const std::function<void()> flush = [this] { this->flushPartial(); };
