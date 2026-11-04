@@ -166,6 +166,7 @@ private val MinLower = 140.dp
 
 @Composable
 internal fun LowerPanels(state: EditorState, addLibrary: AddLibrary, top: Boolean = false, transitionHere: Boolean = true) {
+    if (state.rigEditing) return
     Swap(
         when {
             state.motionPathOpen && state.selectedId != null -> "motionPath"

@@ -60,7 +60,7 @@ internal fun WideEditorBody(state: EditorState, onExit: () -> Unit, addLibrary: 
         val timeline = (maxHeight - 88.dp - 260.dp).coerceIn(140.dp, 320.dp)
         val textEdit = state.panel == EditorPanel.EditText && state.selected?.kind == "text"
         val textUi = remember { TextEditUi() }
-        val side = textEdit || ((state.selectedId != null || state.framePhotoOpen) && !state.addOpen && !MultiSelect.active)
+        val side = !state.rigEditing && (textEdit || ((state.selectedId != null || state.framePhotoOpen) && !state.addOpen && !MultiSelect.active))
         val reserve = if (side) SideWidth else 0.dp
         val extendedSide = side && !textEdit && (state.audioMotionEditing || state.particleEditing || state.framePhotoOpen || state.motionPathOpen)
         Column(Modifier.fillMaxSize()) {

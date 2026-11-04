@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <scene title="True Motion — Two-bone rig" width="1080" height="1080" exportWidth="1080" exportHeight="1080" fps="30" totalTime="2999" bgcolor="#ff18202a" retime="off">
-  <nullobj id="91001" label="Upper bone" startTime="0" endTime="2999" trueBone="true" trueBoneLength="240">
+  <bone id="91001" label="Upper bone" startTime="0" endTime="2999" length="240">
     <transform><location value="360,540,0"/><rotation><kf t="0" v="-35"/><kf t="0.5" v="30"/><kf t="1" v="-35"/></rotation></transform>
     <trueRest><location value="360,540,0"/><rotation value="0"/><scale value="1,1"/><pivot value="0,0,0"/></trueRest>
-  </nullobj>
-  <nullobj id="91002" label="Lower bone — IK" parent="91001" startTime="0" endTime="2999" trueBone="true" trueBoneLength="200">
+  </bone>
+  <bone id="91002" label="Lower bone — IK" parent="91001" startTime="0" endTime="2999" length="200">
     <transform><location value="240,0,0"/><rotation><kf t="0" v="70"/><kf t="0.5" v="-60"/><kf t="1" v="70"/></rotation></transform>
     <trueRest><location value="240,0,0"/><rotation value="0"/><scale value="1,1"/><pivot value="0,0,0"/></trueRest>
-  </nullobj>
+  </bone>
   <shape id="91003" label="Upper artwork" parent="91001" s=".rect" startTime="0" endTime="2999" fillType="color">
     <transform><location value="120,0,0"/></transform><property name="size" type="vec2" value="120,32"/><fillColor value="#ff4bd5bc"/>
   </shape>

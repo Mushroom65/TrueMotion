@@ -62,6 +62,7 @@ fun XmlNode.storedMediaUris(): Set<String> = mediaUris() + buildSet {
 
 fun XmlNode.imageUris(): Set<String> = buildSet {
     fun walk(n: XmlNode) {
+        if (n.name in setOf("trueAssetLibrary", "trueSwitchSource", "trueMediaSwitch")) return
         n["fillImage"]?.let { add(it) }
         n.children.forEach(::walk)
     }

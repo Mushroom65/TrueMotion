@@ -241,7 +241,7 @@ class Importer(
     private fun report(scene: Scene, missing: List<String>, migrated: EffectMigration.Result?): List<Pair<UiText, List<UiText>>> {
         val layers = allLayers(scene.node).toList()
         val unknown = sortedSetOf<String>()
-        scene.node.children.filter { it.name !in Scene.LAYER_TAGS && it.name != "media" && it.name != "bookmark" }.forEach { unknown += "<${it.name}>" }
+        scene.node.children.filter { it.name !in Scene.LAYER_TAGS && it.name != "media" && it.name != "bookmark" && it.name != "bone" }.forEach { unknown += "<${it.name}>" }
         for (layer in layers) for (attr in layer.attrs.keys - KnownAttributes) unknown += "${layer.name} $attr"
         val effects = layers.flatMap { l -> l.children.filter { it.name == "effect" }.mapNotNull { it["id"] }.distinct() }
             .groupingBy { it }.eachCount().filterKeys { !canRun(it) }
@@ -283,7 +283,7 @@ class Importer(
         private fun uniqueLayerIds(root: XmlNode): XmlNode {
             val taken = HashSet<Long>()
             fun collect(node: XmlNode) {
-                if (node.name in Scene.LAYER_TAGS) node["id"]?.toLongOrNull()?.let(taken::add)
+                if ((node.name in Scene.LAYER_TAGS || node.name == "bone")) node["id"]?.toLongOrNull()?.let(taken::add)
                 node.children.forEach(::collect)
             }
             collect(root)
@@ -291,14 +291,14 @@ class Importer(
             fun scene(node: XmlNode): XmlNode {
                 val owners = HashMap<Long, Long>()
                 val renumbered = node.children.map { child ->
-                    if (child.name !in Scene.LAYER_TAGS) return@map child
+                    if ((child.name !in Scene.LAYER_TAGS && child.name != "bone")) return@map child
                     val old = child["id"]?.toLongOrNull()?.takeIf { it != 0L }
                     val id = if (old != null && seen.add(old)) old else generateSequence { Layer.newId() }.first { taken.add(it) }
                     if (old != null) owners.putIfAbsent(old, id)
                     if (id == old) child else child.with("id", "$id")
                 }
                 return node.copy(children = renumbered.map { child ->
-                    if (child.name !in Scene.LAYER_TAGS) return@map child
+                    if ((child.name !in Scene.LAYER_TAGS && child.name != "bone")) return@map child
                     val parent = child["parent"]?.toLongOrNull()?.let(owners::get)
                     val linked = (if (parent == null || child["parent"] == "$parent") child else child.with("parent", "$parent")).withSiblingRefs(owners::get)
                     if (linked.name == "embedScene") linked.child("scene")?.let { linked.withChild("scene", scene(it)) } ?: linked else linked

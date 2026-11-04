@@ -54,7 +54,7 @@ value class Scene(val node: XmlNode) {
         return Scene(node.copy(children = node.children.toMutableList().also { it.add(index, media.node) }))
     }
 
-    fun layer(id: Long): Layer? = layers.firstOrNull { it.id == id }
+    fun layer(id: Long): Layer? = node.children.firstOrNull { (it.name in LAYER_TAGS || it.name == "bone") && Layer(it).id == id }?.let(::Layer)
 
     fun layerAt(id: Long, timeMs: Int): Layer? = layer(id)?.at(timeMs, fps)
 
@@ -89,7 +89,7 @@ value class Scene(val node: XmlNode) {
 
     fun update(id: Long, timeMs: Int? = null, change: (Layer) -> Layer): Scene = withChildren(
         node.children.map {
-            if (it.name !in LAYER_TAGS || Layer(it).id != id) it
+            if ((it.name !in LAYER_TAGS && it.name != "bone") || Layer(it).id != id) it
             else change(if (timeMs == null) Layer(it) else Layer(it).at(timeMs, fps)).node
         },
     )
@@ -103,7 +103,7 @@ value class Scene(val node: XmlNode) {
         return next.withChildren(next.node.children + unique.node)
     }
 
-    fun remove(id: Long): Scene = withChildren(node.children.filterNot { it.name in LAYER_TAGS && Layer(it).id == id })
+    fun remove(id: Long): Scene = withChildren(node.children.filterNot { (it.name in LAYER_TAGS || it.name == "bone") && Layer(it).id == id })
 
     fun reorder(id: Long, index: Int): Scene = move(id, index).let { moved ->
         if (moved.layer(id)?.node?.get("pathLayer") == null) moved else moved.update(id) { it.copy(node = it.node.with("pathLayer", null)) }
@@ -161,7 +161,7 @@ value class Scene(val node: XmlNode) {
     companion object {
         val LAYER_TAGS = setOf("shape", "text", "drawing", "embedScene", "camera", "audio", "nullobj", "model")
 
-        fun parse(xml: String) = Scene(XmlNode.parse(xml)).withLegacyMotionPaths()
+        fun parse(xml: String) = Scene(XmlNode.parse(xml).withMigratedBones()).withLegacyMotionPaths()
 
         fun create(title: String, width: Int, height: Int, fps: Int, bgColor: Int) = Scene(
             XmlNode(

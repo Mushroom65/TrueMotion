@@ -37,4 +37,15 @@
     <string name="rig_model_info">Костей: %1$d · слоёв: %2$d</string>
     <string name="rig_rename">Переименовать</string>
     <string name="rig_ik_invalid">Для IK нужны масштаб 1, отсутствие наклона и дочерний сустав в точке (длина родителя, 0). Восстановите исходную позу или исправьте трансформацию.</string>
+    <string name="library_previous_key">Предыдущий ключ медиа</string>
+    <string name="library_next_key">Следующий ключ медиа</string>
+    <string name="library_choose_hint">Выберите медиа. + открывает галерею. ◆ создаёт ключ замены.</string>
+    <string name="library_create_key_hint">Нажмите ◆ на этом кадре, затем выберите медиа для нового ключа.</string>
+    <string name="rig_viewport_title">Риггинг</string>
+    <string name="rig_draw">Кость</string>
+    <string name="rig_pose">Поза</string>
+    <string name="rig_auto_keys">Автоключи</string>
+    <string name="rig_draw_hint">Выберите деталь во вьюпорте. Протяните кость или коснитесь существующей — деталь привяжется сразу. Продолжайте цепочку от сустава.</string>
+    <string name="rig_pose_hint">Тяните конец кости для позы, корневой сустав — для перемещения рига. Масштабируйте двумя пальцами. Сохраняйте через «Мои ресурсы».</string>
+    <string name="rig_ik_mode">IK</string>
 </resources>

@@ -32,7 +32,7 @@ enum class EditorPanel(@StringRes val title: Int) {
     Tools(0), Speed(R.string.edit_panel_time_remapping), MoveTransform(R.string.edit_panel_transform), ColorFill(R.string.edit_panel_fill_color),
     EditShape(R.string.edit_panel_shape_options), EditText(R.string.edit_panel_edit_text),
     BorderShadow(R.string.edit_panel_frame_shadow), Blending(R.string.edit_panel_opacity_blend), Effects(R.string.edit_panel_effects), Camera(R.string.edit_panel_camera_options), Model(R.string.edit_panel_model_options), Crop(R.string.layer_tool_crop), AudioMotion(R.string.true_audio_title),
-    Edge(R.string.cutout_edge),
+    Library(R.string.asset_tab), Edge(R.string.cutout_edge),
 }
 
 data class KeyTarget(val ref: PropRef, val default: String, val type: String = "float")
@@ -117,6 +117,7 @@ class EditorState(
         groupViews += GroupView(frame, canvasZoom, canvasPan, timelineZoom, cameraMode)
         clearSelection()
         cameraMode = false
+        rigEditing = false
         groupPath = groupPath + groupId
         scene = document.groupScene(groupPath)!!
         frame = inner.frameAt(at).coerceIn(0, maxOf(scene.lastFrame, 0))
@@ -135,6 +136,7 @@ class EditorState(
         framePhotoOpen = false
         clearSelection()
         cameraMode = false
+        rigEditing = false
         groupPath = groupPath.dropLast(1)
         scene = document.groupScene(groupPath)!!
         val view = groupViews.removeLastOrNull()
@@ -179,6 +181,11 @@ class EditorState(
     var trueStudioOpen by mutableStateOf(false)
     var framePhotoOpen by mutableStateOf(false)
     var motionPathOpen by mutableStateOf(false)
+    var rigEditing by mutableStateOf(false)
+    var rigBoneId by mutableStateOf<Long?>(null)
+    var rigTool by mutableIntStateOf(0)
+    var rigKeyed by mutableStateOf(true)
+    var rigFlip by mutableStateOf(false)
     var framePhotoSource by mutableStateOf(false)
     var audioMotionTab by mutableIntStateOf(0)
     var trueCommandRevision by mutableIntStateOf(0)

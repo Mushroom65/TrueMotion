@@ -11,6 +11,9 @@ import app.absentmotion.model.canAnimate
 import app.absentmotion.model.cutBetween
 import app.absentmotion.model.withAnimation
 import app.absentmotion.model.withTransition
+import app.absentmotion.model.bones
+import app.absentmotion.model.boneAncestors
+import app.absentmotion.model.pruneBones
 import app.absentmotion.model.Layer
 import app.absentmotion.model.pathAngle
 import app.absentmotion.model.pathEnabled
@@ -144,15 +147,25 @@ internal fun Scene.grouped(ids: Set<Long>, blend: String?, id: Long, label: Stri
     if (inside.isEmpty()) return this
     val stranded = list.indices.filter { i -> list[i].id in inside && list.isMask(i) && list[(i - 1 downTo 0).first { !list.isMask(it) }].id !in inside }
         .map { list[it].id }.toSet()
-    val flat = layers.filter { it.id in inside && it.node["parent"]?.toLongOrNull().let { p -> p != null && p !in inside } }
+    val rigBones = boneAncestors(inside)
+    val rigIds = rigBones.map { it.id }.toSet()
+    val flat = layers.filter { it.id in inside && it.node["parent"]?.toLongOrNull().let { p -> p != null && p !in inside && p !in rigIds } }
         .fold(unparentChildrenOf(inside)) { acc, layer -> acc.update(layer.id) { acc.rebased(it, null) ?: it } }
     val members = flat.layers.filter { it.id in inside }
     val start = members.minOf { it.startTime }
     val end = members.maxOf { it.endTime }
     val top = members.last().id
-    val nested = members.map { layer ->
+    val boneCopies = rigBones.associate { it.id to Layer.newId() }
+    val localBones = rigBones.map { bone ->
+        if (bone.node["parent"]?.toLongOrNull().let { it != null && it !in inside && it !in rigIds }) flat.rebased(bone, null) ?: bone else bone
+    }
+    val nested = (members + localBones).map { layer ->
         val shifted = layer.movedTo(layer.startTime - start).let { if (it.id in stranded) it.copy(node = it.node.with("clippingMask", null)) else it }
-        (if (layer.id == top && blend != null && members.size > 1) shifted.withBlend(blend) else shifted).node
+        val placed = if (layer.id == top && blend != null && members.size > 1) shifted.withBlend(blend) else shifted
+        var node = placed.node
+        boneCopies[layer.id]?.let { node = node.with("id", "$it") }
+        boneCopies[node["parent"]?.toLongOrNull()]?.let { node = node.with("parent", "$it") }
+        node
     }
     val attrs = linkedMapOf("id" to "$id", "label" to label, "startTime" to "$start", "endTime" to "$end")
     if (top in stranded) attrs["clippingMask"] = "true"
@@ -164,7 +177,7 @@ internal fun Scene.grouped(ids: Set<Long>, blend: String?, id: Long, label: Stri
             in inside -> null
             else -> node
         }
-    }))
+    })).pruneBones(rigIds)
 }
 
 fun EditorState.toggleClippingMask() {
@@ -221,7 +234,7 @@ internal fun decompose(w: Place, q: Place): Place? {
 }
 
 private fun Scene.parentOf(layer: Layer): Layer? =
-    layer.node["parent"]?.toLongOrNull()?.takeIf { it != layer.id }?.let { id -> layers.firstOrNull { it.id == id } }
+    layer.node["parent"]?.toLongOrNull()?.takeIf { it != layer.id }?.let { id -> layer(id) }
 
 internal fun Scene.place(layer: Layer, timeMs: Int, depth: Int = 0): Place =
     compose(ownPlace(layer, timeMs, fps), parentOf(layer)?.takeIf { depth <= 16 }?.let { place(it, timeMs, depth + 1) })
@@ -307,7 +320,7 @@ internal fun Layer.rebaked(changing: Boolean, outerTimes: List<Int>, fps: Int, c
 
 internal fun Scene.rebased(layer: Layer, parentId: Long?): Layer? {
     val old = parentOf(layer)
-    val new = parentId?.let { id -> layers.firstOrNull { it.id == id } }
+    val new = parentId?.let { id -> layer(id) }
     val outer = chain(old) + chain(new)
     val moved = Layer(layer.node).rebaked(outer.any { it.moves() }, outer.flatMap { it.keyframeTimes() }, fps) { own, ms ->
         val world = compose(own, old?.let { place(it, ms) })
@@ -325,7 +338,7 @@ internal fun Scene.withWorldLocation(layer: Layer, timeMs: Int, change: (x: Floa
 }
 
 internal fun Scene.unparentChildrenOf(ids: Set<Long>): Scene =
-    layers.filter { it.id !in ids && it.node["parent"]?.toLongOrNull() in ids }
+    (layers + bones).filter { it.id !in ids && it.node["parent"]?.toLongOrNull() in ids }
         .fold(this) { acc, child -> acc.update(child.id) { acc.rebased(it, null) ?: it } }
 
 fun EditorState.setParent(parentId: Long?) {

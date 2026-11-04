@@ -6,13 +6,13 @@ fun copyLayers(
 ): List<Layer> {
     val ids = mutableMapOf<Long, Long>()
     fun collect(node: XmlNode) {
-        if (node.name in Scene.LAYER_TAGS) node["id"]?.toLongOrNull()?.let { ids.getOrPut(it, newId) }
+        if ((node.name in Scene.LAYER_TAGS || node.name == "bone")) node["id"]?.toLongOrNull()?.let { ids.getOrPut(it, newId) }
         node.children.forEach(::collect)
     }
     layers.forEach { collect(it.node) }
     fun remap(node: XmlNode): XmlNode {
         var result = node
-        if (node.name in Scene.LAYER_TAGS) {
+        if ((node.name in Scene.LAYER_TAGS || node.name == "bone")) {
             node["id"]?.toLongOrNull()?.let { result = result.with("id", ids[it]?.toString()) }
             node["parent"]?.toLongOrNull()?.let { result = result.with("parent", ids[it]?.toString() ?: node["parent"].takeIf { preserveOutsideParents }) }
             result = result.withSiblingRefs(ids::get)
@@ -29,8 +29,9 @@ fun copyLayers(
 }
 
 internal fun Scene.withCopiedLayerIds(): Scene {
-    val copies = copyLayers(layers).iterator()
-    return Scene(node.copy(children = node.children.map { if (it.name in Scene.LAYER_TAGS) copies.next().node else it }))
+    val originals = layers + bones
+    val mapped = originals.zip(copyLayers(originals)).associate { (before, after) -> before.id to after.node }
+    return Scene(node.copy(children = node.children.map { if (it.name in Scene.LAYER_TAGS || it.name == "bone") mapped[Layer(it).id] ?: it else it }))
 }
 
 internal fun XmlNode.withSiblingRefs(map: (Long) -> Long?): XmlNode {

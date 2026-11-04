@@ -42,23 +42,61 @@ class RigModelTest {
         assertEquals(60f, keys.last().v.toFloat(), 0.001f)
     }
 
-    @Test fun savedRigIncludesAncestorsAndArtworkAndCopiesHaveIndependentParentIds() {
-        val scene = Scene.parse("""<scene width="400" height="300" fps="30">
-            <media uri="arm" type="image/png"/>
-            <nullobj id="1" label="Root" trueBone="true" startTime="1000" endTime="3999"/>
-            <nullobj id="2" parent="1" label="Child" trueBone="true" startTime="1000" endTime="3999"/>
-            <shape id="3" parent="2" fillImage="arm" startTime="1000" endTime="3999"/>
-            <shape id="4" label="Unrelated" startTime="0" endTime="999"/>
-            </scene>""")
-        val model = scene.rigModel(setOf(2), "Actor")
-        assertEquals("Actor", model.title)
-        assertEquals(3, model.layers.size)
-        assertEquals(2, model.layers.count { it.isRigBone })
-        assertEquals(2999, model.totalTime)
-        assertTrue(model.layers.all { it.startTime == 0 })
-        assertTrue(model.layers.none { it.id in setOf(1L, 2L, 3L, 4L) })
-        val ids = model.layers.map { it.id }.toSet()
-        assertTrue(model.layers.mapNotNull { it.node["parent"]?.toLongOrNull() }.all { it in ids })
-        assertTrue(model.node.storedMediaUris().contains("arm"))
+    private fun artwork(): Scene = Scene.parse("""<scene width="400" height="300" fps="30">
+        <shape id="3" label="Arm" startTime="0" endTime="2999"><transform><location value="200,150,0"/></transform></shape>
+        <shape id="4" label="Hand" startTime="0" endTime="2999"><transform><location value="300,150,0"/></transform></shape>
+        </scene>""")
+
+    @Test fun drawnBoneBindsArtworkWithoutAddingATimelineLayerOrMovingArtwork() {
+        val original = artwork()
+        val scene = original.withDrawnBone(3, null, Pt(100f,150f), Pt(200f,150f), 1, 0)
+        assertEquals(original.layers.map { it.id }, scene.layers.map { it.id })
+        assertEquals(1, scene.bones.size)
+        assertEquals("bone", scene.layer(1)!!.kind)
+        assertEquals("1", scene.layer(3)!!.node["parent"])
+        assertEquals(200f, scene.place(scene.layer(3)!!, 0).x, .001f)
+        assertEquals(150f, scene.place(scene.layer(3)!!, 0).y, .001f)
+        val rotated = scene.update(1) { it.withTransform("rotation",90f) }
+        assertEquals(100f, rotated.place(rotated.layer(3)!!, 0).x, .001f)
+        assertEquals(250f, rotated.place(rotated.layer(3)!!, 0).y, .001f)
+    }
+
+    @Test fun childBoneIsDrawnInParentSpaceAndBindsTheNextPartImmediately() {
+        val scene = artwork().withDrawnBone(3,null,Pt(100f,150f),Pt(200f,150f),1,0)
+            .withDrawnBone(4,1,Pt(200f,150f),Pt(300f,150f),2,0)
+        assertEquals(2, scene.bones.size)
+        assertEquals("1", scene.layer(2)!!.node["parent"])
+        assertEquals("2", scene.layer(4)!!.node["parent"])
+        assertEquals(100f, scene.layer(2)!!.location[0], .001f)
+        assertEquals(0f, scene.layer(2)!!.location[1], .001f)
+        assertEquals(300f, scene.place(scene.layer(4)!!,0).x,.001f)
+    }
+
+    @Test fun groupsAndMyResourcesRetainEditableBonesAndIndependentIds() {
+        val scene = artwork().withDrawnBone(3,null,Pt(100f,150f),Pt(200f,150f),1,0)
+            .withDrawnBone(4,1,Pt(200f,150f),Pt(300f,150f),2,0)
+        assertEquals(setOf(3L,4L),scene.riggedParts(3))
+        val grouped = scene.grouped(scene.riggedParts(3),null,9,"Actor")
+        assertTrue(grouped.bones.isEmpty())
+        val group = grouped.layer(9)!!
+        assertEquals(2,group.nested!!.bones.size)
+        assertEquals(2,group.nested!!.layers.size)
+        val resources = grouped.elementNodes(group,null)
+        assertEquals(1,resources.size)
+        assertEquals(2,Layer(resources.single()).nested!!.bones.size)
+        val copied = group.nested!!.withCopiedLayerIds()
+        val oldIds=(group.nested!!.layers+group.nested!!.bones).map { it.id }.toSet()
+        val newIds=(copied.layers+copied.bones).map { it.id }.toSet()
+        assertTrue(oldIds.intersect(newIds).isEmpty())
+        assertTrue((copied.layers+copied.bones).mapNotNull { it.node["parent"]?.toLongOrNull() }.all { it in newIds })
+    }
+
+    @Test fun oldNullBoneProjectsMigrateAndRendererOnlyReceivesCompiledTransforms() {
+        val scene=Scene.parse("""<scene><nullobj id="1" trueBone="true" trueBoneLength="90"/><shape id="3" parent="1"/></scene>""")
+        assertEquals(listOf(3L),scene.layers.map { it.id })
+        assertEquals(90f,scene.bones.single().rigLength,.001f)
+        assertFalse(scene.toXml().contains("nullobj"))
+        assertTrue(scene.node.withNativeBones().toXml().contains("nullobj"))
+        assertEquals(scene.bones,Scene.parse(scene.toXml()).bones)
     }
 }

@@ -103,7 +103,6 @@ private class Tab(@StringRes val label: Int, val icon: ImageVector)
 private val Tabs = listOf(
     Tab(R.string.add_tab_shape, ChromeIcons.ShapeTab), Tab(R.string.add_tab_media, ChromeIcons.MediaTab), Tab(R.string.add_tab_audio, ChromeIcons.AudioTab),
     Tab(R.string.add_tab_object_asset, ChromeIcons.ObjectTab), Tab(R.string.add_tab_template, ChromeIcons.TemplateTab),
-    Tab(R.string.asset_tab, ChromeIcons.MediaTab), Tab(R.string.rig_tab, ChromeIcons.ObjectTab),
 )
 
 @Composable
@@ -117,7 +116,7 @@ internal fun AddPopup(state: EditorState, modifier: Modifier = Modifier, library
             }
             val body = Modifier.weight(1f).fillMaxWidth().background(Am.Panel).tutorialTarget(if (selectedTab == 1) "add_media" else if (selectedTab == 2) "add_audio" else null)
             Swap(selectedTab, body, rise = 0.dp) {
-                when (selectedTab) { 5 -> AssetWorkspacePage(state, Modifier.fillMaxSize(), false); 6 -> AssetWorkspacePage(state, Modifier.fillMaxSize(), true); 0 -> ShapePages(state, Modifier.fillMaxSize()); 1 -> MediaTab(state, Modifier.fillMaxSize(), library); 3 -> ObjectPage(state, Modifier.fillMaxSize()); 4 -> TemplatePage(state, Modifier.fillMaxSize()); else -> AudioTab(state, Modifier.fillMaxSize(), library) }
+                when (selectedTab) { 0 -> ShapePages(state, Modifier.fillMaxSize()); 1 -> MediaTab(state, Modifier.fillMaxSize(), library); 3 -> ObjectPage(state, Modifier.fillMaxSize()); 4 -> TemplatePage(state, Modifier.fillMaxSize()); else -> AudioTab(state, Modifier.fillMaxSize(), library) }
             }
         }
         QuickBar(state, Modifier.width(64.dp).fillMaxHeight())

@@ -7,6 +7,9 @@ import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import app.absentmotion.R
 import app.absentmotion.audio.audioDeclaration
+import app.absentmotion.editor.EditorPanel
+import app.absentmotion.media.mediaDeclaration
+import app.absentmotion.model.withLayerAsset
 import app.absentmotion.editor.EditorState
 import app.absentmotion.editor.addAudio
 import app.absentmotion.editor.keepCopy
@@ -21,6 +24,7 @@ internal object MediaPicks {
     private var launchSounds: () -> Unit = {}
     private var currentProject: () -> String? = { null }
     private var target: String? = null
+    private var libraryLayer: Long? = null
 
     fun install(owner: Any, visual: () -> Unit, files: () -> Unit, sounds: () -> Unit, project: () -> String?) {
         this.owner = owner
@@ -39,11 +43,11 @@ internal object MediaPicks {
         currentProject = { null }
     }
 
-    fun openVisual() { target = currentProject(); launchVisual() }
+    fun openVisual(layerLibrary: Long? = null) { target = currentProject(); libraryLayer = layerLibrary; launchVisual() }
 
-    fun openFiles() { target = currentProject(); launchFiles() }
+    fun openFiles() { target = currentProject(); libraryLayer = null; launchFiles() }
 
-    fun openSounds() { target = currentProject(); launchSounds() }
+    fun openSounds() { target = currentProject(); libraryLayer = null; launchSounds() }
 
     private val pictures = mutableStateListOf<Pair<Uri, Long>>()
     private val sounds = mutableStateListOf<Pair<Uri, Long>>()
@@ -59,7 +63,22 @@ internal object MediaPicks {
         val pictures = take(pictures, now)
         val sounds = take(sounds, now)
         if (target != null && target != state.projectId) return
-        if (pictures.isNotEmpty()) state.addPictures(context, pictures)
+        val destination = libraryLayer.also { libraryLayer = null }
+        if (pictures.isNotEmpty()) {
+            if (destination == null) state.addPictures(context, pictures)
+            else {
+                keepAccess(context, pictures)
+                state.addingMedia = true
+                try {
+                    for (uri in pictures) {
+                        val media = mediaDeclaration(context, uri)?.let { state.keepCopy(context, it) }
+                        if (media != null) state.edit { it.withLayerAsset(destination, media) }
+                        else Toast.makeText(context, R.string.library_err_unsupported_type, Toast.LENGTH_SHORT).show()
+                    }
+                    if (state.scene.layer(destination) != null) { state.selectedId = destination; state.panel = EditorPanel.Library }
+                } finally { state.addingMedia = false }
+            }
+        }
         if (sounds.isNotEmpty()) state.addSounds(context, sounds)
     }
 

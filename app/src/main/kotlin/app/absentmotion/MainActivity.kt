@@ -163,7 +163,7 @@ class MainActivity : ComponentActivity() {
         RecoveryHandler.install(recovery) { editor?.let { it.projectId to it.document.toXml() } }
         val reopen = savedInstanceState?.getString(OPEN_PROJECT)
         lifecycleScope.launch {
-            val (offer, crash) = withContext(DiskThread.dispatcher) { runCatching { recovery.pending(store) }.getOrNull() to runCatching { CrashLogs.collect(applicationContext) }.getOrNull() }
+            val (offer, crash) = withContext(DiskThread.dispatcher) { app.absentmotion.library.migrateOldRigModels(applicationContext, store); runCatching { recovery.pending(store) }.getOrNull() to runCatching { CrashLogs.collect(applicationContext) }.getOrNull() }
             crashed = crash
             recovered = offer
             if (reopen != null && offer?.id != reopen && editor == null && !opening) openJob = lifecycleScope.launch {

@@ -4,6 +4,9 @@ import app.absentmotion.model.finiteFloat
 import app.absentmotion.R
 import app.absentmotion.i18n.AppText
 import app.absentmotion.library.ProjectStore
+import app.absentmotion.model.bones
+import app.absentmotion.model.boneAncestors
+import app.absentmotion.model.riggedParts
 import app.absentmotion.model.Layer
 import app.absentmotion.model.Scene
 import app.absentmotion.model.XmlNode
@@ -37,8 +40,10 @@ internal fun XmlNode.mapTransform(name: String, change: (FloatArray) -> Unit): X
 }
 
 suspend fun EditorState.saveToMyElements(store: ProjectStore): Boolean {
-    val layer = selected ?: return false
-    val host = scene
+    val chosen = selected ?: return false
+    val packedId = Layer.newId()
+    val host = if (scene.boneAncestors(setOf(chosen.id)).isNotEmpty()) scene.grouped(scene.riggedParts(chosen.id), null, packedId, chosen.label) else scene
+    val layer = host.layer(packedId) ?: chosen
     val group = layer.nested
     val bounds = if (group == null) lifetimeBounds(layer) else null
     val width = group?.let { host.width } ?: ((bounds?.let { it[2] - it[0] } ?: host.width.toFloat()) + 2).toInt()
@@ -53,7 +58,7 @@ suspend fun EditorState.saveToMyElements(store: ProjectStore): Boolean {
 private val PLAIN_GROUP_ATTRS = setOf("id", "label", "startTime", "endTime", "tag", "parent")
 private val PLACEMENT = setOf("location", "scale", "rotation", "pivot")
 
-private fun Layer.flattensIntoAsset(): Boolean = nested?.let { inner -> inner.retime == "off" && inner.layers.all { it.endTime <= endTime - startTime } } == true &&
+private fun Layer.flattensIntoAsset(): Boolean = nested?.let { inner -> inner.bones.isEmpty() && inner.retime == "off" && inner.layers.all { it.endTime <= endTime - startTime } } == true &&
     node.attrs.keys.all { it in PLAIN_GROUP_ATTRS } &&
     node.children.all { it.name == "scene" || it.name == "transform" && it.children.all { part -> part.name in PLACEMENT } }
 

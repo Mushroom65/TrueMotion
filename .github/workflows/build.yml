@@ -23,6 +23,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+          cache: gradle
       - name: Install SDK packages
         uses: android-actions/setup-android@v4
         with:

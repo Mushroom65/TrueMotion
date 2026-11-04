@@ -4,6 +4,7 @@ import android.hardware.HardwareBuffer
 import android.graphics.Rect
 import android.graphics.Bitmap
 import android.view.Surface
+import app.absentmotion.model.withNativeBones
 
 class NativeEngine(backend: Backend) : AutoCloseable {
     enum class Backend { GRAPHITE, GANESH, GL }
@@ -21,7 +22,7 @@ class NativeEngine(backend: Backend) : AutoCloseable {
     fun timing(target: Long): String = nativeTiming(handle, target)
 
     fun setScene(xml: String) {
-        nativeSetScene(handle, xml.toByteArray())?.let { throw IllegalArgumentException(it) }
+        nativeSetScene(handle, (if (xml.contains("<bone ")) app.absentmotion.model.XmlNode.parse(xml).withNativeBones().toXml() else xml).toByteArray())?.let { throw IllegalArgumentException(it) }
         sceneSetCount++
     }
     internal var sceneSetCount = 0L

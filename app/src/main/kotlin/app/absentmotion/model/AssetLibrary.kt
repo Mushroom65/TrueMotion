@@ -29,7 +29,7 @@ fun Scene.withMediaSwitch(id: Long, timeMs: Int, media: MediaDeclaration): Scene
     val initial = original.mediaFill
     val source = original.node.child("trueSwitchSource") ?: original.node.copy(name = "trueSwitchSource",
         attrs = original.node.attrs - setOf("id", "parent", "clippingMask", "blending"),
-        children = original.node.children.filterNot { it.name in setOf("transform", "effect", "shadow", "speedMap") })
+        children = original.node.children.filterNot { it.name in setOf("transform", "effect", "shadow", "speedMap", "trueAssetLibrary") })
     val first = if (original.isMediaSwitch) original.mediaSwitchKeys else listOf(Keyframe(0f, initial!!.uri,
         extra = mapOf((if (initial.video) "fillVideo" else "fillImage") to initial.uri)))
     val key = Keyframe(local, media.uri, extra = mapOf((if (media.type.startsWith("video/")) "fillVideo" else "fillImage") to media.uri))
@@ -83,3 +83,62 @@ internal fun Scene.refreshMediaSwitches(previous: Scene): Scene = Scene(node.cop
         makeMediaSwitch(layer, source, keys).node
     } else child
 }))
+
+val MediaSwitchRef = PropRef(PropRef.Kind.Child, "trueMediaSwitch")
+val Layer.assetUris: List<String> get() = node.child("trueAssetLibrary")?.children.orEmpty().mapNotNull { it["fillImage"] ?: it["fillVideo"] }
+
+fun Scene.layerAssets(layer: Layer): List<MediaDeclaration> {
+    val own = layer.assetUris
+    val current = layer.mediaFill?.uri ?: layer.mediaSwitchKeys.firstOrNull()?.v
+    val uris = if (own.isEmpty()) listOfNotNull(current) + libraryMedia.map { it.uri } else own
+    return uris.distinct().mapNotNull(::media).filter { it.type.startsWith("image/") || it.type.startsWith("video/") }
+}
+
+fun Scene.withLayerAsset(id: Long, media: MediaDeclaration): Scene {
+    val layer = layer(id) ?: return this
+    val existing = layerAssets(layer)
+    val records = (existing + media).distinctBy { it.uri }
+    val library = XmlNode("trueAssetLibrary", children = records.map { record ->
+        XmlNode("asset", mapOf((if (record.type.startsWith("video/")) "fillVideo" else "fillImage") to record.uri))
+    })
+    return withMedia(media).update(id) { it.copy(node = it.node.withChild("trueAssetLibrary", library)) }
+}
+
+fun Scene.activeLayerAsset(layer: Layer, time: Int): MediaDeclaration? {
+    val keys = layer.mediaSwitchKeys
+    val uri = if (keys.isEmpty()) layer.mediaFill?.uri else keys.lastOrNull { layer.timeOf(it.t) <= time }?.v ?: keys.first().v
+    return uri?.let(::media)
+}
+
+fun Scene.onAssetKey(layer: Layer, time: Int): Boolean = layer.mediaSwitchKeys.any { frameAt(layer.timeOf(it.t)) == frameAt(time) }
+
+fun Scene.withStaticLayerAsset(id: Long, media: MediaDeclaration): Scene = withLayerAsset(id, media).update(id) { layer ->
+    val original = layer.node.child("trueSwitchSource")
+    if (original == null) layer.copy(node = layer.node.with("fillType", "media").with("fillImage", media.uri.takeUnless { media.type.startsWith("video/") })
+        .with("fillVideo", media.uri.takeIf { media.type.startsWith("video/") }))
+    else {
+        val placement = layer.node.children.filter { it.name in setOf("transform", "effect", "shadow", "trueAssetLibrary") }
+        val node = XmlNode("shape", original.attrs + layer.node.attrs, original.children + placement)
+            .with("fillType", "media").with("fillImage", media.uri.takeUnless { media.type.startsWith("video/") })
+            .with("fillVideo", media.uri.takeIf { media.type.startsWith("video/") })
+        layer.copy(node = node)
+    }
+}
+
+fun Scene.toggleAssetKey(id: Long, time: Int): Scene {
+    val layer = layer(id) ?: return this
+    val active = activeLayerAsset(layer, time) ?: return this
+    if (!onAssetKey(layer, time)) return withMediaSwitch(id, time, active)
+    return if (layer.mediaSwitchKeys.size <= 1) withStaticLayerAsset(id, active) else {
+        val keys = layer.mediaSwitchKeys.filterNot { frameAt(layer.timeOf(it.t)) == frameAt(time) }
+        update(id) { makeMediaSwitch(it, it.node.child("trueSwitchSource")!!, keys) }
+    }
+}
+
+/** Selecting another thumbnail never creates an implicit replacement key. */
+fun Scene.chooseLayerAsset(id: Long, time: Int, media: MediaDeclaration): Scene {
+    val layer = layer(id) ?: return this
+    if (!layer.isMediaSwitch) return withStaticLayerAsset(id, media)
+    if (!onAssetKey(layer, time)) return this
+    return withMediaSwitch(id, time, media)
+}

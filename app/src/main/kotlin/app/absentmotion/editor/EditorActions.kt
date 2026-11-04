@@ -8,6 +8,9 @@ import app.absentmotion.R
 import app.absentmotion.i18n.AppText
 import app.absentmotion.platform.Color
 import kotlin.math.roundToInt
+import app.absentmotion.model.toggleAssetKey
+import app.absentmotion.model.boneAncestors
+import app.absentmotion.model.pruneBones
 import app.absentmotion.model.Scene
 import app.absentmotion.model.copyLayers
 import app.absentmotion.model.isMask
@@ -67,6 +70,7 @@ fun EditorState.addShape(def: ShapeDef) {
 
 fun EditorState.stepBack(): Boolean {
     when {
+        rigEditing -> { endGesture(); rigEditing = false; keyTarget = null }
         motionPathOpen -> { endGesture(); motionPathOpen = false }
         framePhotoOpen -> framePhotoOpen = false
         MultiSelect.active -> MultiSelect.clear()
@@ -97,7 +101,8 @@ fun EditorState.clearSelection() {
 
 fun EditorState.deleteSelected() {
     val id = selectedId ?: return
-    edit { it.unparentChildrenOf(setOf(id)).remove(id) }
+    val related = scene.boneAncestors(setOf(id)).map { it.id }.toSet()
+    edit { it.unparentChildrenOf(setOf(id)).remove(id).pruneBones(related) }
 }
 
 fun EditorState.duplicateSelected() {
@@ -157,6 +162,7 @@ fun EditorState.resetTransform(tabs: List<Int>) {
 }
 
 fun EditorState.toggleKeyframe() {
+    if (keyTarget?.ref == app.absentmotion.model.MediaSwitchRef) { selectedId?.let { id -> edit { it.toggleAssetKey(id, timeMs) } }; return }
     val target = keyTarget ?: return
     editKeyValue { layer ->
         val missing = layer.element(target.ref) == null
@@ -176,6 +182,7 @@ val EditorState.easing: Easing? get() = keyTarget?.let { keyLayer?.easing(it.ref
 
 fun EditorState.setEasing(easing: Easing, key: Any? = null) {
     val ref = keyTarget?.ref ?: return
+    if (ref == app.absentmotion.model.MediaSwitchRef) return
     val curve = compatibleCurve(ref, easing) ?: return
     editKeyValue(key) { it.withEasing(ref, curve) }
 }
@@ -213,6 +220,7 @@ fun EditorState.pasteCurve() {
 
 fun EditorState.pasteCurveToAll() {
     val ref = keyTarget?.ref ?: return
+    if (ref == app.absentmotion.model.MediaSwitchRef) return
     val curve = compatibleCurve(ref, copiedCurve) ?: return
     editKeyValue { it.withEasingEverywhere(ref, curve) }
 }
@@ -306,7 +314,8 @@ fun EditorState.duplicateChosen() {
 fun EditorState.deleteChosen() {
     val ids = chosenLayers.map { it.id }.toSet()
     if (ids.isEmpty()) return
-    edit { s -> ids.fold(s.unparentChildrenOf(ids)) { acc, id -> acc.remove(id) } }
+    val related = scene.boneAncestors(ids).map { it.id }.toSet()
+    edit { s -> ids.fold(s.unparentChildrenOf(ids)) { acc, id -> acc.remove(id) }.pruneBones(related) }
     MultiSelect.clear()
     deselectLayer()
 }

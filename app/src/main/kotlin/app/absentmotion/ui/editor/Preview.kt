@@ -122,6 +122,7 @@ fun Preview(state: EditorState, modifier: Modifier = Modifier, reserveEnd: Dp = 
     var gesture by remember { mutableIntStateOf(IDLE) }
     var tapGeneration by remember { mutableIntStateOf(0) }
     val handles = when {
+        state.rigEditing -> HIDDEN
         state.drawing != null -> state.drawing!!.handlesCode
         state.panel == EditorPanel.Crop -> HIDDEN
         gesture != IDLE -> gesture
@@ -383,6 +384,7 @@ fun Preview(state: EditorState, modifier: Modifier = Modifier, reserveEnd: Dp = 
         GradientHandles(state, quad.takeUnless { state.playing }, scale, Offset(dx, dy))
         CropOverlay(state, quad.takeUnless { state.playing }, scale, Offset(dx, dy))
         state.layerPoints?.let { points -> world?.takeUnless { state.playing }?.let { LayerPointsOverlay(points, it, scale, Offset(dx, dy)) } }
+        if (state.rigEditing) RigViewport(state, scale, Offset(dx, dy), quad, Modifier.fillMaxSize())
         if (editingText) Canvas(Modifier.fillMaxSize()) {
             val q = quad.takeUnless { state.playing } ?: return@Canvas
             val points = List(4) { Offset(q[2 * it] * scale + dx, q[2 * it + 1] * scale + dy) }

@@ -226,17 +226,31 @@ suspend fun mediaThumbnail(context: Context, uri: Uri): Bitmap? = withContext(Di
     val key = uri.toString()
     thumbnailLocks[key.hashCode().mod(thumbnailLocks.size)].withLock {
         cachedMediaThumbnail(uri) ?: try {
-            thumbnail(context.contentResolver, uri)?.also { thumbnailCache.put(key, it) }
+            thumbnail(context, uri)?.also { thumbnailCache.put(key, it) }
         } catch (_: Exception) { null } catch (_: OutOfMemoryError) { null }
     }
 }
 
-private fun thumbnail(resolver: ContentResolver, uri: Uri): Bitmap? {
-    if (Build.VERSION.SDK_INT >= 29) return resolver.loadThumbnail(uri, Size(272, 272), null)
-    val id = ContentUris.parseId(uri)
-    @Suppress("DEPRECATION")
-    return if ("video" in uri.pathSegments) MediaStore.Video.Thumbnails.getThumbnail(resolver, id, MediaStore.Video.Thumbnails.MINI_KIND, null)
-        else MediaStore.Images.Thumbnails.getThumbnail(resolver, id, MediaStore.Images.Thumbnails.MINI_KIND, null)
+private fun thumbnail(context: Context, uri: Uri): Bitmap? {
+    val resolver = context.contentResolver
+    if (Build.VERSION.SDK_INT >= 29 && uri.scheme == "content") {
+        runCatching { resolver.loadThumbnail(uri, Size(272, 272), null) }.getOrNull()?.let { return it }
+    }
+    val video = resolver.getType(uri)?.startsWith("video/") == true ||
+        uri.lastPathSegment.orEmpty().substringAfterLast('.').lowercase() in setOf("mp4", "m4v", "mov", "mkv", "webm", "avi", "3gp", "mts")
+    if (!video) decodePicture(resolver, uri, 272)?.let { return it }
+    val retriever = android.media.MediaMetadataRetriever()
+    return try {
+        if (uri.scheme == "file") retriever.setDataSource(uri.path) else retriever.setDataSource(context, uri)
+        val frame = if (Build.VERSION.SDK_INT >= 27) retriever.getScaledFrameAtTime(0, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC, 272, 272)
+            else retriever.getFrameAtTime(0, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+        frame?.let {
+            if (maxOf(it.width, it.height) <= 272) it else {
+                val factor = 272f / maxOf(it.width, it.height)
+                Bitmap.createScaledBitmap(it, (it.width * factor).toInt().coerceAtLeast(1), (it.height * factor).toInt().coerceAtLeast(1), true).also { scaled -> if (scaled !== it) it.recycle() }
+            }
+        }
+    } finally { retriever.release() }
 }
 
 suspend fun imageDeclaration(context: Context, uri: Uri): MediaDeclaration? = withContext(Dispatchers.IO) {
