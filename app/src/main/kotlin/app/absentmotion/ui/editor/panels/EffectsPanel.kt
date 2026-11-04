@@ -164,7 +164,7 @@ internal fun EffectsPanel(state: EditorState, modifier: Modifier) {
                             }
                         }
                     }
-                    if(layer.kind !in setOf("audio","camera","nullobj")) RepeatedCopiesControls(state,layer)
+                    if(layer.kind !in setOf("audio","camera","nullobj")) key(layer.id) {RepeatedCopiesControls(state,layer)}
                     Box(Modifier.padding(6.5.dp).fillMaxWidth().height(37.dp).clip(RowShape).background(Am.Button)
                         .clickable { state.playing = false; state.effectBrowserOpen = true }, contentAlignment = Alignment.Center) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

@@ -38,17 +38,20 @@ fun XmlNode.withNativeBones(): XmlNode {
     if (name == "scene") {
         val used = children.mapNotNull { it["id"]?.toLongOrNull() }.toMutableSet()
         var next = -1L
-        val compiled = children.flatMap { child ->
+        val helpers=mutableListOf<XmlNode>()
+        val compiled = children.map { child ->
             val binding = if (child.name in Scene.LAYER_TAGS) Layer(child).rigBinding else null
-            if (binding == null) listOf(child) else {
+            if (binding == null) child else {
                 while (next in used) next--
                 val id=next--;used+=id
                 val attrs=mapOf("id" to "$id", "startTime" to (child["startTime"]?:"0"),"endTime" to (child["endTime"]?:"0")) +
                     (child["parent"]?.let { mapOf("parent" to it) }?:emptyMap())
-                listOf(XmlNode("nullobj",attrs,listOf(binding.transform())),child.with("parent","$id").withChild("trueRigBind",null))
+                helpers+=XmlNode("nullobj",attrs,listOf(binding.transform()))
+                child.with("parent","$id").withChild("trueRigBind",null)
             }
         }
-        return copy(children=compiled)
+        // Never split a clipping-mask stack with an internal transform node.
+        return copy(children=compiled+helpers)
     }
     return if (name == "bone") copy(name = "nullobj", children = children) else if (children == this.children) this else copy(children = children)
 }

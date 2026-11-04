@@ -105,7 +105,7 @@ internal fun RepeatedCopiesControls(state:EditorState,layer:Layer) {
             Text(stringResource(R.string.repeat_controls_help),color=Am.OnDarkDim,fontSize=11.sp)
             if(layer.copySource==null) {
                 Row(verticalAlignment=Alignment.CenterVertically) {
-                    PropertyNumber(stringResource(R.string.motion_count),(copies.size+1).toFloat(),Modifier.weight(1f)) {n->if(n.toInt() in 1..200)edit {it.withRepeatedCopies(sourceId,n.toInt())}}
+                    PropertyNumber(stringResource(R.string.motion_count),(copies.size+1).toFloat(),Modifier.weight(1f),commitOnBlur=true) {n->if(n.toInt() in 1..200)edit {it.withRepeatedCopies(sourceId,n.toInt())}}
                     TextButton({edit {it.withRepeatedCopies(sourceId,copies.size+2)}},enabled=copies.size<199) {Text("+",color=Am.Accent)}
                 }
             } else {
@@ -137,13 +137,19 @@ internal fun SceneLightControls(state:EditorState,onSelect:()->Unit={}) {
 }
 
 @Composable
-internal fun PropertyNumber(label:String,value:Float,modifier:Modifier=Modifier,onSelect:()->Unit={},change:(Float)->Unit) {
+internal fun PropertyNumber(label:String,value:Float,modifier:Modifier=Modifier,commitOnBlur:Boolean=false,onSelect:()->Unit={},change:(Float)->Unit) {
     var text by remember {mutableStateOf(value.toString())}
     var focused by remember {mutableStateOf(false)}
+    val focus=androidx.compose.ui.platform.LocalFocusManager.current
     LaunchedEffect(value,focused) {if(!focused)text=value.toString()}
-    OutlinedTextField(text,{text=it;it.toFloatOrNull()?.takeIf(Float::isFinite)?.let(change)},
-        modifier=modifier.fillMaxWidth().onFocusChanged {focused=it.isFocused;if(it.isFocused)onSelect()},
+    OutlinedTextField(text,{text=it;if(!commitOnBlur)it.toFloatOrNull()?.takeIf(Float::isFinite)?.let(change)},
+        modifier=modifier.fillMaxWidth().onFocusChanged {
+            val lost=focused&&!it.isFocused;focused=it.isFocused
+            if(it.isFocused)onSelect()
+            if(lost&&commitOnBlur)text.toFloatOrNull()?.takeIf(Float::isFinite)?.let(change)
+        },
         label={Text(label,fontSize=11.sp)},singleLine=true,textStyle=androidx.compose.ui.text.TextStyle(fontSize=13.sp),
-        keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),
+        keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal,imeAction=androidx.compose.ui.text.input.ImeAction.Done),
+        keyboardActions=androidx.compose.foundation.text.KeyboardActions(onDone={focus.clearFocus()}),
         colors=OutlinedTextFieldDefaults.colors(focusedTextColor=Am.OnDark,unfocusedTextColor=Am.OnDark,focusedBorderColor=Am.Accent,unfocusedBorderColor=Am.OnDarkDim))
 }

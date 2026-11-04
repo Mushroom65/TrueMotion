@@ -189,4 +189,14 @@ class RigModelTest {
         assertEquals(binding,restored.layer(3)!!.rigBinding)
         assertEquals(200f,restored.place(restored.layer(3)!!,1000).x,.001f)
     }
+
+    @Test fun renderBindingsDoNotSplitClippingStacksOrLeakIntoTheLayerList() {
+        val source=artwork().update(4) {it.copy(node=it.node.with("clippingMask","true"))}
+            .withDrawnBone(4,null,Pt(200f,150f),Pt(300f,150f),1,0)
+        assertEquals(listOf(3L,4L),source.layers.map {it.id})
+        val compiled=Scene(source.node.withNativeBones())
+        assertEquals(listOf(3L,4L),compiled.layers.take(2).map {it.id})
+        assertEquals("true",compiled.layer(4)!!.node["clippingMask"])
+        assertTrue(compiled.layers.last().id<0)
+    }
 }

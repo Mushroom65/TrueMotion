@@ -13,6 +13,7 @@ import app.absentmotion.model.withAnimation
 import app.absentmotion.model.withTransition
 import app.absentmotion.model.bones
 import app.absentmotion.model.rigBinding
+import app.absentmotion.model.isBone
 import app.absentmotion.model.Pt
 import kotlin.math.hypot
 import kotlin.math.atan2
@@ -241,7 +242,7 @@ private fun Scene.parentOf(layer: Layer): Layer? =
     layer.node["parent"]?.toLongOrNull()?.takeIf { it != layer.id }?.let { id -> layer(id) }
 
 internal fun Scene.place(layer: Layer, timeMs: Int, depth: Int = 0): Place =
-    if (chain(layer).any { it.rigBinding!=null }) rigPlace(layer,timeMs)
+    if (depth==0 && chain(layer).any { it.rigBinding!=null }) rigPlace(layer,timeMs)
     else compose(ownPlace(layer, timeMs, fps), parentOf(layer)?.takeIf { depth <= 16 }?.let { place(it, timeMs, depth + 1) })
 
 internal fun Scene.chain(layer: Layer?): List<Layer> = generateSequence(layer) { parentOf(it) }.take(17).toList()
@@ -367,11 +368,15 @@ fun EditorState.setParent(parentId: Long?) {
         if (walk == layer.id) return
         walk = scene.layer(walk)?.node?.get("parent")?.toLongOrNull()
     }
+    if(layer.rigBinding!=null || old?.let {scene.layer(it)?.isBone}==true || parentId?.let {scene.layer(it)?.isBone}==true) {
+        edit {it.withRigParent(layer.id,parentId,sampleMs)}
+        return
+    }
     val next = scene.rebased(layer, parentId) ?: return
     editSelected { next }
 }
 
-internal fun Scene.parented(ids: Collection<Long>, parentId: Long?): Pair<Scene, Int> {
+internal fun Scene.parented(ids: Collection<Long>, parentId: Long?, time: Int = 0): Pair<Scene, Int> {
     var skipped = 0
     val chosen = ids.filter { it != parentId }.mapNotNull { layer(it) }.sortedBy { chain(it).size }
     val next = chosen.fold(this) { acc, picked ->
@@ -381,6 +386,9 @@ internal fun Scene.parented(ids: Collection<Long>, parentId: Long?): Pair<Scene,
             skipped++
             return@fold acc
         }
+        if(layer.rigBinding!=null || layer.node["parent"]?.toLongOrNull()?.let {acc.layer(it)?.isBone}==true || parentId?.let {acc.layer(it)?.isBone}==true) {
+            return@fold acc.withRigParent(layer.id,parentId,time)
+        }
         val moved = acc.rebased(layer, parentId) ?: return@fold acc
         acc.update(layer.id) { moved }
     }
@@ -388,7 +396,7 @@ internal fun Scene.parented(ids: Collection<Long>, parentId: Long?): Pair<Scene,
 }
 
 fun EditorState.setParentOfChosen(parentId: Long?): Int {
-    val (next, skipped) = scene.parented(MultiSelect.ids, parentId)
+    val (next, skipped) = scene.parented(MultiSelect.ids, parentId,sampleMs)
     if (next.node !== scene.node) edit { next }
     return skipped
 }

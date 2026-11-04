@@ -28,7 +28,7 @@ internal fun Scene.withRigParent(id: Long,parentId: Long?,time: Int): Scene {
     val art=layer(id)?:return this
     if(art.node["parent"]?.toLongOrNull()==parentId) return this
     val parent=parentId?.let(::layer)
-    if(parentId!=null && parent?.isBone!=true) return this
+    if(parentId!=null && parent==null) return this
     if(parent!=null && chain(parent).any { it.id==id }) return this
     val oldFrame=rigParentAffine(art,time)
     val inverse=(parent?.let { rigAffine(it,time) }?:IdentityRigFrame).inverse()?:return this

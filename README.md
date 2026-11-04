@@ -6,6 +6,8 @@ An experimental Android motion graphics editor based on [AbsentMotion 4.4.0](htt
 
 [Русская инструкция](README_TRUE_MOTION_RU.md) · [Port status](docs/TRUE_MOTION_MIGRATION_RU.md) · [Telegram](https://t.me/TrueMoti0n)
 
+0.17.1 fixes disappearing shared-depth layers in Graphite, preserves artwork keys when binding/rebinding/deleting bones, and integrates repetition and value links into existing property/effect inspectors. The separate Motion graphics page is removed. [Fixes and usage](docs/RELEASE_0_17_1_RU.md).
+
 0.17.0 adds opt-in shared per-fragment depth for planes, models and scene particles, a scene light, per-copy offsets and persistent value links. Rig branches can start at any point on a bone; preview signing now uses a pinned certificate. This is a partial roadmap implementation, with Android device validation pending. [Usage and limits](docs/RELEASE_0_17_RU.md).
 
 0.16.0 moves the media library into layer properties, with thumbnails, gallery import and explicit replacement keys. Rigging now runs in the viewport with direct bone drawing and automatic artwork binding; bones stay out of the layer stack. Rigs use the existing My resources workflow. [Usage and limits](docs/RELEASE_0_16_RU.md).

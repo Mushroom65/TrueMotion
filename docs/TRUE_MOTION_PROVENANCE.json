@@ -73,7 +73,7 @@
   "fullFeaturePortComplete": false,
   "activeNativeOverride": {
     "path": "app/native-prebuilt/arm64-v8a/libamengine.so",
-    "sha256": "a3819c8f7910d36edc48bd02e5f2bfd697b15c2a8cfc4adaea16db98803c6f05",
+    "sha256": "3cf9fb213c0af7a3c177608411b8a826d47f385497a86c944b16719b0b9912d9",
     "bytes": 20225408,
     "source": "AbsentMotion v4.4.0 + True Motion opt-in shared fragment depth for planes, model faces and scene particles; scene directional light; existing native effects/audio/legacy runtime retained",
     "host": "GitHub Actions ubuntu-latest",
@@ -112,7 +112,7 @@
       "app/src/main/cpp/gl_yuv.h": "95e665fac2442d3bdd341947b5c6683612f2878d5af14f7c0b9b08b5f9b35102",
       "app/src/main/cpp/interpolation.cpp": "eefeb05db072c1d58a8d66f085c85f44147487dd7748cebe1bfb9ede3b3b8f6b",
       "app/src/main/cpp/interpolation.h": "dedfbfb4f716702b390d2c88da6c135f343ccd484dfaab2f525a0e7f0db9273c",
-      "app/src/main/cpp/jni.cpp": "6f416326e70d867072e49a9eb0d3d573879d7130d4f2bcea9051e186dbb29b0f",
+      "app/src/main/cpp/jni.cpp": "472033eac470d4dad241548e62eb95f0b0b651d4b234b3cdbbb915f8845db56b",
       "app/src/main/cpp/lame_jni.cpp": "09997b2787e532853787f93adf53d19251d6a34d8280b5474d83ae9647be16bc",
       "app/src/main/cpp/legacy.cpp": "507a9f2442921ffff4da00fe8be768d276da01455cb410aba79798669483d926",
       "app/src/main/cpp/legacy.h": "fe1348feeb0b6e3ec83fb06a0252f3af3f309e3fd7ce57074ad671479a1e801f",
@@ -181,7 +181,7 @@
       "app/src/main/cpp/gl_yuv.h": "95e665fac2442d3bdd341947b5c6683612f2878d5af14f7c0b9b08b5f9b35102",
       "app/src/main/cpp/interpolation.cpp": "eefeb05db072c1d58a8d66f085c85f44147487dd7748cebe1bfb9ede3b3b8f6b",
       "app/src/main/cpp/interpolation.h": "dedfbfb4f716702b390d2c88da6c135f343ccd484dfaab2f525a0e7f0db9273c",
-      "app/src/main/cpp/jni.cpp": "6f416326e70d867072e49a9eb0d3d573879d7130d4f2bcea9051e186dbb29b0f",
+      "app/src/main/cpp/jni.cpp": "472033eac470d4dad241548e62eb95f0b0b651d4b234b3cdbbb915f8845db56b",
       "app/src/main/cpp/lame_jni.cpp": "09997b2787e532853787f93adf53d19251d6a34d8280b5474d83ae9647be16bc",
       "app/src/main/cpp/legacy.cpp": "507a9f2442921ffff4da00fe8be768d276da01455cb410aba79798669483d926",
       "app/src/main/cpp/legacy.h": "fe1348feeb0b6e3ec83fb06a0252f3af3f309e3fd7ce57074ad671479a1e801f",
@@ -223,8 +223,8 @@
       "app/src/main/cpp/depth_context.h": "66ed11b8ae4bc120ff0b8474e2ee2cd15502c32dd8029474fba93c93e5dd3dc8"
     },
     "sourceHashNote": "0.17.1: upload the resolved shared-depth raster to the active GPU before presentation; fall back to established rendering if upload fails. Native engine scripts additionally support x86_64 for emulator regression checks.",
-    "sourceCommit": "41b081cdc042e02c94b7c697b94f389e2a08a4c9",
-    "buildUrl": "https://github.com/Mushroom65/TrueMotion/actions/runs/41921479392"
+    "sourceCommit": "a422863a56c920c9060c0f8a62b1ff268556b16f",
+    "buildUrl": "https://github.com/Mushroom65/TrueMotion/actions/runs/41923992229"
   },
   "nativeBuildHistory": [
     {
