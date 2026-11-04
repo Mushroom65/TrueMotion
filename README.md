@@ -46,7 +46,7 @@ On Windows use `gradlew.bat`. The result is `app/build/outputs/apk/compat/debug/
 
 The fast build uses the included native libraries. The renderer core was rebuilt from the combined C++ source; the other libraries match the official compatible upstream APK. Exact hashes and source provenance are recorded in [TRUE_MOTION_PROVENANCE.json](docs/TRUE_MOTION_PROVENANCE.json). Native changes require rebuilding the core: see [native build notes](docs/NATIVE_AUDIO_BUILD_RU.md) and [upstream build documentation](docs/BUILD.md). For a full native build: `git submodule update --init --recursive`.
 
-GitHub Actions builds the compatible debug APK and runs JVM tests. It does not publish releases or deploy the upstream website. CI-produced debug APKs are development artifacts.
+GitHub Actions builds the compatible debug APK and runs JVM tests. The separate manual **Publish True Motion preview** workflow accepts a full source commit SHA and its matching version tag, reruns validation, and publishes a preview release with the APK, source archives, checksums and rig example. It refuses to replace an already published release. CI-produced debug APKs use a runner-generated signing key and may not install over an APK signed elsewhere.
 
 ## Artwork and validation
 
