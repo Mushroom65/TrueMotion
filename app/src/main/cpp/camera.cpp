@@ -169,6 +169,20 @@ void SetCameraView(bool on) { gCameraView = on; }
 
 bool CameraViewOn() { return gCameraView; }
 
+SkM44 ProjectionSpace(const std::vector<Layer>& layers,const Layer& layer,int width,int height,double timeMs) {
+    const Layer* camera=gCameraView?ActiveCamera(layers,timeMs):nullptr;
+    const View v=camera?LayerView(layers,*camera,width,height,timeMs):DefaultView(width,height);
+    return Space(v,EffectivePlacement(layers,layer,timeMs));
+}
+
+SkV3 ViewDirection(const Layer& layer,double timeMs,SkV3 direction) {
+    const Sight& s=layer.sight;
+    if(!s.layers) return direction;
+    const View v=s.camera?LayerView(*s.layers,*s.camera,s.width,s.height,timeMs):DefaultView(s.width,s.height);
+    const auto p=v.turn.map(direction.x,direction.y,direction.z,0);
+    return {p.x,p.y,p.z};
+}
+
 bool CameraFrame(const std::vector<Layer>& layers, const Layer& camera, int width, int height, double timeMs, SkPoint corners[4]) {
     if (width <= 0 || height <= 0) return false;
     const Placement p = EffectivePlacement(layers, camera, timeMs);
@@ -224,7 +238,7 @@ bool SeenPlacement(const Layer& l, double timeMs, Placement* out) {
     return true;
 }
 
-bool SeeLayers(const std::vector<Layer>& layers, int width, int height, bool top, int fps, double timeMs, std::vector<Layer>* seen) {
+bool SeeLayers(const std::vector<Layer>& layers, int width, int height, bool top, int fps, double timeMs, std::vector<Layer>* seen, bool depth3D) {
     const Layer* camera = top && gCameraView ? ActiveCamera(layers, timeMs) : nullptr;
     if (!camera) {
         bool flat = true;
@@ -253,7 +267,7 @@ bool SeeLayers(const std::vector<Layer>& layers, int width, int height, bool top
         if (l.kind != "camera") {
             const Seen s = Look(now, p);
             d = s.depth;
-            drop = !s.visible && !TrueHasWorldParticles(l,timeMs);
+            drop = !s.visible && !TrueHasWorldParticles(l,timeMs) && !(depth3D && Solid(l,p,timeMs));
             copy.projected = Solid(l, p, timeMs) || now.tilted;
             if (camera) AddCameraEffects(*camera, timeMs, d, Look(before, EffectivePlacement(layers, l, beforeMs)).location, s.location, &copy);
         }

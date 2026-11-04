@@ -210,6 +210,7 @@ private:
     EffectRuntime fEffects;
     LayerEffects layerEffects() {
         LayerEffects fx;
+        fx.capture = [this](int w,int h,const std::function<void(SkCanvas*)>& draw,std::vector<uint8_t>* rgba) {return this->grab(w,h,draw,rgba);};
         fx.active = [this](const Layer& layer) { return fEffects.active(layer); };
         fx.lifted = [this](const Layer& layer) { return fEffects.lifted(layer); };
         fx.spills = [this](const Layer& layer) { return fEffects.spills(layer); };

@@ -415,6 +415,10 @@ bool ParseScene(const std::string& xml, Scene* scene, std::string* error) {
     next.height = IntAttr(*root, "height", 0);
     next.fps = FpsAttr(*root);
     next.totalTime = IntAttr(*root, "totalTime", 0);
+    next.depth3D = StrAttr(*root, "trueDepth3D") == "true";
+    auto light=[&](const char* name,float fallback) {const char* s=root->attr(name);const float x=s?strtof(s,nullptr):fallback;return std::isfinite(x)?x:fallback;};
+    next.lightAzimuth=light("trueLightAzimuth",135);next.lightElevation=light("trueLightElevation",50);
+    next.lightIntensity=std::clamp(light("trueLightIntensity",1),0.f,4.f);next.lightAmbient=std::clamp(light("trueLightAmbient",.35f),0.f,1.f);
     const char* bg = root->attr("bgcolor");
     next.bgColor = bg && *bg == '#' ? (uint32_t)strtoul(bg + 1, nullptr, 16) : 0;
     if (next.width <= 0 || next.height <= 0) {

@@ -1,4 +1,5 @@
 #include "true_particles.h"
+#include "depth_context.h"
 
 #include <cstdlib>
 #include "include/core/SkCanvas.h"
@@ -160,6 +161,37 @@ SkRect TrueParticleBounds(const Layer& layer,double timeMs) {
     // Keep an empty emitter selectable without cropping the actual generated geometry.
     return bounds.isEmpty()?SkRect::MakeLTRB(-12,-12,12,12):bounds;
 }
+void DrawParticlesDepth(const Layer& layer,double timeMs,float alpha,const TrueParticleTexture& texture,DepthContext& context) {
+    depth::Texture dot;dot.width=dot.height=64;dot.rgba.resize(64*64*4);
+    for(int y=0;y<64;y++) for(int x=0;x<64;x++) {
+        const float radius=std::hypot((x+.5f)/32-1,(y+.5f)/32-1);
+        const size_t k=((size_t)y*64+x)*4;
+        dot.rgba[k]=dot.rgba[k+1]=dot.rgba[k+2]=255;dot.rgba[k+3]=(uint8_t)std::lround(std::clamp((1-radius)/.8f,0.f,1.f)*255);
+    }
+    for(const LayerEffect& e:layer.effects) if(TrueParticleEffect(e.id)&&!e.hidden&&World(e,layer.localTime(timeMs))) {
+        const float t=layer.localTime(timeMs);
+        const bool textured=Number(e,"useTexture",t,0,0,1)>.5;
+        const auto image=textured?texture(e):nullptr;
+        if(textured&&!image) continue;
+        const depth::Texture* pixels=textured?context.texture(image):&dot;
+        const float aspect=Number(e,"spriteAspect",t,1,.01,100);
+        const bool additive=Number(e,"additive",t,1,0,1)>.5;
+        for(const Sprite& s:WorldSprites(layer,e,timeMs)) {
+            const auto& c=s.particle->color;
+            const float a=s.angle*3.14159265/180,cs=std::cos(a),sn=std::sin(a);
+            std::array<depth::Vertex,4> vertices;
+            for(int k=0;k<4;k++) {
+                const float u=(k==1||k==2)?1:0,v=k>=2?1:0;
+                const float x=(u*2-1)*s.r*aspect,y=(v*2-1)*s.r;
+                const auto p=context.device.map(s.x+x*cs-y*sn,s.y+x*sn+y*cs,0,1);
+                vertices[k]={p.x,p.y,(float)s.depth,p.w,u,v,{(float)c[0],(float)c[1],(float)c[2],std::clamp(alpha*(float)c[3],0.f,1.f)}};
+            }
+            depth::triangle(context.buffer,vertices[0],vertices[1],vertices[2],pixels,additive,false);
+            depth::triangle(context.buffer,vertices[0],vertices[2],vertices[3],pixels,additive,false);
+        }
+    }
+}
+
 void TrueDrawParticles(SkCanvas* canvas,const Layer& layer,double timeMs,float alpha,const SkMatrix& localToScene,const TrueParticleTexture& texture) {
     thread_local sk_sp<SkShader> dot=[] {
         const SkColor4f colors[]={{1,1,1,1},{1,1,1,0}};

@@ -249,6 +249,8 @@ void RepeatCopies(const Layer& layer, double timeMs, const RepeatSpace& space, s
 struct Scene {
     int width = 0, height = 0, fps = 30, totalTime = 0;
     uint32_t bgColor = 0;
+    bool depth3D = false;
+    float lightAzimuth = 135, lightElevation = 50, lightIntensity = 1, lightAmbient = .35f;
     std::vector<Layer> layers;
     std::map<std::string, int> mediaOrientation;
     std::vector<double> beats;
@@ -266,8 +268,10 @@ double RetimedTime(const Retiming& r, int startTime, int endTime, double at);
 void SetCameraView(bool on);
 SkMatrix PlaneMatrix(const std::vector<Layer>& layers, const Layer& layer, int width, int height, double timeMs);
 bool CameraViewOn();
+SkM44 ProjectionSpace(const std::vector<Layer>& layers, const Layer& layer, int width, int height, double timeMs);
+SkV3 ViewDirection(const Layer& layer, double timeMs, SkV3 direction);
 bool CameraFrame(const std::vector<Layer>& layers, const Layer& camera, int width, int height, double timeMs, SkPoint corners[4]);
-bool SeeLayers(const std::vector<Layer>& layers, int width, int height, bool top, int fps, double timeMs, std::vector<Layer>* seen);
+bool SeeLayers(const std::vector<Layer>& layers, int width, int height, bool top, int fps, double timeMs, std::vector<Layer>* seen, bool depth3D = false);
 bool SeenPlacement(const Layer& layer, double timeMs, Placement* placement);
 SkMatrix WorldMatrix(const Scene& scene, const Layer& layer, double timeMs);
 int64_t TopLayerAt(const Scene& scene, double timeMs, float x, float y, const MediaPictures& masks);
@@ -293,7 +297,11 @@ struct Model {
 };
 void SetModel(const std::string& uri, std::shared_ptr<const Model> model);
 void DrawModel(SkCanvas* canvas, const Layer& layer, double timeMs, float alpha, const MediaPictures& pictures);
+struct DepthContext;
+void DrawModelDepth(SkCanvas* canvas, const Layer& layer, double timeMs, float alpha, const MediaPictures& pictures, const Scene& scene, DepthContext& depth);
+void DrawParticlesDepth(const Layer& layer, double timeMs, float alpha, const std::function<sk_sp<SkImage>(const LayerEffect&)>& texture, DepthContext& depth);
 struct LayerEffects {
+    std::function<bool(int, int, const std::function<void(SkCanvas*)>&, std::vector<uint8_t>*)> capture;
     std::function<bool(const Layer&)> active;
     std::function<bool(const Layer&)> lifted;
     std::function<bool(const Layer&)> spills;

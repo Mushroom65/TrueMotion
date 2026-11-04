@@ -39,6 +39,8 @@
 #include "particles.h"
 #include "scene.h"
 #include "text.h"
+#include "depth_context.h"
+#include "include/core/SkData.h"
 
 namespace am {
 
@@ -2005,17 +2007,69 @@ bool InheritEffects(const std::vector<Layer>& layers, std::vector<Layer>* out) {
     return true;
 }
 
+static bool SharedDepth(SkCanvas* canvas,const std::vector<Layer>& layers,int width,int height,double timeMs,const MediaPictures& pictures) {
+    if(!gScene || !gScene->depth3D || !gEffects || !gEffects->capture) return false;
+    // Clipping stacks and backdrop blend modes retain their established compositing semantics.
+    if(std::any_of(layers.begin(),layers.end(),[&](const Layer& l){return l.activeAt(timeMs)&&(l.clippingMask||!IsNormal(l.blending));})) return false;
+    const SkIRect bounds=canvas->getDeviceClipBounds();
+    const int w=bounds.width(),h=bounds.height();
+    if(w<1||h<1||(int64_t)w*h>8'500'000) return false;
+    depth::Buffer buffer(w,h);
+    const SkM44 device=SkM44::Translate(-bounds.left(),-bounds.top())*canvas->getLocalToDevice();
+    DepthContext context{buffer,device,gEffects->capture,{}};
+    for(const Layer& l:layers) {
+        if(!l.activeAt(timeMs)||l.kind=="nullobj"||l.kind=="camera") continue;
+        const float alpha=std::clamp(l.opacity.get(0,l.localTime(timeMs),1)*MotionOpacity(l,timeMs),0.f,1.f);
+        if(l.kind=="model"&&std::none_of(l.effects.begin(),l.effects.end(),[](const LayerEffect& e){return !e.hidden;})) {
+            DrawModelDepth(canvas,l,timeMs,alpha,pictures,*gScene,context);
+            continue;
+        }
+        if(TrueHasWorldParticles(l,timeMs)&&std::all_of(l.effects.begin(),l.effects.end(),[&](const LayerEffect& e){
+            return e.hidden||(TrueParticleEffect(e.id)&&e.value("dimension",l.localTime(timeMs),-1)>.5f);
+        })) {
+            DrawParticlesDepth(l,timeMs,alpha,[&](const LayerEffect& e){return ParticleImage(canvas,l,e,timeMs,pictures);},context);
+            continue;
+        }
+        std::vector<uint8_t> pixels;
+        if(!context.capture(w,h,[&](SkCanvas* target){target->setMatrix(device);DrawOne(target,layers,l,timeMs,pictures,Override());},&pixels)) return false;
+        if(pixels.size()!=(size_t)w*h*4) return false;
+        const auto& source=l.sight.layers?*l.sight.layers:layers;
+        const Layer& original=l.sight.layer?*l.sight.layer:l;
+        const SkM44 projection=device*ProjectionSpace(source,original,width,height,timeMs);
+        SkMatrix homography;
+        homography.setAll(projection.rc(0,0),projection.rc(0,1),projection.rc(0,3),projection.rc(1,0),projection.rc(1,1),projection.rc(1,3),projection.rc(3,0),projection.rc(3,1),projection.rc(3,3));
+        SkMatrix inverse;
+        if(!homography.invert(&inverse)) continue;
+        for(int y=0;y<h;y++) for(int x=0;x<w;x++) {
+            const size_t k=((size_t)y*w+x)*4;
+            if(pixels[k+3]==0) continue;
+            const SkPoint local=inverse.mapPoint({x+.5f,y+.5f});
+            const SkV4 point=projection.map(local.fX,local.fY,0,1);
+            if(point.w<=0) continue;
+            buffer.add(x,y,point.z,{pixels[k]/255.f,pixels[k+1]/255.f,pixels[k+2]/255.f,pixels[k+3]/255.f});
+        }
+        if(gBreak) (*gBreak)();
+    }
+    const auto rgba=buffer.resolve();
+    const auto info=SkImageInfo::Make(w,h,kRGBA_8888_SkColorType,kPremul_SkAlphaType,SkColorSpace::MakeSRGB());
+    auto image=SkImages::RasterFromData(info,SkData::MakeWithCopy(rgba.data(),rgba.size()),(size_t)w*4);
+    if(!image) return false;
+    canvas->save();canvas->resetMatrix();canvas->drawImage(image,bounds.left(),bounds.top());canvas->restore();
+    return true;
+}
+
 void DrawList(SkCanvas* canvas, const std::vector<Layer>& listed, int width, int height, bool top, double timeMs,
               const MediaPictures& pictures) {
     std::vector<Layer> inherited, storage;
     const std::vector<Layer>& source = InheritEffects(listed, &inherited) ? inherited : listed;
-    const bool seen = SeeLayers(source, width, height, top, gScene ? gScene->fps : 30, timeMs, &storage);
+    const bool seen = SeeLayers(source, width, height, top, gScene ? gScene->fps : 30, timeMs, &storage, gScene && gScene->depth3D);
     if (seen) FaceForward(&storage);
     const std::vector<Layer>& layers = seen ? storage : source;
     const std::vector<Layer>* const outer = gEffectList;
     const std::vector<Layer>* const particleSources = gParticleSources;
     gEffectList = &layers;
     gParticleSources = &source;
+    if(top&&SharedDepth(canvas,layers,width,height,timeMs,pictures)) {gEffectList=outer;gParticleSources=particleSources;return;}
     for (size_t i = 0; i < layers.size(); i++) {
         const Layer& base = layers[i];
         if (base.clippingMask && i > 0) continue;
