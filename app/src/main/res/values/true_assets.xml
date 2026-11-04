@@ -45,7 +45,7 @@
     <string name="rig_draw">Bone</string>
     <string name="rig_pose">Pose</string>
     <string name="rig_auto_keys">Auto keys</string>
-    <string name="rig_draw_hint">Select artwork in the viewport. Drag to draw and bind a bone, or tap an existing bone. Start at a joint to continue a chain.</string>
+    <string name="rig_draw_hint">Drag from a joint or any point on a bone to add a branch. Tap a bone to select it. Select artwork and use Bind selected layer.</string>
     <string name="rig_pose_hint">Drag a bone tip to pose the artwork; drag a root joint to move the rig. Pinch to zoom. Save through My resources.</string>
     <string name="rig_ik_mode">IK</string>
 </resources>

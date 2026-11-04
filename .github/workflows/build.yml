@@ -32,13 +32,19 @@ jobs:
         run: |
           python3 tools/source_audit.py
           python3 tools/verify_native.py
+          bash tools/test_depth_renderer.sh
+          python3 -m unittest discover -s tests/tools
       - name: Test and build compatible app
         run: bash gradlew -PtrueMotionNativePrebuilt=true :app:testCompatDebugUnitTest :app:assembleCompatDebug --no-daemon
+      - name: Keep build APK out of public artifacts without the permanent key
+        run: |
+          # A runner-generated debug certificate is suitable only for this compile check.
+          # Installable previews are published exclusively by release.yml with the pinned key.
+          rm -f app/build/outputs/apk/compat/debug/*.apk
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: TrueMotion-compat-debug
           path: |
-            app/build/outputs/apk/compat/debug/*.apk
             app/build/reports/tests/testCompatDebugUnitTest/
           if-no-files-found: error

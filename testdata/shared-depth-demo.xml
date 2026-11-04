@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scene title="Shared depth — crossing planes" width="540" height="540" exportWidth="540" exportHeight="540" fps="30" totalTime="2999" bgcolor="#ff18202a" trueDepth3D="true" trueLightAzimuth="135" trueLightElevation="50" trueLightIntensity="1" trueLightAmbient="0.35">
+  <shape id="92001" label="Teal plane" s=".rect" startTime="0" endTime="2999" fillType="color">
+    <transform><location value="270,270,0"/><tilt value="0,55"/></transform><property name="size" type="vec2" value="200,120"/><fillColor value="#ff4bd5bc"/>
+  </shape>
+  <shape id="92002" label="Gold plane" s=".rect" startTime="0" endTime="2999" fillType="color">
+    <transform><location value="270,270,0"/><tilt value="0,-55"/></transform><property name="size" type="vec2" value="200,100"/><fillColor value="#ffffbf69"/>
+  </shape>
+  <camera id="92003" label="Camera" type="perspective" startTime="0" endTime="2999">
+    <transform><location value="270,270,-467.6537"/></transform><fov value="60"/>
+  </camera>
+</scene>

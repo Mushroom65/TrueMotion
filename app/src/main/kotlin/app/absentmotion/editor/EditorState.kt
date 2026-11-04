@@ -21,6 +21,8 @@ import app.absentmotion.model.KeyScope
 import app.absentmotion.model.Layer
 import app.absentmotion.model.PropRef
 import app.absentmotion.model.refreshMediaSwitches
+import app.absentmotion.model.refreshMotionTree
+import app.absentmotion.model.captureCopyTransformEdits
 import app.absentmotion.model.Scene
 import app.absentmotion.model.groupScene
 import app.absentmotion.model.validGroupPath
@@ -32,7 +34,7 @@ enum class EditorPanel(@StringRes val title: Int) {
     Tools(0), Speed(R.string.edit_panel_time_remapping), MoveTransform(R.string.edit_panel_transform), ColorFill(R.string.edit_panel_fill_color),
     EditShape(R.string.edit_panel_shape_options), EditText(R.string.edit_panel_edit_text),
     BorderShadow(R.string.edit_panel_frame_shadow), Blending(R.string.edit_panel_opacity_blend), Effects(R.string.edit_panel_effects), Camera(R.string.edit_panel_camera_options), Model(R.string.edit_panel_model_options), Crop(R.string.layer_tool_crop), AudioMotion(R.string.true_audio_title),
-    Library(R.string.asset_tab), Edge(R.string.cutout_edge),
+    Library(R.string.asset_tab), MotionTools(R.string.motion_tools), Edge(R.string.cutout_edge),
 }
 
 data class KeyTarget(val ref: PropRef, val default: String, val type: String = "float")
@@ -334,8 +336,8 @@ class EditorState(
         visualPreview.clear()
         Glide.interrupt()
         val before = scene
-        val next = change(before).refreshMediaSwitches(before).withMattesFollowing(before)
-        if (next != before) history.edit(key, document.withGroupScene(groupPath, next).withGroupHolds())
+        val next = change(before).captureCopyTransformEdits(before, sampleMs).refreshMediaSwitches(before).withMattesFollowing(before)
+        if (next != before) history.edit(key, document.withGroupScene(groupPath, next).withGroupHolds().refreshMotionTree())
     }
 
     fun endGesture() {

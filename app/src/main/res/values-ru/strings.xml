@@ -2062,4 +2062,27 @@
         <item quantity="other">%1$s склейки</item>
     </plurals>
     <string name="structure_svg_importing">Импорт SVG…</string>
-    </resources>
+        <string name="rig_bind_selected">Привязать выбранный слой</string>
+    <string name="motion_tools">Моушн-графика</string>
+    <string name="motion_copies">Повторения</string>
+    <string name="motion_links">Связи значений</string>
+    <string name="motion_copy_help">Изменения оригинала обновляют все копии. Выберите копию для настройки её смещения, поворота, масштаба, прозрачности и задержки анимации.</string>
+    <string name="motion_count">Всего экземпляров (1–200)</string>
+    <string name="motion_detach">Сделать независимой</string>
+    <string name="motion_link_original">Связывайте значения оригинала — повторения наследуют их.</string>
+    <string name="motion_go_original">Выбрать оригинал</string>
+    <string name="motion_link_help">Значение = источник × множитель + смещение. Положительная задержка использует предыдущие кадры источника. Связь обновляется при изменении источника.</string>
+    <string name="motion_target">Изменяемый параметр</string>
+    <string name="motion_source">Слой-источник</string>
+    <string name="motion_channel">Параметр источника</string>
+    <string name="motion_delay">Задержка (кадры)</string>
+    <string name="motion_link_apply">Применить связь</string>
+    <string name="motion_unlink">Отвязать, сохранив анимацию</string>
+    <string name="depth_scene">3D-сцена</string>
+    <string name="depth_enable">Общая глубина (экспериментально)</string>
+    <string name="depth_root_only">Настройте 3D в основной композиции. Группы в этом режиме остаются плоскими слоями.</string>
+    <string name="depth_help">Слои, грани моделей и частицы в режиме «3D сцены» используют общую глубину и камеру. Z и наклон — в «Трансформации». Свет сцены освещает модели. Scatter/Fracture и эффекты моделей компонуются плоско. Маски и режимы наложения используют стандартный рендер. До четырёх прозрачных поверхностей в точке; режим требует больше памяти и может работать медленнее.</string>
+    <string name="depth_light">Свет сцены · модели</string>
+    <string name="depth_azimuth">Азимут °</string>
+    <string name="depth_elevation">Высота °</string>
+</resources>

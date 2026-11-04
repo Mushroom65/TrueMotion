@@ -28,7 +28,7 @@ internal fun Scene.rigLocal(world: Pt, parentId: Long?, time: Int): Pt {
 }
 
 /** Draw a bone on the selected artwork and bind it in the same undoable operation. */
-internal fun Scene.withDrawnBone(artId: Long, parentId: Long?, from: Pt, to: Pt, id: Long, time: Int): Scene {
+internal fun Scene.withDrawnBone(artId: Long, parentId: Long?, from: Pt, to: Pt, id: Long, time: Int, bindArtwork: Boolean = true): Scene {
     val art = layer(artId)?.takeUnless { it.kind in setOf("camera", "audio", "nullobj", "bone") } ?: return this
     val parent = parentId?.let(::layer)?.takeIf { it.isBone }
     val start = rigLocal(from, parent?.id, time)
@@ -42,7 +42,32 @@ internal fun Scene.withDrawnBone(artId: Long, parentId: Long?, from: Pt, to: Pt,
     if (parent != null) bone = bone.copy(node = bone.node.with("parent", "${parent.id}"))
     bone = bone.copy(node = bone.node.withChild("trueRest", bone.node.child("transform")!!.copy(name = "trueRest")))
     val next = add(bone)
-    return next.update(art.id) { next.rebased(it, bone.id) ?: it }
+    return if (bindArtwork) next.update(art.id) { next.rebased(it, bone.id) ?: it } else next
+}
+
+internal data class RigAttachment(val parent: Long, val point: Pt)
+
+/** Every point on a bone can carry several branches, including its root (pelvis). */
+internal fun Scene.rigAttachment(point: Pt, reach: Float, time: Int, preferred: Long?): RigAttachment? {
+    data class Candidate(val bone: Layer, val point: Pt, val distance: Float, val joint: Boolean)
+    val candidates = bones.flatMap { bone ->
+        val p = place(bone, time)
+        val angle = Math.toRadians(p.rot.toDouble())
+        val a = Pt(p.x, p.y)
+        val b = Pt(p.x + (cos(angle) * bone.rigLength * p.sx).toFloat(), p.y + (sin(angle) * bone.rigLength * p.sx).toFloat())
+        val dx = b.x - a.x; val dy = b.y - a.y
+        val u = (((point.x - a.x) * dx + (point.y - a.y) * dy) / (dx * dx + dy * dy).coerceAtLeast(.0001f)).coerceIn(0f, 1f)
+        val parent = bone.node["parent"]?.toLongOrNull()?.let(::layer)?.takeIf { it.isBone } ?: bone
+        // Starting at the base of a limb creates its sibling, not a child of that limb.
+        listOf(Candidate(parent, a, hypot(point.x-a.x,point.y-a.y),true),
+            Candidate(bone,b,hypot(point.x-b.x,point.y-b.y),true),
+            Pt(a.x+u*dx,a.y+u*dy).let { q -> Candidate(bone,q,hypot(point.x-q.x,point.y-q.y),false) })
+    }
+    val joints = candidates.filter { it.joint && it.distance <= reach }
+    val eligible = joints.ifEmpty { candidates.filter { it.distance <= reach * .65f } }
+    val nearest = eligible.minOfOrNull { it.distance } ?: return null
+    val chosen = eligible.filter { it.distance <= nearest + .01f }.minByOrNull { if (it.bone.id == preferred) 0 else 1 } ?: return null
+    return RigAttachment(chosen.bone.id, chosen.point)
 }
 
 fun EditorState.openRig() {
@@ -55,7 +80,9 @@ fun EditorState.openRig() {
 internal fun EditorState.drawRigBone(parentId: Long?, from: Pt, to: Pt) {
     val art = selectedId ?: return
     val id = Layer.newId()
-    edit { it.withDrawnBone(art, parentId, from, to, id, sampleMs) }
+    // Extending a skeleton must never steal the torso from its existing bone.
+    val bound = selected?.node?.get("parent")?.toLongOrNull()?.let { scene.layer(it)?.isBone } == true
+    edit { it.withDrawnBone(art, parentId, from, to, id, sampleMs, bindArtwork = !bound) }
     if (scene.layer(id) != null) rigBoneId = id
 }
 

@@ -2030,4 +2030,27 @@
     <string name="screenshot_saved">Saved to the gallery and added as a new layer</string>
     <string name="screenshot_failed">The screenshot could not be made</string>
     <string name="screenshot_outside">Move the playhead onto the clip first</string>
+    <string name="rig_bind_selected">Bind selected layer</string>
+    <string name="motion_tools">Motion graphics</string>
+    <string name="motion_copies">Repeated copies</string>
+    <string name="motion_links">Value links</string>
+    <string name="motion_copy_help">Edit the original to update every copy. Select a copy to change its own position, rotation, scale, opacity and animation delay.</string>
+    <string name="motion_count">Total copies (1–200)</string>
+    <string name="motion_detach">Make independent</string>
+    <string name="motion_link_original">Link values on the original; repeated copies inherit them.</string>
+    <string name="motion_go_original">Select original</string>
+    <string name="motion_link_help">Target = source × multiplier + offset. Positive delay follows earlier source frames. Links update when the source changes.</string>
+    <string name="motion_target">Target channel</string>
+    <string name="motion_source">Source layer</string>
+    <string name="motion_channel">Source channel</string>
+    <string name="motion_delay">Delay (frames)</string>
+    <string name="motion_link_apply">Apply link</string>
+    <string name="motion_unlink">Unlink, keep animation</string>
+    <string name="depth_scene">3D scene</string>
+    <string name="depth_enable">Shared depth (experimental)</string>
+    <string name="depth_root_only">Configure 3D in the main composition. Groups are flat layers in this mode.</string>
+    <string name="depth_help">Layers, model faces and particles in Scene 3D mode share camera depth. Use Z and Tilt in Transform. Scene light illuminates models. Scatter/Fracture and effects on models are flat compositions. Clipping masks and backdrop blend modes use the standard renderer. Up to four transparent surfaces per pixel; this mode uses more memory and can render more slowly.</string>
+    <string name="depth_light">Scene light · models</string>
+    <string name="depth_azimuth">Azimuth °</string>
+    <string name="depth_elevation">Elevation °</string>
 </resources>

@@ -68,7 +68,8 @@ internal fun RigViewport(state: EditorState, scale: Float, offset: Offset, quad:
                 val body = candidates.minByOrNull(::distance)?.takeIf { distance(it) < reach * .65f }
                 val grabbed = tip ?: root ?: body
                 val rootHandle = tip == null && root != null
-                val from = if (state.rigTool == 0) tip?.to ?: start else start
+                val attachment = state.scene.rigAttachment(Pt(start.x, start.y), reach, state.sampleMs, state.rigBoneId)
+                val from = if (state.rigTool == 0) attachment?.point?.let { Offset(it.x, it.y) } ?: start else start
                 val tool = state.rigTool
                 var dragged = false
                 var multi = false
@@ -98,15 +99,15 @@ internal fun RigViewport(state: EditorState, scale: Float, offset: Offset, quad:
                     event.changes.forEach { it.consume() }
                 } while (event.changes.any { it.pressed })
                 ghost = null
-                if (!multi && dragged && tool == 0) state.drawRigBone(tip?.bone?.id, Pt(from.x, from.y), Pt(end.x, end.y))
+                if (!multi && dragged && tool == 0) state.drawRigBone(attachment?.parent, Pt(from.x, from.y), Pt(end.x, end.y))
                 else if (!multi && !dragged) {
                     if (grabbed != null) {
-                        if (tool == 0) state.bindViewportBone(grabbed.bone.id)
+                        state.rigBoneId = grabbed.bone.id
                     } else scope.launch {
                         val hit = state.engine.hitTest(start.x, start.y, state.timeMs)
                         state.scene.layer(hit)?.takeUnless { it.isBone || it.kind in setOf("audio", "camera", "nullobj") }?.let { art ->
                             state.selectedId = art.id
-                            state.rigBoneId = art.node["parent"]?.toLongOrNull()?.takeIf { state.scene.layer(it)?.isBone == true }
+                            art.node["parent"]?.toLongOrNull()?.takeIf { state.scene.layer(it)?.isBone == true }?.let { state.rigBoneId = it }
                         }
                     }
                 }
@@ -141,6 +142,9 @@ internal fun RigViewport(state: EditorState, scale: Float, offset: Offset, quad:
                 listOf(R.string.rig_draw, R.string.rig_pose, R.string.rig_ik_mode).forEachIndexed { index, title ->
                     TextButton({ state.endGesture(); state.rigTool = index }) { Text(stringResource(title), color = if (state.rigTool == index) Am.Accent else Am.OnDark, fontSize = 12.sp) }
                 }
+                if (state.rigTool == 0) TextButton({ state.rigBoneId?.let(state::bindViewportBone) }, enabled = state.rigBoneId != null && state.selected != null) {
+                    Text(stringResource(R.string.rig_bind_selected), color = Am.Accent, fontSize = 11.sp)
+                }
                 val bone = state.rigBoneId?.let { state.scene.layerAt(it, state.sampleMs) }
                 BarButton(if (bone?.onKeyframe(PropRef.Rotation) == true) PanelIcons.KeyframeRemove else PanelIcons.Keyframe,
                     stringResource(R.string.a11y_add_keyframe), Modifier.size(38.dp), enabled = bone != null) { state.toggleRigKey() }
@@ -151,6 +155,7 @@ internal fun RigViewport(state: EditorState, scale: Float, offset: Offset, quad:
                 BarButton(PanelIcons.Check, stringResource(R.string.done), Modifier.size(42.dp)) { state.endGesture(); state.rigEditing = false; state.keyTarget = null }
             }
             Text(stringResource(if (state.rigTool == 0) R.string.rig_draw_hint else R.string.rig_pose_hint), Modifier.padding(horizontal = 8.dp, vertical = 3.dp), color = Am.OnDarkDim, fontSize = 10.sp)
+            if (state.rigTool == 0) Text(state.selected?.label.orEmpty(), Modifier.padding(horizontal = 8.dp), color = Am.Accent, fontSize = 10.sp)
         }
         val bone = state.rigBoneId?.let { state.scene.layer(it) }
         if (bone != null) Row(Modifier.align(Alignment.BottomCenter).horizontalScroll(rememberScrollState()).background(Am.Panel.copy(alpha = .9f))) {

@@ -214,6 +214,7 @@ fun LayerTools(state: EditorState, modifier: Modifier = Modifier, side: Boolean 
         val saved = stringResource(R.string.screenshot_saved)
         val failed = stringResource(R.string.screenshot_failed)
         val more = listOfNotNull(
+            if (kind !in setOf("audio", "camera", "nullobj")) Tile(MotionTools) { state.playing = false; state.panel = EditorPanel.MotionTools } else null,
             if (kind == "shape" || state.selected?.isMediaSwitch == true) Tile(Library) { state.playing = false; state.easingOpen = false; state.panel = EditorPanel.Library } else null,
             if (kind !in setOf("camera", "audio", "nullobj")) Tile(Rig) { state.openRig() } else null,
             if (state.selected?.canCrop == true) Tile(Crop) { state.openCrop() } else null,
@@ -233,8 +234,10 @@ fun LayerTools(state: EditorState, modifier: Modifier = Modifier, side: Boolean 
             } else null,
         )
         val direct = more.filter { it.tool === Library || it.tool === Rig }
-        val visibleRows = if (direct.isEmpty()) rows else listOf(direct + listOf(transform, effects)) + rows.map { row -> row.filterNot { it.tool === MoveTransform || it.tool === Effects } }.filter { it.isNotEmpty() }
-        val extra = more.filterNot { it.tool === Library || it.tool === Rig }
+        val baseRows = if (direct.isEmpty()) rows else listOf(direct + listOf(transform, effects)) + rows.map { row -> row.filterNot { it.tool === MoveTransform || it.tool === Effects } }.filter { it.isNotEmpty() }
+        val motion = more.firstOrNull { it.tool === MotionTools }
+        val visibleRows = if (motion == null) baseRows else baseRows.dropLast(1) + listOf(baseRows.last() + motion)
+        val extra = more.filterNot { it.tool === Library || it.tool === Rig || it.tool === MotionTools }
         if (side) TileRows((visibleRows.flatten() + extra).chunked(2), 2)
         else if (extra.isEmpty()) TileRows(visibleRows, null)
         else key(state.selectedId) {
@@ -289,6 +292,7 @@ private class Tool(@StringRes val label: Int, val icon: ImageVector, val iconY: 
 private class Tile(val tool: Tool, val enabled: Boolean = true, val active: Boolean = false, val onLongClick: (() -> Unit)? = null, val menu: (@Composable () -> Unit)? = null, val onClick: () -> Unit)
 
 private val Library = Tool(R.string.asset_tab, ChromeIcons.MediaTab, 18.1f)
+private val MotionTools = Tool(R.string.motion_tools, PanelIcons.MoveTransform, 18.1f)
 private val Rig = Tool(R.string.rig_viewport_title, PanelIcons.MoveTransform, 18.1f)
 private val ColorFill = Tool(R.string.layer_tool_fill_color, PanelIcons.PaintBucket, 18.1f)
 private val BorderShadow = Tool(R.string.layer_tool_frame_shadow, PanelIcons.BorderShadow, 18.1f)
@@ -349,6 +353,7 @@ fun LayerPanel(state: EditorState, modifier: Modifier = Modifier) {
     val selected = state.selected ?: return
     val panel = state.panel
     if (panel == EditorPanel.Library) { LayerLibraryPanel(state, modifier); return }
+    if (panel == EditorPanel.MotionTools) { MotionToolsPanel(state, modifier); return }
     app.absentmotion.ui.editor.panels.BorderShadowLifetime(state, selected.id, panel)
     val layer = selected
     if (panel == EditorPanel.AudioMotion) {
@@ -421,7 +426,7 @@ fun LayerPanel(state: EditorState, modifier: Modifier = Modifier) {
                 EditorPanel.Camera -> CameraPanel(state, layer, Modifier.fillMaxSize())
                 EditorPanel.Model -> ModelPanel(state, layer, Modifier.fillMaxSize())
                 EditorPanel.Edge -> app.absentmotion.ui.editor.panels.EdgePanel(state, layer, Modifier.fillMaxSize())
-                EditorPanel.Tools, EditorPanel.EditText, EditorPanel.Effects, EditorPanel.Crop, EditorPanel.AudioMotion, EditorPanel.Library -> {}
+                EditorPanel.Tools, EditorPanel.EditText, EditorPanel.Effects, EditorPanel.Crop, EditorPanel.AudioMotion, EditorPanel.Library, EditorPanel.MotionTools -> {}
             }
             Box(Modifier.width(2.px).fillMaxHeight().background(PanelDark))
             if (move) Box(Modifier.align(Alignment.CenterEnd).width(2.px).fillMaxHeight().background(PanelDark))

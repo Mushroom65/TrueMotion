@@ -6,6 +6,8 @@ An experimental Android motion graphics editor based on [AbsentMotion 4.4.0](htt
 
 [Русская инструкция](README_TRUE_MOTION_RU.md) · [Port status](docs/TRUE_MOTION_MIGRATION_RU.md) · [Telegram](https://t.me/TrueMoti0n)
 
+0.17.0 adds opt-in shared per-fragment depth for planes, models and scene particles, a scene light, per-copy offsets and persistent value links. Rig branches can start at any point on a bone; preview signing now uses a pinned certificate. This is a partial roadmap implementation, with Android device validation pending. [Usage and limits](docs/RELEASE_0_17_RU.md).
+
 0.16.0 moves the media library into layer properties, with thumbnails, gallery import and explicit replacement keys. Rigging now runs in the viewport with direct bone drawing and automatic artwork binding; bones stay out of the layer stack. Rigs use the existing My resources workflow. [Usage and limits](docs/RELEASE_0_16_RU.md).
 
 0.15.0 adds a main-editor project library with held media replacement keys, cutout bone rigs with FK/two-bone IK, and a separate saved-model tab. Experimental preview; Android device validation is pending. [Usage and limits](docs/RELEASE_0_15_RU.md).
@@ -48,7 +50,7 @@ On Windows use `gradlew.bat`. The result is `app/build/outputs/apk/compat/debug/
 
 The fast build uses the included native libraries. The renderer core was rebuilt from the combined C++ source; the other libraries match the official compatible upstream APK. Exact hashes and source provenance are recorded in [TRUE_MOTION_PROVENANCE.json](docs/TRUE_MOTION_PROVENANCE.json). Native changes require rebuilding the core: see [native build notes](docs/NATIVE_AUDIO_BUILD_RU.md) and [upstream build documentation](docs/BUILD.md). For a full native build: `git submodule update --init --recursive`.
 
-GitHub Actions builds the compatible debug APK and runs JVM tests. The separate manual **Publish True Motion preview** workflow accepts a full source commit SHA and its matching version tag, reruns validation, and publishes a preview release with the APK, source archives, checksums and rig example. It refuses to replace an already published release. CI-produced debug APKs use a runner-generated signing key and may not install over an APK signed elsewhere.
+GitHub Actions checks the compatible debug build and uploads JVM test reports. Installable previews are published only by the workflow that verifies the permanent signing certificate. The separate manual **Publish True Motion preview** workflow accepts a full source commit SHA and its matching version tag, reruns validation, and publishes a preview release with the APK, source archives, checksums and rig example. It refuses to replace an already published release. From 0.17.0, release APKs must use the pinned permanent preview certificate. CI accepts the signing secret or verifies a prepared signed APK against a clean source build. See the 0.17.0 notes for backup and setup.
 
 ## Artwork and validation
 

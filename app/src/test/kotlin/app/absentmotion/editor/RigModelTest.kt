@@ -47,6 +47,26 @@ class RigModelTest {
         <shape id="4" label="Hand" startTime="0" endTime="2999"><transform><location value="300,150,0"/></transform></shape>
         </scene>""")
 
+    @Test fun torsoCanCarryHeadBothArmsAndBothLegsAtDifferentJoints() {
+        var scene=artwork()
+        for (id in 5L..8L) scene=scene.add(Layer(XmlNode("shape",mapOf("id" to "$id","startTime" to "0","endTime" to "2999"))).withTransform("location",200f,200f,0f))
+        scene=scene.withDrawnBone(3,null,Pt(200f,200f),Pt(200f,100f),20,0)
+            .withDrawnBone(4,20,Pt(200f,100f),Pt(200f,60f),21,0)
+            .withDrawnBone(5,20,Pt(200f,120f),Pt(130f,160f),22,0)
+            .withDrawnBone(6,20,Pt(200f,120f),Pt(270f,160f),23,0)
+            .withDrawnBone(7,20,Pt(200f,200f),Pt(170f,280f),24,0)
+            .withDrawnBone(8,20,Pt(200f,200f),Pt(230f,280f),25,0)
+        assertEquals(5,scene.bones.count { it.node["parent"]=="20" })
+        assertEquals("20",scene.layer(3)!!.node["parent"])
+        assertEquals(20L,scene.rigAttachment(Pt(200f,200f),10f,0,20)!!.parent)
+        assertEquals(20L,scene.rigAttachment(Pt(200f,200f),10f,0,24)!!.parent)
+        assertEquals(20L,scene.rigAttachment(Pt(200f,150f),10f,0,20)!!.parent)
+        val extended=scene.withDrawnBone(3,20,Pt(200f,200f),Pt(150f,280f),26,0,bindArtwork=false)
+        assertEquals("20",extended.layer(3)!!.node["parent"])
+        val turned=scene.update(20) { it.withTransform("rotation",0f) }
+        for(id in 3L..8L) { assertTrue(turned.place(turned.layer(id)!!,0).x.isFinite()); assertEquals(scene.layer(id)!!.node["parent"],turned.layer(id)!!.node["parent"]) }
+    }
+
     @Test fun drawnBoneBindsArtworkWithoutAddingATimelineLayerOrMovingArtwork() {
         val original = artwork()
         val scene = original.withDrawnBone(3, null, Pt(100f,150f), Pt(200f,150f), 1, 0)

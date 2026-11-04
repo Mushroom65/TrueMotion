@@ -12,6 +12,8 @@ fun copyLayers(
     layers.forEach { collect(it.node) }
     fun remap(node: XmlNode): XmlNode {
         var result = node
+        if (node.name in setOf("trueValueLink", "trueCopy")) node["source"]?.toLongOrNull()?.let(ids::get)?.let { result = result.with("source", "$it") }
+        if (node.name == "trueCopyId") for (attr in listOf("from", "to")) node[attr]?.toLongOrNull()?.let(ids::get)?.let { result = result.with(attr, "$it") }
         if ((node.name in Scene.LAYER_TAGS || node.name == "bone")) {
             node["id"]?.toLongOrNull()?.let { result = result.with("id", ids[it]?.toString()) }
             node["parent"]?.toLongOrNull()?.let { result = result.with("parent", ids[it]?.toString() ?: node["parent"].takeIf { preserveOutsideParents }) }

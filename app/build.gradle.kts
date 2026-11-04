@@ -48,6 +48,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
+            vcsInfo.include = false
+        }
         release {
             signingConfig = signingConfigs.findByName("release")
             vcsInfo.include = false
@@ -72,7 +76,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    packaging { jniLibs { useLegacyPackaging = true } }
+    packaging { jniLibs {
+        useLegacyPackaging = true
+        // Prebuilt libraries are already stripped and hash-verified; package identical bytes on every host.
+        if (nativePrebuilt) keepDebugSymbols += "**/*.so"
+    } }
 
     buildFeatures {
         compose = true

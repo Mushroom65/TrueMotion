@@ -11,6 +11,14 @@ on:
         description: 'Version tag, matching version.properties (for example v0.15.0)'
         required: true
         type: string
+      prepared_apk_commit:
+        description: 'Optional commit containing release.apk, signed with the pinned preview certificate'
+        type: string
+        default: ''
+      prepared_apk_sha256:
+        description: 'SHA-256 of the prepared APK (required with prepared_apk_commit)'
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -28,6 +36,8 @@ jobs:
       RELEASE_TAG: ${{ inputs.tag }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      PREPARED_COMMIT: ${{ inputs.prepared_apk_commit }}
+      PREPARED_SHA256: ${{ inputs.prepared_apk_sha256 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -57,15 +67,55 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-37.0 build-tools;37.0.0'
       - name: Audit, test and build
+        env:
+          PREVIEW_KEYSTORE: ${{ secrets.TRUE_MOTION_PREVIEW_KEYSTORE_BASE64 }}
         run: |
           python3 tools/source_audit.py
           python3 tools/verify_native.py
+          bash tools/test_depth_renderer.sh
+          python3 -m unittest discover -s tests/tools
+          python3 - <<'PY'
+          import base64, os, re
+          from pathlib import Path
+          if os.environ['PREPARED_COMMIT']:
+              assert re.fullmatch(r'[0-9a-f]{40}', os.environ['PREPARED_COMMIT'])
+              assert re.fullmatch(r'[0-9a-f]{64}', os.environ['PREPARED_SHA256'])
+          else:
+              key = os.environ.get('PREVIEW_KEYSTORE', '')
+              assert key, 'Provide the permanent signing secret or a prepared APK; ephemeral release keys are disabled'
+              p = Path(os.environ['RUNNER_TEMP']) / 'truemotion-preview.jks'
+              p.write_bytes(base64.b64decode(key, validate=True))
+              p.chmod(0o600)
+              Path('signing.properties').write_text(f'storeFile={p}\nstorePassword=android\nkeyAlias=androiddebugkey\nkeyPassword=android\n')
+          PY
           bash gradlew -PtrueMotionNativePrebuilt=true :app:testCompatDebugUnitTest :app:assembleCompatDebug --no-daemon
+      - name: Verify and select permanent-signature APK
+        run: |
+          mkdir -p build/release
+          built=app/build/outputs/apk/compat/debug/app-compat-debug.apk
+          if [[ -n "$PREPARED_COMMIT" ]]; then
+            git fetch --no-tags origin "$PREPARED_COMMIT"
+            git show "$PREPARED_COMMIT:release.apk" > build/release/prepared.apk
+            python3 tools/verify_prepared_apk.py "$built" build/release/prepared.apk "$PREPARED_SHA256"
+            cp build/release/prepared.apk "build/release/TrueMotion-${RELEASE_VERSION}-compatible-arm64-debug.apk"
+            rm build/release/prepared.apk
+          else
+            cp "$built" "build/release/TrueMotion-${RELEASE_VERSION}-compatible-arm64-debug.apk"
+          fi
+          "${ANDROID_HOME}/build-tools/37.0.0/apksigner" verify --print-certs "build/release/TrueMotion-${RELEASE_VERSION}-compatible-arm64-debug.apk" > build/release/certificate.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          pin = Path('docs/PREVIEW_CERTIFICATE_SHA256.txt').read_text().strip().lower()
+          cert = Path('build/release/certificate.txt').read_text().lower()
+          fingerprints = set(re.findall(r'certificate sha-256 digest:\s*([0-9a-f]{64})', cert))
+          assert fingerprints == {pin}, 'APK certificate differs from the permanent preview key'
+          PY
       - name: Prepare release files
         run: |
           mkdir -p build/release
-          cp app/build/outputs/apk/compat/debug/app-compat-debug.apk "build/release/TrueMotion-${RELEASE_VERSION}-compatible-arm64-debug.apk"
           cp testdata/rig-model-demo.xml build/release/
+          cp testdata/shared-depth-demo.xml build/release/
           git archive --format=zip --output="build/release/TrueMotion-${RELEASE_VERSION}-source.zip" HEAD
           git format-patch -1 HEAD --stdout > "build/release/TrueMotion-${RELEASE_VERSION}-source.patch"
           python3 - <<'PY'
@@ -83,7 +133,7 @@ jobs:
           release = Path('build/release')
           (release / 'test-summary.json').write_text(json.dumps(totals) + '\n')
           version = os.environ['RELEASE_VERSION']
-          names = [f'TrueMotion-{version}-compatible-arm64-debug.apk', f'TrueMotion-{version}-source.zip', f'TrueMotion-{version}-source.patch', 'rig-model-demo.xml']
+          names = [f'TrueMotion-{version}-compatible-arm64-debug.apk', f'TrueMotion-{version}-source.zip', f'TrueMotion-{version}-source.patch', 'rig-model-demo.xml', 'shared-depth-demo.xml']
           (release / 'SHA256SUMS.txt').write_text(''.join(hashlib.file_digest((release / name).open('rb'), 'sha256').hexdigest() + '  ' + name + '\n' for name in names))
           PY
           "${ANDROID_HOME}/build-tools/37.0.0/apksigner" verify "build/release/TrueMotion-${RELEASE_VERSION}-compatible-arm64-debug.apk"
@@ -119,13 +169,13 @@ jobs:
           url = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
           passed = report['tests'] - report['skipped']
           with notes.open('a') as out:
-              out.write(f"\n\nAPK этого релиза собран и проверен [GitHub Actions]({url}) из коммита `{os.environ['SOURCE_COMMIT']}`. Проверка CI: {passed} тестов пройдено, {report['skipped']} пропущено, ошибок нет. Debug-подпись этой сборки может отличаться от ранее установленных APK.\n")
+              out.write(f"\n\nAPK проверен [GitHub Actions]({url}) по исходникам коммита `{os.environ['SOURCE_COMMIT']}`. Проверка CI: {passed} тестов пройдено, {report['skipped']} пропущено, ошибок нет. Сертификат постоянной preview-подписи сверён с закреплённым отпечатком. Для подготовленного APK содержимое приложения побайтово сверено с чистой сборкой CI.\n")
           PY
           gh release upload "$RELEASE_TAG" \
             "build/release/TrueMotion-${RELEASE_VERSION}-compatible-arm64-debug.apk" \
             "build/release/TrueMotion-${RELEASE_VERSION}-source.zip" \
             "build/release/TrueMotion-${RELEASE_VERSION}-source.patch" \
-            build/release/rig-model-demo.xml build/release/SHA256SUMS.txt build/release/test-summary.json --clobber
+            build/release/rig-model-demo.xml build/release/shared-depth-demo.xml build/release/SHA256SUMS.txt build/release/test-summary.json --clobber
           gh release edit "$RELEASE_TAG" --draft=false --prerelease --notes-file build/release/RELEASE_NOTES_RU.md
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
