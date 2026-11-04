@@ -98,7 +98,16 @@ jobs:
           Path('build/release/RELEASE_NOTES_RU.md').write_text(existing['body'])
           PY
           else
-            cp "docs/RELEASE_${RELEASE_VERSION//./_}_RU.md" build/release/RELEASE_NOTES_RU.md
+            notes="docs/RELEASE_${RELEASE_VERSION//./_}_RU.md"
+            if [[ ! -f "$notes" && "$RELEASE_VERSION" == *.0 ]]; then
+              minor_version="${RELEASE_VERSION%.0}"
+              notes="docs/RELEASE_${minor_version//./_}_RU.md"
+            fi
+            if [[ -f "$notes" ]]; then
+              cp "$notes" build/release/RELEASE_NOTES_RU.md
+            else
+              printf 'True Motion %s (preview)\n' "$RELEASE_VERSION" > build/release/RELEASE_NOTES_RU.md
+            fi
             gh release create "$RELEASE_TAG" --target "$SOURCE_COMMIT" --title "True Motion ${RELEASE_VERSION} (preview)" --notes-file build/release/RELEASE_NOTES_RU.md --draft --prerelease
           fi
           python3 - <<'PY'
