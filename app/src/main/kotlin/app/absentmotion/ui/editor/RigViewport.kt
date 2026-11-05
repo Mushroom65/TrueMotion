@@ -25,21 +25,36 @@ import app.absentmotion.editor.*
 import app.absentmotion.model.*
 import app.absentmotion.ui.theme.Am
 import kotlinx.coroutines.launch
-import kotlin.math.cos
-import kotlin.math.sin
+import app.absentmotion.platform.Matrix
+import kotlinx.coroutines.flow.collectLatest
 
-private data class BoneLine(val bone: Layer, val from: Offset, val to: Offset)
+private data class BoneLine(val bone: Layer, val from: Offset, val to: Offset, val plane: Matrix?)
+private data class RigFrameRequest(val scene: Scene, val time: Int, val selected: Long?, val camera: Boolean)
 
-private fun lines(state: EditorState): List<BoneLine> = state.scene.bones.map { bone ->
-    val place = state.scene.place(bone, state.sampleMs)
-    val angle = Math.toRadians(place.rot.toDouble())
-    BoneLine(bone, Offset(place.x, place.y), Offset(place.x + (cos(angle) * bone.rigLength * place.sx).toFloat(), place.y + (sin(angle) * bone.rigLength * place.sx).toFloat()))
-}
+private fun lines(state: EditorState, matrices: Map<Long,FloatArray>): List<BoneLine> =
+    state.scene.bones.filter { it.activeAt(state.sampleMs) }.map { bone ->
+        val values=matrices[bone.id]
+        val points=if(values!=null) {
+            val matrix=Matrix().apply {setValues(values.copyOfRange(0,9))}
+            matrix.map(Pt(0f,0f)) to matrix.map(Pt(bone.rigLength,0f))
+        } else state.scene.rigSegment(bone,state.sampleMs)
+        BoneLine(bone,Offset(points.first.x,points.first.y),Offset(points.second.x,points.second.y),
+            values?.let {Matrix().apply {setValues(it.copyOfRange(9,18))}})
+    }
 
 @Composable
 internal fun RigViewport(state: EditorState, scale: Float, offset: Offset, quad: FloatArray?, modifier: Modifier) {
     val currentScale by rememberUpdatedState(scale)
     val currentOffset by rememberUpdatedState(offset)
+    var matrices by remember {mutableStateOf<Map<Long,FloatArray>>(emptyMap())}
+    LaunchedEffect(state) {
+        snapshotFlow {RigFrameRequest(state.scene,state.sampleMs,state.selectedId,state.cameraMode)}.collectLatest { request ->
+            val ids=request.scene.bones.map {it.id}+listOfNotNull(request.selected)
+            matrices=state.engine.layerMatrices(ids,request.time,request.camera)
+        }
+    }
+    val currentLines by rememberUpdatedState(lines(state,matrices))
+    val currentMatrices by rememberUpdatedState(matrices)
     val scope = rememberCoroutineScope()
     var ghost by remember { mutableStateOf<Pair<Offset, Offset>?>(null) }
     val accent = Am.Accent
@@ -52,23 +67,29 @@ internal fun RigViewport(state: EditorState, scale: Float, offset: Offset, quad:
                 state.playing = false
                 val initialScale = currentScale.coerceAtLeast(0.00001f)
                 val initialOffset = currentOffset
-                fun world(point: Offset) = (point - initialOffset) / initialScale
-                val start = world(down.position)
-                val candidates = lines(state)
+                fun view(point: Offset) = (point - initialOffset) / initialScale
+                val viewStart = view(down.position)
+                val candidates = currentLines
                 val reach = 22.dp.toPx() / initialScale
-                val tip = candidates.minByOrNull { (it.to - start).getDistance() }?.takeIf { (it.to - start).getDistance() < reach }
-                val root = candidates.filter { it.bone.node["parent"] == null }.minByOrNull { (it.from - start).getDistance() }
-                    ?.takeIf { (it.from - start).getDistance() < reach }
+                val tip = candidates.minByOrNull { (it.to - viewStart).getDistance() }?.takeIf { (it.to - viewStart).getDistance() < reach }
+                val root = candidates.filter { it.bone.node["parent"] == null }.minByOrNull { (it.from - viewStart).getDistance() }
+                    ?.takeIf { (it.from - viewStart).getDistance() < reach }
                 fun distance(line: BoneLine): Float {
                     val delta = line.to - line.from
                     val length2 = delta.x * delta.x + delta.y * delta.y
-                    val u = if (length2 < .00001f) 0f else (((start - line.from).x * delta.x + (start - line.from).y * delta.y) / length2).coerceIn(0f, 1f)
-                    return (start - line.from - delta * u).getDistance()
+                    val u = if (length2 < .00001f) 0f else (((viewStart - line.from).x * delta.x + (viewStart - line.from).y * delta.y) / length2).coerceIn(0f, 1f)
+                    return (viewStart - line.from - delta * u).getDistance()
                 }
                 val body = candidates.minByOrNull(::distance)?.takeIf { distance(it) < reach * .65f }
                 val grabbed = tip ?: root ?: body
                 val rootHandle = tip == null && root != null
-                val attachment = state.scene.rigAttachment(Pt(start.x, start.y), reach, state.sampleMs, state.rigBoneId)
+                val plane = grabbed?.plane ?: currentMatrices[state.selectedId]?.let {v->Matrix().apply {setValues(v.copyOfRange(9,18))}}
+                val inverse=plane?.let {p->Matrix().takeIf {p.invert(it)}}
+                fun world(point: Offset): Offset = inverse?.map(Pt(point.x,point.y))?.let {Offset(it.x,it.y)} ?: point
+                fun project(point: Offset): Offset = plane?.map(Pt(point.x,point.y))?.let {Offset(it.x,it.y)} ?: point
+                val start=world(viewStart)
+                val worldReach=maxOf((world(viewStart+Offset(reach,0f))-start).getDistance(),(world(viewStart+Offset(0f,reach))-start).getDistance())
+                val attachment = state.scene.rigAttachment(Pt(start.x, start.y), worldReach, state.sampleMs, state.rigBoneId)
                 val from = if (state.rigTool == 0) attachment?.point?.let { Offset(it.x, it.y) } ?: start else start
                 val tool = state.rigTool
                 var dragged = false
@@ -88,10 +109,10 @@ internal fun RigViewport(state: EditorState, scale: Float, offset: Offset, quad:
                         state.canvasPan = pinchedPan(state.canvasPan + event.calculatePan() / currentScale, about, next / state.canvasZoom)
                         state.canvasZoom = next
                     } else if (!multi) {
-                        end = world(change.position)
+                        end = world(view(change.position))
                         if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) dragged = true
                         if (dragged) {
-                            if (tool == 0 && state.selected != null) ghost = from to end
+                            if (tool == 0 && state.selected != null) ghost = project(from) to project(end)
                             else if (grabbed != null) state.poseViewportBone(grabbed.bone.id, Pt(end.x, end.y), rootHandle, tip != null)
                             else state.canvasPan += event.calculatePan() / currentScale
                         }
@@ -104,7 +125,7 @@ internal fun RigViewport(state: EditorState, scale: Float, offset: Offset, quad:
                     if (grabbed != null) {
                         state.rigBoneId = grabbed.bone.id
                     } else scope.launch {
-                        val hit = state.engine.hitTest(start.x, start.y, state.timeMs)
+                        val hit = state.engine.hitTest(viewStart.x, viewStart.y, state.timeMs)
                         state.scene.layer(hit)?.takeUnless { it.isBone || it.kind in setOf("audio", "camera", "nullobj") }?.let { art ->
                             state.selectedId = art.id
                             art.node["parent"]?.toLongOrNull()?.takeIf { state.scene.layer(it)?.isBone == true }?.let { state.rigBoneId = it }
@@ -133,7 +154,7 @@ internal fun RigViewport(state: EditorState, scale: Float, offset: Offset, quad:
                 val corners = List(4) { Offset(quad[it * 2], quad[it * 2 + 1]) * scale + offset }
                 for (index in corners.indices) drawLine(accent.copy(alpha = .6f), corners[index], corners[(index + 1) % 4], 1.dp.toPx())
             }
-            lines(state).forEach { line -> drawBone(screen(line.from), screen(line.to), if (state.rigBoneId == line.bone.id) accent else normal) }
+            currentLines.forEach { line -> drawBone(screen(line.from), screen(line.to), if (state.rigBoneId == line.bone.id) accent else normal) }
             ghost?.let { drawBone(screen(it.first), screen(it.second), accent) }
         }
         Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().background(Am.Panel.copy(alpha = .94f))) {

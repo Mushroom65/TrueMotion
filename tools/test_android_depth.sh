@@ -13,7 +13,7 @@ assert '"ok":true' in text, text
 PY
   folder=depth017-validation
   if [[ "$backend" == gl ]]; then folder=depth017-gl-validation; fi
-  for name in crossing transparency camera report; do
+  for name in crossing transparency camera rig report; do
     ext=png
     if [[ "$name" == report ]]; then ext=json; fi
     adb exec-out run-as app.truemotion cat "files/$folder/$name.$ext" > "build/render-regression/$backend-$name.$ext"

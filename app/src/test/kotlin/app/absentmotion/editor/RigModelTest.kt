@@ -199,4 +199,35 @@ class RigModelTest {
         assertEquals("true",compiled.layer(4)!!.node["clippingMask"])
         assertTrue(compiled.layers.last().id<0)
     }
+    @Test fun boneHandlesAndSnappingRespectMirroredNonUniformParentScaleAndPivot() {
+        val source=artwork()
+            .add(Layer(XmlNode.parse("""<bone id="10" length="100" startTime="0" endTime="2999"><transform><location value="200,150,0"/><scale value="-2,0.5"/><pivot value="5,7,0"/></transform></bone>""")))
+            .add(Layer(XmlNode.parse("""<bone id="11" parent="10" length="80" startTime="0" endTime="2999"><transform><location value="10,20,0"/><rotation value="45"/></transform></bone>""")))
+        val (root,tip)=source.rigSegment(source.layer(11)!!,0)
+        assertEquals(190f,root.x,.001f);assertEquals(156.5f,root.y,.001f)
+        assertEquals(190f-160f/sqrt(2f),tip.x,.001f)
+        assertEquals(156.5f+40f/sqrt(2f),tip.y,.001f)
+        val snap=source.rigAttachment(tip,1f,0,11)!!
+        assertEquals(11L,snap.parent);assertEquals(tip.x,snap.point.x,.001f);assertEquals(tip.y,snap.point.y,.001f)
+    }
+
+    @Test fun reparentedBonesKeepTheirDisplayedEndpointsAtTheBindingFrame() {
+        val source=artwork().withDrawnBone(3,null,Pt(50f,60f),Pt(120f,100f),10,0)
+            .withDrawnBone(4,null,Pt(200f,100f),Pt(230f,170f),11,0)
+        val before=source.rigSegment(source.layer(11)!!,0)
+        val bound=source.withRigParent(11,10,0)
+        val after=bound.rigSegment(bound.layer(11)!!,0)
+        assertEquals(before.first.x,after.first.x,.001f);assertEquals(before.first.y,after.first.y,.001f)
+        assertEquals(before.second.x,after.second.x,.001f);assertEquals(before.second.y,after.second.y,.001f)
+        assertTrue(bound.layer(11)!!.keyframeTimes().isEmpty())
+    }
+
+    @Test fun drawingARootBoneUsesTheArtworkDepthSoItsProjectedPositionStaysOnTheArtwork() {
+        val source=artwork().update(3) {it.withTransform("location",200f,150f,240f)}
+        val bound=source.withDrawnBone(3,null,Pt(100f,150f),Pt(200f,150f),10,0)
+        assertEquals(240f,bound.layer(10)!!.location[2],.001f)
+        assertEquals(240f,bound.place(bound.layer(3)!!,0).z,.001f)
+        assertEquals(-240f,bound.layer(3)!!.rigBinding!!.z,.001f)
+    }
+
 }

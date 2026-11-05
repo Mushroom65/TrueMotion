@@ -37,11 +37,17 @@ internal fun Scene.withDrawnBone(artId: Long, parentId: Long?, from: Pt, to: Pt,
     if (!length.isFinite() || length < 1f) return this
     var bone = Layer(XmlNode("bone", mapOf("id" to "$id", "label" to art.label, "length" to "${length.coerceAtMost(10000f)}",
         "startTime" to "${minOf(art.startTime, parent?.startTime ?: art.startTime)}", "endTime" to "${maxOf(art.endTime, parent?.endTime ?: art.endTime)}")))
-        .withTransform("location", start.x, start.y, 0f).withTransform("rotation", Math.toDegrees(atan2(dy, dx).toDouble()).toFloat())
+        .withTransform("location", start.x, start.y, if(parent==null) place(art,time).z else 0f).withTransform("rotation", Math.toDegrees(atan2(dy, dx).toDouble()).toFloat())
     if (parent != null) bone = bone.copy(node = bone.node.with("parent", "${parent.id}"))
     bone = bone.copy(node = bone.node.withChild("trueRest", bone.node.child("transform")!!.copy(name = "trueRest")))
     val next = add(bone)
     return if (bindArtwork) next.withRigParent(art.id,bone.id,time) else next
+}
+
+/** The same complete parent transform used by the renderer, without decomposing rotation/scale. */
+internal fun Scene.rigSegment(bone: Layer, time: Int): Pair<Pt, Pt> {
+    val matrix=rigAffine(bone,time)
+    return matrix.map(Pt(0f,0f)) to matrix.map(Pt(bone.rigLength,0f))
 }
 
 internal data class RigAttachment(val parent: Long, val point: Pt)
@@ -50,10 +56,7 @@ internal data class RigAttachment(val parent: Long, val point: Pt)
 internal fun Scene.rigAttachment(point: Pt, reach: Float, time: Int, preferred: Long?): RigAttachment? {
     data class Candidate(val bone: Layer, val point: Pt, val distance: Float, val joint: Boolean)
     val candidates = bones.flatMap { bone ->
-        val p = place(bone, time)
-        val angle = Math.toRadians(p.rot.toDouble())
-        val a = Pt(p.x, p.y)
-        val b = Pt(p.x + (cos(angle) * bone.rigLength * p.sx).toFloat(), p.y + (sin(angle) * bone.rigLength * p.sx).toFloat())
+        val (a,b) = rigSegment(bone,time)
         val dx = b.x - a.x; val dy = b.y - a.y
         val u = (((point.x - a.x) * dx + (point.y - a.y) * dy) / (dx * dx + dy * dy).coerceAtLeast(.0001f)).coerceIn(0f, 1f)
         val parent = bone.node["parent"]?.toLongOrNull()?.let(::layer)?.takeIf { it.isBone } ?: bone

@@ -613,6 +613,16 @@ class EngineThread(private val background: Int, context: Context? = null, privat
         }
     }
 
+    /** Read one consistent viewport frame for the skeleton and its drawing plane. */
+    suspend fun layerMatrices(layerIds: Collection<Long>, timeMs: Int, camera: Boolean): Map<Long, FloatArray> = captureLock.withLock {
+        withContext(dispatcher) {
+            applyPending()
+            prepareTextTime(timeMs)
+            engine().setCameraView(camera)
+            layerIds.mapNotNull { id -> engine().layerMatrix(id,timeMs.toDouble())?.let { id to it } }.toMap()
+        }
+    }
+
     suspend fun layerBounds(layerId: Long, timeMs: Int): FloatArray? = captureLock.withLock {
         withContext(dispatcher) {
             applyPending()

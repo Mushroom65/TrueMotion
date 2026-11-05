@@ -37,6 +37,24 @@ internal object Depth017Probe {
         val rotated=render(camera)
         check(channel(rotated,128,156,0)>230 && channel(rotated,128,100,2)>230) { "Scene camera did not rotate the shared-depth scene" }
         save(rotated,"camera")
-        return JSONObject().put("backend",JSONObject(engine.info)).put("crossingPlanes",true).put("orderIndependent",true).put("transparency",true).put("sceneCamera",true)
+        val rig=Scene.parse("""<scene width="256" height="256" fps="30" totalTime="999" bgcolor="#ff000000">
+            <bone id="10" length="80" startTime="0" endTime="999"><transform><location value="128,128,40"/><rotation value="20"/><scale value="-1.5,0.6"/></transform></bone>
+            <bone id="11" parent="10" length="50" startTime="0" endTime="999"><transform><location value="20,10,0"/><rotation value="40"/></transform></bone>
+            <shape id="1" parent="11" s=".rect" startTime="0" endTime="999" fillType="color"><property name="size" type="vec2" value="5,5"/><fillColor value="#ffff0000"/></shape>
+            <shape id="2" parent="11" s=".rect" startTime="0" endTime="999" fillType="color"><transform><location value="50,0,0"/></transform><property name="size" type="vec2" value="5,5"/><fillColor value="#ff00ff00"/></shape>
+            <camera id="3" type="perspective" startTime="0" endTime="999"><transform><location value="144,120,-221.7025"/><rotation value="25"/></transform><fov value="60"/></camera>
+            </scene>""")
+        val handles=render(rig)
+        val matrix=checkNotNull(engine.layerMatrix(11,0.0))
+        fun point(x: Float): Pair<Int,Int> {
+            val w=matrix[6]*x+matrix[8]
+            return kotlin.math.round((matrix[0]*x+matrix[2])/w).toInt() to kotlin.math.round((matrix[3]*x+matrix[5])/w).toInt()
+        }
+        for((local,c) in listOf(0f to 0,50f to 1)) {
+            val (x,y)=point(local)
+            check(x in 0..255 && y in 0..255 && channel(handles,x,y,c)>230) {"Rig handle does not match rendered artwork at $local: $x,$y"}
+        }
+        save(handles,"rig")
+        return JSONObject().put("rigProjectedHandles",true).put("backend",JSONObject(engine.info)).put("crossingPlanes",true).put("orderIndependent",true).put("transparency",true).put("sceneCamera",true)
     }
 }
